@@ -120,7 +120,7 @@ module.exports = class myHelper {
 
     eval_getBlobLen(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-        
-        return [ctx.Fr.e((ctx.input.blobData.length-2) / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
+        const inputLen = ctx.input.blobData.startsWith("0x") ? ctx.input.blobData.slice(2).length : ctx.input.blobData.length
+        return [ctx.Fr.e(inputLen / 2), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 };
