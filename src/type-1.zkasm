@@ -146,4 +146,5 @@ hashBatchDataEnd:
         $ => B                          :MLOAD(blobDataProcessed)
         $ => C                          :MLOAD(batchLen)
         ; C batchLen + 4 bytes of batch length
-        C + B + 4                       :MSTORE(blobDataProcessed),JMP(nextBatch)
+        C + B + 4                       :MSTORE(blobDataProcessed)
+        C                               :JMPZ(readBatchDataLen, nextBatch)
