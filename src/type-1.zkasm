@@ -23,7 +23,7 @@ invalidBlobData:
         RR + 1                          :MSTORE(polEvalFrBLS12381_index)
         ; offset = 1 byte + len = 1 byte + left_alignment
         ; store in 31th byte, 0th byte of A
-        1 + 128 * 1 + 8192  => C
+        31 + 128 * 1 + 8192 => C
         $ => A                          :MEM_ALIGN_RD
         ; read pending 31 bytes and adding whit
         $ + A => A                      :F_HASHP31(E)
@@ -58,7 +58,8 @@ callAndAssert:
 nonCompressionBlob:
         ; getting totalBodyLen
         2 + 128 * 4 => C
-        $                               :MEM_ALIGN_RD,MSTORE(totalBodyLen)
+        $ => B                          :MEM_ALIGN_RD,MSTORE(totalBodyLen)
+        %BYTES_ETH_BLOB_DATA - 5 - B    :JMPN(invalidParsing)
 
         ; A = current 31 bits value
         ; RR = current index array 31 bits value
