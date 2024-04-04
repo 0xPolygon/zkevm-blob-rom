@@ -8,7 +8,7 @@ failAssert:
 ; @out A
 addBlobInputHashK:
         $ => B                          :MLOAD(blobDataLen)
-        B - HASHPOS - D                 :JMPN(invalidBlob)
+        B - HASHPOS - D                 :JMPN(invalidParsing)
         E => B
         %INDEX_BLOB_L2_HASH_K_DATA => E
         $ => A                          :HASHK(E)

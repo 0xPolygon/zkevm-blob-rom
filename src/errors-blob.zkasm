@@ -8,6 +8,8 @@ invalidZkGasLimit:
     $${eventLog(onError, error_invalid_zkgaslimit)}         :JMP(invalidBlob)
 invalidBlobType:
     $${eventLog(onError, error_invalid_blob_type)}          :JMP(invalidBlob)
+invalidForcedBatches:
+    $${eventLog(onError, error_invalid_forced_batches)}     :JMP(invalidBlob)
 invalidBlob:
         1                               :MSTORE(isInvalid)
         0                               :MSTORE(finalAccBatchHashData)

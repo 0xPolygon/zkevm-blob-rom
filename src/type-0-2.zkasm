@@ -10,7 +10,7 @@ nonCompression:
         B - 2                           :JMPNZ(addBatchData)
         ; if type == 2 --> only one batch is supported
         $ => B                          :MLOAD(numBatches)
-        1 - B                           :JMPZ(invalidBlob)
+        1 - B                           :JMPZ(invalidForcedBatches)
 
 addBatchData:
         ; change CTX
