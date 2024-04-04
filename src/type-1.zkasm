@@ -52,7 +52,10 @@ callAndAssert:
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         1 + 128 * 1 => C
         $ => C                          :MEM_ALIGN_RD
+        C - 1                           :JMPN(nonCompressionBlob)
+                                        :JMP(invalidTypeCompression)
 
+nonCompressionBlob:
         ; getting totalBodyLen
         2 + 128 * 4 => C
         $                               :MEM_ALIGN_RD,MSTORE(totalBodyLen)

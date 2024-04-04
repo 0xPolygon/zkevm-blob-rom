@@ -181,7 +181,7 @@ computeBatchHashData:
 
         ; blobData[0] --> compression type
         1 => D                          :CALL(addBlobInputHashK) ; A = first byte
-        A => B
+        A => C
         ; blobData[1]-blobData[4] --> totalBodyLen
         4 => D                          :CALL(addBlobInputHashK) ; A = totalBodyLen
         ; blobDataLen = totalBody + compression type (1 byte) + totalBodyLen (4 bytes)
@@ -189,7 +189,7 @@ computeBatchHashData:
         blobDataLen - A - 5             :JMPNZ(invalidParsing)
         ; if type = 0 & type = 2 and compression type = 0
         ; D.0 ---> nonCompression
-        B - 1                           :JMPN(nonCompression)
+        C - 1                           :JMPN(nonCompression)
                                         :JMP(invalidTypeCompression)
 
 nextBatch:
