@@ -20,7 +20,7 @@ addBlobDataMem:
 
 ; if byte0 != 0x00 --> invalidBlobData and update polEvalFrBLS12381_index & add to polEvalFrBLS12381_pol_eval
 invalidBlobData:
-        RR                              :MSTORE(polEvalFrBLS12381_index)
+        RR + 1                          :MSTORE(polEvalFrBLS12381_index)
         ; offset = 1 byte + len = 1 byte + left_alignment
         ; store in 31th byte, 0th byte of A
         1 + 128 * 1 + 8192  => C
@@ -29,16 +29,12 @@ invalidBlobData:
         $ + A => A                      :F_HASHP31(E)
         A                               :MSTORE(polEvalFrBLS12381_pol_eval+RR)
         RR + 1 => RR
-        RR - %NUM_ARRAY_ETH_BLOB_DATA   :JMPZ(addBlobDataMemInvalid)
+        RR - %NUM_ARRAY_ETH_BLOB_DATA   :JMPZ(callAndAssert)
 
 addBlobDataMemInvalid:
         $                               :HASHP32(E),MSTORE(polEvalFrBLS12381_pol_eval+RR)
         RR + 1 => RR                    
         RR - %NUM_ARRAY_ETH_BLOB_DATA   :JMPNZ(addBlobDataMemInvalid)
-
-finalBlobDataMemInvalid:
-                                        :CALL(polEvalFrBLS12381)
-                                        :JMP(invalidBlob)
 
 callAndAssert:
         ; call polEvalFrBLS12381
@@ -47,9 +43,10 @@ callAndAssert:
         ; assert output pointY
         $ => B                          :MLOAD(y)
         B                               :ASSERT
+        $ => B                          :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
 
 ; add batchData to batchHashData = LinearPoseidon(batchData)
-        0 => B,RR
+        0 => RR
         31 - 1 - 4 => RCX
         ; reading type
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
@@ -109,7 +106,7 @@ readRemainingBatchDataLen:
 readBatchData:
         $ => E                          :MLOAD(lastHashPIdUsed)
         D                               :JMP_EQ(0,hashBatchDataEnd), MSTORE(batchLen)
-        4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidBlob)
+        4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidParsing)
         
         RCX                             :JMP_EQ(0, loopHash31BytesOfBatchData)
         D - RCX                         :JMPN(allBatchDataInRemainingBytes)
