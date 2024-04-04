@@ -26,6 +26,7 @@ const input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
 const skipVcounters = '%%SKIP_VCOUNTERS%%';
 
 const pathCounters = path.join(__dirname, "../counters.json")
+const pathCountersTemplate = path.join(__dirname, "../counters-template.json")
 
 it(`${nameFile}`, async () => {
     if (fs.existsSync(checkerDir)) {
@@ -70,6 +71,9 @@ async function runTest(cmPols, steps) {
 }
 
 async function writeFileCounters(counters) {
+    if (!fs.existsSync(pathCounters)) {
+        await fs.copyFileSync(pathCountersTemplate, pathCounters)
+    }
     const countersInfo = JSON.parse(fs.readFileSync(pathCounters));
     const counterInput = inputPath.split("/")[inputPath.split("/").length-1];
     countersInfo[counterInput] = {}

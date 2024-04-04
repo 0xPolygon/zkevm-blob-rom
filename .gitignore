@@ -144,3 +144,4 @@ tmp
 
 # parallel tests
 tools/parallel-testing/parallel-tests
+tools/parallel-testing/counters.json
