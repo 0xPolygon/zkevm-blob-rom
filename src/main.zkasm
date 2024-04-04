@@ -126,6 +126,8 @@ standarCalldata:
         A                               :HASHKDIGEST(E)
         B => HASHPOS
         HASHPOS                         :HASHKLEN(E)
+        ;if type === 0 -> forcedHashData = 0
+        0                               :MSTORE(forcedHashData)
                                         :JMP(type0and2)
 
 ;;;;;;;;;;;;;;;;;;
@@ -140,6 +142,8 @@ blobData:
         B => HASHPOS
         HASHPOS                         :HASHPLEN(E)
 
+        ;if type === 1 -> forcedHashData = 0
+        0                               :MSTORE(forcedHashData)
         ; isEIP4844 = 1 & update lastHASHPIDUsed
         1                               :MSTORE(isEIP4844)
         1                               :MSTORE(lastHashPIdUsed)
@@ -150,14 +154,14 @@ blobData:
 ;;;;;;;;;;;;;;;;;;
 forcedBlob:
         ; B == blobDataLen (getBlobLen())
-        $ => A                          :MLOAD(forcedHashData)
-        ; load forcedHashData to HASHK index 1
+        $ => A                          :MLOAD(blobL2HashData) ; used when type = 0
+        ; load blobL2HashData = keccak256(blobData) to HASHK index 1
         %INDEX_BLOB_L2_HASH_K_DATA => E
         A                               :HASHKDIGEST(E)
+        B => HASHPOS
+        HASHPOS                         :HASHKLEN(E)
 
 type0and2:
-        ;if type === 0 || type === 2 --> forcedHashData = 0
-        0                               :MSTORE(forcedHashData)
         ; sanity check
         0                               :MSTORE(isEIP4844)
         0                               :MSTORE(lastHashPIdUsed)
