@@ -8,7 +8,7 @@ INCLUDE "constantsBLS12381.zkasm"
 ;       C - Check type input
 ;               C.0 - Type 0: calldata
 ;               C.1 - Type 1: ethereum blob transaction
-;               C.2 - Type 2: calldata and it is a forced one
+;               C.2 - Type 2: forced
 ;       D - batchHashData - finalAccBatchHashData
 ;       D.0 - type 0 & 2: Prepare batchHashData & finalAccBatchHashData
 ;       D.1 - type 1: check 0x00, compute batchHashData & finalAccBatchHashData

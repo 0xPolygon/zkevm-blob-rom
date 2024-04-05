@@ -146,6 +146,7 @@ hashLastBytesOfBatchData:
 hashBatchDataEnd:
         $ => B                          :MLOAD(blobDataProcessed)
         $ => C                          :MLOAD(batchLen)
-        ; C batchLen + 4 bytes of batch length
+        ; blobDataProcessed = B (blobDataProcessed) + C (batchLen) + 4 bytes of batch length
         C + B + 4                       :MSTORE(blobDataProcessed)
+        ; if batchLen === 0 --> readBatchDataLen, else --> nextBatch
         C                               :JMPZ(readBatchDataLen, nextBatch)
