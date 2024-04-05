@@ -1,20 +1,20 @@
-; inputs
+; Inputs
 VAR GLOBAL oldBlobStateRoot
 VAR GLOBAL oldBlobAccInputHash
 VAR GLOBAL oldNumBlob
 VAR GLOBAL oldStateRoot
 VAR GLOBAL forkID
 
-; outputs
+; Outputs
 VAR GLOBAL newBlobStateRoot
-VAR GLOBAL newBlobAccInputHash
-VAR GLOBAL newNumBlob
-VAR GLOBAL finalAccBatchHashData
+VAR GLOBAL newBlobAccInputHash ; New blob accumulated input hash. newBlobAccInputHash = keccak256(oldBlobAccInputHash, lastL1InfoTreeIndex, lastL1InfoTreeRoot, timestampLimit, sequenceraddress, zkGasLimit, type, z, y, blobL2Hashdata, forcedHashdata)
+VAR GLOBAL newNumBlob ; New blob number. newNumBlob = oldNumBlob + 1
+VAR GLOBAL finalAccBatchHashData ; Final accumulated batch data hash. finalAccBatchHashData = LinearPoseidon(oldBatchAccInputHash, batchHashData, sequencerAddress, forcedHashData)
 VAR GLOBAL localExitRootFromBlob
-VAR GLOBAL isInvalid
+VAR GLOBAL isInvalid ; Flag to determine if the blob is invalid
 
-; outputs exposed from blobAccInputHash
-VAR GLOBAL timestampLimit
+; Outputs exposed from blobAccInputHash
+VAR GLOBAL timestampLimit 
 VAR GLOBAL lastL1InfoTreeRoot
 VAR GLOBAL lastL1InfoTreeIndex
 
@@ -22,15 +22,15 @@ VAR GLOBAL lastL1InfoTreeIndex
 VAR GLOBAL sequencerAddr
 VAR GLOBAL zkGasLimit
 VAR GLOBAL type ; 0: standard calldata, 1: blob data, 2: forced blob
-VAR GLOBAL y ; isEIP4844 = 1
-VAR GLOBAL blobL2HashData ; isEIP4844 = 0
-VAR GLOBAL forcedHashData ; isEIP4844 = 0, keccak(ger, blockhashL1, minTimestamp)
+VAR GLOBAL y ; blobType = 1
+VAR GLOBAL blobL2HashData ; blobType = 0 || blobType = 2
+VAR GLOBAL forcedHashData ; blobType = 2
 
 ; tools blob parse
 VAR GLOBAL tmpSR
-VAR GLOBAL blobDataLen
-VAR GLOBAL totalBodyLen
-VAR GLOBAL blobHashPos
+VAR GLOBAL blobDataLen ; blobData.length
+VAR GLOBAL totalBodyLen ; blobData.length - 1 compression byte - 4 totalBodyLen bytes
+VAR GLOBAL blobHashPos ; pointer blobData
 VAR GLOBAL numBatches
 VAR GLOBAL isEIP4844
 VAR GLOBAL lastHashPIdUsed

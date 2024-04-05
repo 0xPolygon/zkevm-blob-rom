@@ -8,7 +8,7 @@ INCLUDE "constantsBLS12381.zkasm"
 ;       C - Check type input
 ;               C.0 - Type 0: calldata
 ;               C.1 - Type 1: ethereum blob transaction
-;               C.2 - Type 2: calldata and it is a forced one
+;               C.2 - Type 2: forced
 ;       D - batchHashData - finalAccBatchHashData
 ;       D.0 - type 0 & 2: Prepare batchHashData & finalAccBatchHashData
 ;       D.1 - type 1: check 0x00, compute batchHashData & finalAccBatchHashData
@@ -126,6 +126,8 @@ standarCalldata:
         A                               :HASHKDIGEST(E)
         B => HASHPOS
         HASHPOS                         :HASHKLEN(E)
+        ;if type === 0 -> forcedHashData = 0
+        0                               :MSTORE(forcedHashData)
                                         :JMP(type0and2)
 
 ;;;;;;;;;;;;;;;;;;
@@ -140,6 +142,8 @@ blobData:
         B => HASHPOS
         HASHPOS                         :HASHPLEN(E)
 
+        ;if type === 1 -> forcedHashData = 0
+        0                               :MSTORE(forcedHashData)
         ; isEIP4844 = 1 & update lastHASHPIDUsed
         1                               :MSTORE(isEIP4844)
         1                               :MSTORE(lastHashPIdUsed)
@@ -150,14 +154,14 @@ blobData:
 ;;;;;;;;;;;;;;;;;;
 forcedBlob:
         ; B == blobDataLen (getBlobLen())
-        $ => A                          :MLOAD(forcedHashData)
-        ; load forcedHashData to HASHK index 1
+        $ => A                          :MLOAD(blobL2HashData) ; used when type = 0
+        ; load blobL2HashData = keccak256(blobData) to HASHK index 1
         %INDEX_BLOB_L2_HASH_K_DATA => E
         A                               :HASHKDIGEST(E)
+        B => HASHPOS
+        HASHPOS                         :HASHKLEN(E)
 
 type0and2:
-        ;if type === 0 || type === 2 --> forcedHashData = 0
-        0                               :MSTORE(forcedHashData)
         ; sanity check
         0                               :MSTORE(isEIP4844)
         0                               :MSTORE(lastHashPIdUsed)
@@ -177,7 +181,7 @@ computeBatchHashData:
 
         ; blobData[0] --> compression type
         1 => D                          :CALL(addBlobInputHashK) ; A = first byte
-        A => B
+        A => C
         ; blobData[1]-blobData[4] --> totalBodyLen
         4 => D                          :CALL(addBlobInputHashK) ; A = totalBodyLen
         ; blobDataLen = totalBody + compression type (1 byte) + totalBodyLen (4 bytes)
@@ -185,7 +189,7 @@ computeBatchHashData:
         blobDataLen - A - 5             :JMPNZ(invalidParsing)
         ; if type = 0 & type = 2 and compression type = 0
         ; D.0 ---> nonCompression
-        B - 1                           :JMPN(nonCompression)
+        C - 1                           :JMPN(nonCompression)
                                         :JMP(invalidTypeCompression)
 
 nextBatch:

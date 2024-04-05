@@ -25,6 +25,9 @@ const nameFile = path.basename(inputPath);
 const input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
 const skipVcounters = '%%SKIP_VCOUNTERS%%';
 
+const pathCounters = path.join(__dirname, "../counters.json")
+const pathCountersTemplate = path.join(__dirname, "../counters-template.json")
+
 it(`${nameFile}`, async () => {
     if (fs.existsSync(checkerDir)) {
         process.exit(1);
@@ -57,13 +60,29 @@ async function runTest(cmPols, steps) {
             helpers: path.join(__dirname, '../../../js/helper.js'),
         };
         const res = await smMain.execute(cmPols.Main, input, rom, config);
-        //if (skipVcounters !== 'yes') {
-        //    compareCounters(input.virtualCounters, res.counters);
-        //}
+        await writeFileCounters(res.counters);
+        // if (skipVcounters !== 'yes') {
+        //     compareCounters(input.virtualCounters, res.counters);
+        // }
     } catch (err) {
         fs.writeFileSync(checkerDir, `Failed test ${inputPath} - ${err}}`);
         throw err;
     }
+}
+
+async function writeFileCounters(counters) {
+    if (!fs.existsSync(pathCounters)) {
+        await fs.copyFileSync(pathCountersTemplate, pathCounters)
+    }
+    const countersInfo = JSON.parse(fs.readFileSync(pathCounters));
+    const counterInput = inputPath.split("/")[inputPath.split("/").length-1];
+    countersInfo[counterInput] = {}
+    for (const cnt in counters) {
+        if (counters[cnt]) {
+            countersInfo[counterInput][cnt] = counters[cnt].toString();
+        }
+    }
+    await fs.writeFileSync(pathCounters, JSON.stringify(countersInfo, null, 2));
 }
 
 function compareCounters(virtualCounters, result) {

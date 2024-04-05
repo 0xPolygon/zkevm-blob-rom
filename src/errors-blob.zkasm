@@ -8,10 +8,16 @@ invalidZkGasLimit:
     $${eventLog(onError, error_invalid_zkgaslimit)}         :JMP(invalidBlob)
 invalidBlobType:
     $${eventLog(onError, error_invalid_blob_type)}          :JMP(invalidBlob)
+invalidForcedBatches:
+    $${eventLog(onError, error_invalid_forced_batches)}     :JMP(invalidBlob)
 invalidBlob:
+        ; update flag isInvalid
         1                               :MSTORE(isInvalid)
+        ; update finalAccBatchHashData = 0
         0                               :MSTORE(finalAccBatchHashData)
         SR                              :MSTORE(tmpSR)
+        ; from the oldStateRootFromBlob:
+        ; read the newLocalExitRoot and set it to the newLocalExitRootFromBlob
         $ => SR                         :MLOAD(oldStateRoot)
         %ADDRESS_GLOBAL_EXIT_ROOT_MANAGER_L2  => A
         %SMT_KEY_SC_STORAGE => B

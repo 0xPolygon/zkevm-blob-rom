@@ -1,0 +1,151 @@
+{
+  "blob-invalid-0.json": {
+    "cntBinary": "7",
+    "cntKeccakF": "3",
+    "cntPoseidonG": "10",
+    "cntPaddingPG": "6",
+    "cntSteps": "246"
+  },
+  "blob-empty-batches-0.json": {
+    "cntArith": "1",
+    "cntBinary": "10",
+    "cntKeccakF": "4",
+    "cntPoseidonG": "12",
+    "cntPaddingPG": "12",
+    "cntSteps": "348"
+  },
+  "blob-inner-data-0.json": {
+    "cntArith": "1",
+    "cntBinary": "8",
+    "cntKeccakF": "3",
+    "cntPoseidonG": "6",
+    "cntPaddingPG": "6",
+    "cntSteps": "243"
+  },
+  "blob-multiple-batches-0.json": {
+    "cntArith": "1",
+    "cntBinary": "12",
+    "cntKeccakF": "5",
+    "cntPoseidonG": "16",
+    "cntPaddingPG": "16",
+    "cntSteps": "403"
+  },
+  "blob-empty-batches-1.json": {
+    "cntArith": "1",
+    "cntBinary": "10",
+    "cntKeccakF": "4",
+    "cntPoseidonG": "12",
+    "cntPaddingPG": "12",
+    "cntSteps": "363"
+  },
+  "blob-multiple-batches-2.json": {
+    "cntArith": "1",
+    "cntBinary": "2066",
+    "cntKeccakF": "40",
+    "cntPoseidonG": "4120",
+    "cntPaddingPG": "4120",
+    "cntSteps": "55758"
+  },
+  "blob-inner-data-2.json": {
+    "cntArith": "1",
+    "cntBinary": "2066",
+    "cntKeccakF": "40",
+    "cntPoseidonG": "4120",
+    "cntPaddingPG": "4120",
+    "cntSteps": "55758"
+  },
+  "blob-empty-batches-2.json": {
+    "cntArith": "16399",
+    "cntBinary": "8374",
+    "cntKeccakF": "2",
+    "cntMemAlign": "8",
+    "cntPoseidonG": "2353",
+    "cntPaddingPG": "2353",
+    "cntSteps": "180918"
+  },
+  "blob-max-length-0.json": {
+    "cntArith": "1",
+    "cntBinary": "2020",
+    "cntKeccakF": "935",
+    "cntPoseidonG": "6042",
+    "cntPaddingPG": "6042",
+    "cntSteps": "105873"
+  },
+  "blob-inner-data-1.json": {
+    "cntArith": "16399",
+    "cntBinary": "15220",
+    "cntKeccakF": "2",
+    "cntMemAlign": "5",
+    "cntPoseidonG": "2347",
+    "cntPaddingPG": "2347",
+    "cntSteps": "194555"
+  },
+  "blob-multiple-batches-1.json": {
+    "cntArith": "16399",
+    "cntBinary": "12896",
+    "cntKeccakF": "2",
+    "cntMemAlign": "11",
+    "cntPoseidonG": "2357",
+    "cntPaddingPG": "2357",
+    "cntSteps": "190008"
+  },
+  "blob-empty-batches-3.json": {
+    "cntArith": "16399",
+    "cntBinary": "10814",
+    "cntKeccakF": "2",
+    "cntMemAlign": "9",
+    "cntPoseidonG": "2353",
+    "cntPaddingPG": "2353",
+    "cntSteps": "185812"
+  },
+  "blob-max-length-3.json": {
+    "cntArith": "1",
+    "cntBinary": "6",
+    "cntKeccakF": "936",
+    "cntSteps": "476268"
+  },
+  "blob-multiple-batches-3.json": {
+    "cntArith": "16399",
+    "cntBinary": "16634",
+    "cntKeccakF": "2",
+    "cntMemAlign": "2162",
+    "cntPoseidonG": "6461",
+    "cntPaddingPG": "6461",
+    "cntSteps": "238429"
+  },
+  "blob-inner-data-3.json": {
+    "cntArith": "16399",
+    "cntBinary": "11028",
+    "cntKeccakF": "2",
+    "cntMemAlign": "2162",
+    "cntPoseidonG": "6461",
+    "cntPaddingPG": "6461",
+    "cntSteps": "227217"
+  },
+  "blob-max-length-1.json": {
+    "cntArith": "16400",
+    "cntBinary": "16524",
+    "cntKeccakF": "2",
+    "cntMemAlign": "3087",
+    "cntPoseidonG": "8383",
+    "cntPaddingPG": "8383",
+    "cntSteps": "252984"
+  },
+  "blob-max-length-4.json": {
+    "cntArith": "16399",
+    "cntBinary": "11036",
+    "cntKeccakF": "2",
+    "cntMemAlign": "34815",
+    "cntPoseidonG": "2341",
+    "cntPaddingPG": "2341",
+    "cntSteps": "655089"
+  },
+  "blob-max-length-2.json": {
+    "cntArith": "1",
+    "cntBinary": "50794",
+    "cntKeccakF": "936",
+    "cntPoseidonG": "101576",
+    "cntPaddingPG": "101576",
+    "cntSteps": "1371414"
+  }
+}

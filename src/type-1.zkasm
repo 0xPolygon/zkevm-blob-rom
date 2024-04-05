@@ -20,25 +20,21 @@ addBlobDataMem:
 
 ; if byte0 != 0x00 --> invalidBlobData and update polEvalFrBLS12381_index & add to polEvalFrBLS12381_pol_eval
 invalidBlobData:
-        RR                              :MSTORE(polEvalFrBLS12381_index)
+        RR + 1                          :MSTORE(polEvalFrBLS12381_index)
         ; offset = 1 byte + len = 1 byte + left_alignment
         ; store in 31th byte, 0th byte of A
-        1 + 128 * 1 + 8192  => C
+        31 + 128 * 1 + 8192 => C
         $ => A                          :MEM_ALIGN_RD
         ; read pending 31 bytes and adding whit
         $ + A => A                      :F_HASHP31(E)
         A                               :MSTORE(polEvalFrBLS12381_pol_eval+RR)
         RR + 1 => RR
-        RR - %NUM_ARRAY_ETH_BLOB_DATA   :JMPZ(addBlobDataMemInvalid)
+        RR - %NUM_ARRAY_ETH_BLOB_DATA   :JMPZ(callAndAssert)
 
 addBlobDataMemInvalid:
         $                               :HASHP32(E),MSTORE(polEvalFrBLS12381_pol_eval+RR)
         RR + 1 => RR                    
         RR - %NUM_ARRAY_ETH_BLOB_DATA   :JMPNZ(addBlobDataMemInvalid)
-
-finalBlobDataMemInvalid:
-                                        :CALL(polEvalFrBLS12381)
-                                        :JMP(invalidBlob)
 
 callAndAssert:
         ; call polEvalFrBLS12381
@@ -47,18 +43,23 @@ callAndAssert:
         ; assert output pointY
         $ => B                          :MLOAD(y)
         B                               :ASSERT
+        $ => B                          :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
 
 ; add batchData to batchHashData = LinearPoseidon(batchData)
-        0 => B,RR
+        0 => RR
         31 - 1 - 4 => RCX
         ; reading type
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         1 + 128 * 1 => C
         $ => C                          :MEM_ALIGN_RD
+        C - 1                           :JMPN(nonCompressionBlob)
+                                        :JMP(invalidTypeCompression)
 
+nonCompressionBlob:
         ; getting totalBodyLen
         2 + 128 * 4 => C
-        $                               :MEM_ALIGN_RD,MSTORE(totalBodyLen)
+        $ => B                          :MEM_ALIGN_RD,MSTORE(totalBodyLen)
+        %BYTES_ETH_BLOB_DATA - 5 - B    :JMPN(invalidParsing)
 
         ; A = current 31 bits value
         ; RR = current index array 31 bits value
@@ -109,7 +110,7 @@ readRemainingBatchDataLen:
 readBatchData:
         $ => E                          :MLOAD(lastHashPIdUsed)
         D                               :JMP_EQ(0,hashBatchDataEnd), MSTORE(batchLen)
-        4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidBlob)
+        4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidParsing)
         
         RCX                             :JMP_EQ(0, loopHash31BytesOfBatchData)
         D - RCX                         :JMPN(allBatchDataInRemainingBytes)
@@ -145,6 +146,7 @@ hashLastBytesOfBatchData:
 hashBatchDataEnd:
         $ => B                          :MLOAD(blobDataProcessed)
         $ => C                          :MLOAD(batchLen)
-        ; C batchLen + 4 bytes of batch length
+        ; blobDataProcessed = B (blobDataProcessed) + C (batchLen) + 4 bytes of batch length
         C + B + 4                       :MSTORE(blobDataProcessed)
+        ; if batchLen === 0 --> readBatchDataLen, else --> nextBatch
         C                               :JMPZ(readBatchDataLen, nextBatch)
