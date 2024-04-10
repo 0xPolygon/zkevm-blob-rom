@@ -24,74 +24,28 @@ addBatchInputHash:
         C + D => C                      :RETURN
 
 
-VAR GLOBAL tmpVarAArith
-VAR GLOBAL tmpVarBArith
-VAR GLOBAL tmpVarCArith
-VAR GLOBAL tmpVarDArith
-VAR GLOBAL tmpVarEArith
-VAR GLOBAL tmpZkPCArith
-VAR GLOBAL arithA
-VAR GLOBAL arithB
-VAR GLOBAL arithRes1
-VAR GLOBAL arithRes2
-; @info arithmetic division
-; @in: arithA: dividend value
-; @in: arithB: divisor value
-; @out: arithRes1: quotient of division arithA / arithB
-; @out: arithRes2: remainder of division arithA % arithB
-divARITH:
-    RR              :MSTORE(tmpZkPCArith), CALL(storeTmp)
-    $ => E          :MLOAD(arithA)
-    $ => A          :MLOAD(arithB)
-    ; Check denominator(A) is not zero
-    0 => B
-    $               :EQ, JMPC(zeroDiv)
+;Get zkGasLimit/ZKGAS_PER_BATCH
+;@in E zkGasLimit
+;@out E zkGasLimit/ZKGAS_PER_BATCH
+divZKGAS:
+    ; Check if dividend (E) is smaller than divisor E < A
+    E => A ; dividend
+    %ZKGAS_PER_BATCH => B ; divisor
+    $                       :LT, JMPC(fin0ZKGAS)
 
-    ; Check if divisor (E) is smaller than denominator E < A
-    A => C ; store temporally A in C
-    E => A ; divisor
-    C => B ; denominator
-    $               :LT, JMPC(divisorSmallerDiv)
-    C => A
-
+    %ZKGAS_PER_BATCH => A
     ${E%A} => C ; remainder
-    ${E/A} => B
+    ${E/A} => B ; quotient
     0 => D
-    E               :ARITH
-
-    B               :MSTORE(arithRes1)
-    C               :MSTORE(arithRes2)
+    E                       :ARITH
+    B => E ; result zkGasLimit/ZKGAS_PER_BATCH
 
     ; check divisor > remainder
-    A => B ; divisor
-    C => A ; remainder
-    $ => A          :LT
-    1               :ASSERT,CALL(loadTmp)
-    $ => RR         :MLOAD(tmpZkPCArith)
+    %ZKGAS_PER_BATCH => B ; divisor
+    C => A                ; remainder
+    $ => A                  :LT
+    1                       :ASSERT,RETURN
+
+fin0ZKGAS:
+    0 => E
                     :RETURN
-
-zeroDiv:
-    0               :MSTORE(arithRes1)
-    0               :MSTORE(arithRes2), CALL(loadTmp)
-    $ => RR         :MLOAD(tmpZkPCArith)
-                    :RETURN
-
-divisorSmallerDiv:
-    0               :MSTORE(arithRes1)
-    E               :MSTORE(arithRes2), CALL(loadTmp)
-    $ => RR         :MLOAD(tmpZkPCArith)
-                    :RETURN
-
-loadTmp:
-    $ => A          :MLOAD(tmpVarAArith)
-    $ => B          :MLOAD(tmpVarBArith)
-    $ => C          :MLOAD(tmpVarCArith)
-    $ => D          :MLOAD(tmpVarDArith)
-    $ => E          :MLOAD(tmpVarEArith), RETURN
-
-storeTmp:
-    A               :MSTORE(tmpVarAArith)
-    B               :MSTORE(tmpVarBArith)
-    C               :MSTORE(tmpVarCArith)
-    D               :MSTORE(tmpVarDArith)
-    E               :MSTORE(tmpVarEArith), RETURN
