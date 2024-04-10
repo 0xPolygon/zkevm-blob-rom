@@ -3,12 +3,11 @@ failAssert:
     1 => A
     2               :ASSERT
 
-; @info Get D bytes from HASHK with index E (with HASHPOS)
+; @info Get D bytes from HASHK with %INDEX_BLOB_L2_HASH_K_DATA (with HASHPOS)
 ; @in D, E, HASHPOS
 ; @out A
-addBlobInputHashK:
-        $ => B                          :MLOAD(blobDataLen)
-        B - HASHPOS - D                 :JMPN(invalidParsing)
+getFromBlobHashK:
+        $ - HASHPOS - D                 :F_MLOAD(blobDataLen),JMPN(invalidParsing)
         E => B
         %INDEX_BLOB_L2_HASH_K_DATA => E
         $ => A                          :HASHK(E)
@@ -19,7 +18,6 @@ addBlobInputHashK:
 ; @out C new HASHPOS
 addBatchInputHash:
         HASHPOS                         :MSTORE(blobHashPos)
-        $ => B                          :MLOAD(batchLen)
         C => HASHPOS
         A                               :HASHP(E)
         $ => HASHPOS                    :MLOAD(blobHashPos)

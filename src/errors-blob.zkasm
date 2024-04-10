@@ -2,6 +2,8 @@ invalidTypeCompression:
     $${eventLog(onError, error_invalid_compression_type)}   :JMP(invalidBlob)
 invalidParsing:
     $${eventLog(onError, error_invalid_parsing)}            :JMP(invalidBlob)
+invalidTotalBodyLen:
+    $${eventLog(onError, error_invalid_totalbody_len)}      :JMP(invalidBlob)
 invalidMSBByte:
     $${eventLog(onError, error_invalid_msb_byte)}           :JMP(invalidBlob)
 invalidZkGasLimit:
@@ -14,15 +16,4 @@ invalidBlob:
         ; update flag isInvalid
         1                               :MSTORE(isInvalid)
         ; update finalAccBatchHashData = 0
-        0                               :MSTORE(finalAccBatchHashData)
-        SR                              :MSTORE(tmpSR)
-        ; from the oldStateRootFromBlob:
-        ; read the newLocalExitRoot and set it to the newLocalExitRootFromBlob
-        $ => SR                         :MLOAD(oldStateRoot)
-        %ADDRESS_GLOBAL_EXIT_ROOT_MANAGER_L2  => A
-        %SMT_KEY_SC_STORAGE => B
-        %LOCAL_EXIT_ROOT_STORAGE_POS => C
-        $ => A                          :SLOAD
-        A                               :MSTORE(localExitRootFromBlob)
-        $ => SR                         :MLOAD(tmpSR)
-                                        :JMP(finishBlob)
+        0                               :MSTORE(finalAccBatchHashData),JMP(finishBlob)
