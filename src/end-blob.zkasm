@@ -1,6 +1,6 @@
 finalWait:
-    ${beforeLast()}                 :JMPN(finalWait)
+    ${beforeLast()}                             :JMPN(finalWait)
     ; Set all registers to 0 except inputs:
     ; B (oldBlobStateRoot), C (oldBlobAccInputHash), RR (oldNumBlob),
     ; D (oldStateRoot), RCX (forkID)
-    0 => A, E, SR, GAS, PC, HASHPOS, CTX   :RESTORE,JMP(start)
+    0 => A, E, SR, GAS, PC, HASHPOS, CTX, SP    :RESTORE,JMP(start)
