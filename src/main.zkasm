@@ -202,10 +202,8 @@ nextBatch:
 ;; E. Finalize execution
 ;;;;;;;;;;;;;;;;;;
 finalizeBlob:
-        $ => A                          :MLOAD(zkGasLimit)
-        A                               :MSTORE(arithA)
-        %ZKGAS_PER_BATCH                :MSTORE(arithB),CALL(divARITH)
-        $ => A                          :MLOAD(arithRes1)
+        $ => E                          :MLOAD(zkGasLimit),CALL(divZKGAS) ; in:[E: zkGasLimit], out: [E: zkGasLimit/ZKGAS_PER_BATCH]
+        E => A                          ; E = zkGasLimit/ZKGAS_PER_BATCH
         $ => B                          :MLOAD(numBatches)
         $                               :LT,JMPC(invalidZkGasLimit)
 
