@@ -173,7 +173,7 @@ opINVALID:
 checkAndSaveFrom:
                          :JMP(opINVALID)
 
-INCLUDE "../src/FRBLS12381/reduceFrBLS12381.zkasm"
+; INCLUDE "../src/FRBLS12381/reduceFrBLS12381.zkasm"
 INCLUDE "../src/FRBLS12381/addFrBLS12381.zkasm"
 INCLUDE "../src/FRBLS12381/subFrBLS12381.zkasm"
 INCLUDE "../src/FRBLS12381/mulFrBLS12381.zkasm"

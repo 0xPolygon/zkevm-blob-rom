@@ -29,36 +29,12 @@ module.exports = class myHelper {
     }
 
     /**
-     * Checks if the given element of the BLS12-381 scalar field is a 4096-th root of unity.
-     * @param ctx - Context.
-     * @param tag - Tag.
-    */
-    eval_check4096Root(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        const z = this.evalCommand(ctxFullFe, tag.params[0]);
-
-        for (let i = 0; i < this.blobSize; i++) {
-            const rooti = BigInt(rootsOfUnity4096[i]);
-            if (z === rooti) {
-                ctx["BLS12_381Root"] = {z, index: i};
-                return 1n;
-            }
-        }
-        return 0n;
-    }
-
-    /**
      * Returns the index of the given element of the BLS12-381 scalar field if it is a 4096-th root of unity.
      * @param ctx - Context.
      * @param tag - Tag.
     */
     eval_get4096RootIndex(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        const z = this.evalCommand(ctxFullFe, tag.params[0]);
-
-        if (ctx["BLS12_381Root"]?.z === z) {
-            return ctx["BLS12_381Root"].index;
-        }
+        const z = this.evalCommand(ctx, tag.params[0]);
 
         for (let i = 0; i < this.blobSize; i++) {
             const rooti = BigInt(rootsOfUnity4096[i]);
@@ -71,7 +47,7 @@ module.exports = class myHelper {
 
     eval_getLastL1InfoTreeIndex(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    
+
         return [ctx.Fr.e(ctx.input.lastL1InfoTreeIndex), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
@@ -82,19 +58,19 @@ module.exports = class myHelper {
 
     eval_getTimestampLimit(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    
+
         return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
     eval_getZkGasLimit(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    
+
         return scalar2fea(ctx.Fr, Scalar.e(ctx.input.zkGasLimit));
     }
 
     eval_getType(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-        
+
         return [ctx.Fr.e(ctx.input.blobType), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 

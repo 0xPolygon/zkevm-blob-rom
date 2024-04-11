@@ -2,14 +2,10 @@
 ;; POST: The result is in the range [0,BLS12_381_R) because if falls back to Fr arithmetic
 ;;
 ;; expBy4096FrBLS12381:
-;;             in: A ∈ [0, 2²⁵⁶-1]
-;;             out: A = A⁴⁰⁹⁶ (mod BLS12_381_R) ∈ Fr
+;;             in: B ∈ [0, 2²⁵⁶-1]
+;;             out: A = B⁴⁰⁹⁶ (mod BLS12_381_R) ∈ Fr
 ;;
-;; Note: 4096 in binary is 10000 0000 0000
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; label to avoid the extra checks for zero and one
-VAR GLOBAL expBy4096FrBLS12381_input_is_not_zero_nor_one
 
 VAR GLOBAL expBy4096FrBLS12381_RR
 
@@ -23,15 +19,12 @@ VAR GLOBAL expBy4096FrBLS12381_RR
 expBy4096FrBLS12381:
         RR              :MSTORE(expBy4096FrBLS12381_RR)
 
-        $               :MLOAD(expBy4096FrBLS12381_input_is_not_zero_nor_one), JMPNZ(expBy4096FrBLS12381_compute)
+        ; Is input > 1?
+        1 => A
+        $       :LT, JMPC(expBy4096FrBLS12381_compute)
 
-        ; Is A = 0?
-        0n => B
-        $       :EQ, JMPC(expBy4096FrBLS12381_input_is_zero)
-
-        ; Is A = 1?
-        1n => B
-        $       :EQ, JMPC(expBy4096FrBLS12381_input_is_one, expBy4096FrBLS12381_compute)
+        ; Is input = 1?
+        B       :JMPNZ(expBy4096FrBLS12381_input_is_one)
 
 ; Begin of branching
 expBy4096FrBLS12381_input_is_zero:
@@ -83,7 +76,8 @@ expBy4096FrBLS12381_compute:
         ; 12/12
         :CALL(squareFrBLS12381)
 
+        B => A
+
 expBy4096FrBLS12381_end:
-        $ => RR         :MLOAD(expBy4096FrBLS12381_RR)
-                        :RETURN
+        $ => RR         :MLOAD(expBy4096FrBLS12381_RR), RETURN
 
