@@ -1,0 +1,22 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: ARITH_BLS12381_MULFP2 ensures that the result is in the range [0,BLS12381_P)
+;;
+;; squareFp2BLS12381:
+;;             in: (A + B·u) ∈ Fp2, where A,B ∈ Fp
+;;             out: E + C·u = (A - B)·(A + B) + (2·A·B)·u ∈ Fp2
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; RESOURCES:
+; -----------------------------
+; [steps: 4, bin: 0, arith: 1]
+; -----------------------------
+
+squareFp2BLS12381:
+        ; Compute and check the squaring
+        ; A·A - B·B = [E] + (q0·BLS12381_P)
+        ; A·B + B·A = [OP] + (q1·BLS12381_P)
+        A => C
+        B => D
+        ${ARITH_BLS12381_MULFP2_X(A,B,A,B)} => E
+        ${ARITH_BLS12381_MULFP2_Y(A,B,A,B)} => C        :ARITH_BLS12381_MULFP2, RETURN

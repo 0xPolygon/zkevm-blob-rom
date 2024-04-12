@@ -1,0 +1,85 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; squareFp4BLS12381:
+;;             in: (a1 + a2·V) ∈ Fp4, where ai ∈ Fp2
+;;             out: (c1 + c2·V) ∈ Fp4, where:
+;;                  - c1 = a2²·(1 + u) + a1²
+;;                  - c2 = (a1 + a2)² - a1² - a2² TODO: Check whether c2 = 2a1a2 is more performant
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL squareFp4BLS12381_a1_x
+VAR GLOBAL squareFp4BLS12381_a1_y
+VAR GLOBAL squareFp4BLS12381_a2_x
+VAR GLOBAL squareFp4BLS12381_a2_y
+VAR GLOBAL squareFp4BLS12381_c1_x
+VAR GLOBAL squareFp4BLS12381_c1_y
+VAR GLOBAL squareFp4BLS12381_c2_x
+VAR GLOBAL squareFp4BLS12381_c2_y
+
+VAR GLOBAL _a1square_x
+VAR GLOBAL _a1square_y
+VAR GLOBAL _a2square_x
+VAR GLOBAL _a2square_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 67, bin: 0, arith: 8]
+; -----------------------------
+
+squareFp4BLS12381:
+        RR => _RR
+
+        ; 1] a1²
+        squareFp4BLS12381_a1_x => A
+        squareFp4BLS12381_a1_y => B     :CALL(squareFp2BLS12381)
+        E => _a1square_x
+        C => _a1square_y
+        ; [steps: 10, bin: 0, arith: 1]
+
+        ; 2] a2²
+        squareFp4BLS12381_a2_x => A
+        squareFp4BLS12381_a2_y => B     :CALL(squareFp2BLS12381)
+        E => A,_a2square_x
+        C => B,_a2square_y
+        ; [steps: 19, bin: 0, arith: 2]
+
+        ; 3] c1 = a2²·(1 + u) + a1²
+        %BLS12381_EXT_X => C
+        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+        ; [steps: 26, bin: 0, arith: 3]
+
+        E => A
+        C => B
+        _a1square_x => C
+        _a1square_y => D                :CALL(addFp2BLS12381)
+        E => squareFp4BLS12381_c1_x
+        C => squareFp4BLS12381_c1_y
+        ; [steps: 35, bin: 0, arith: 4]
+
+        ; 4] c2 = (a1 + a2)² - a1² - a2²
+        squareFp4BLS12381_a1_x => A
+        squareFp4BLS12381_a1_y => B
+        squareFp4BLS12381_a2_x => C
+        squareFp4BLS12381_a2_y => D     :CALL(addFp2BLS12381)
+        E => A
+        C => B                          :CALL(squareFp2BLS12381)
+        ; [steps: 49, bin: 0, arith: 6]
+
+        E => A
+        C => B
+        _a1square_x => C
+        _a1square_y => D                :CALL(subFp2BLS12381)
+
+        E => A
+        C => B
+        _a2square_x => C
+        _a2square_y => D                :CALL(subFp2BLS12381)
+        E => squareFp4BLS12381_c2_x
+        C => squareFp4BLS12381_c2_y
+
+        _RR => RR                       :RETURN
+        ; [steps: 67, bin: 0, arith: 8]
