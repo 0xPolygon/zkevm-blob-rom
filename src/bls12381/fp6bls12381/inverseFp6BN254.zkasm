@@ -1,0 +1,214 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; inverseFp6BLS12381:
+;;             in: (a1 + a2·v + a3·v²) ∈ Fp6, where ai ∈ Fp2
+;;             out: (c1 + c2·v + c3·v²) ∈ Fp6, where:
+;;                  - c1 = (a1² - (1 + u)·(a2·a3))·(a1·c1mid + xi·(a3·c2mid + a2·c3mid))⁻¹
+;;                  - c2 = ((1 + u)·a3² - (a1·a2))·(a1·c1mid + xi·(a3·c2mid + a2·c3mid))⁻¹
+;;                  - c3 = (a2²-a1·a3)·(a1·c1mid + xi·(a3·c2mid + a2·c3mid))⁻¹
+;;             with
+;;                  * c1mid = a1² - (1 + u)·(a2·a3)
+;;                  * c2mid = (1 + u)·a3² - (a1·a2)
+;;                  * c3mid = a2² - (a1·a3)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL inverseFp6BLS12381_a1_x
+VAR GLOBAL inverseFp6BLS12381_a1_y
+VAR GLOBAL inverseFp6BLS12381_a2_x
+VAR GLOBAL inverseFp6BLS12381_a2_y
+VAR GLOBAL inverseFp6BLS12381_a3_x
+VAR GLOBAL inverseFp6BLS12381_a3_y
+VAR GLOBAL inverseFp6BLS12381_c1_x
+VAR GLOBAL inverseFp6BLS12381_c1_y
+VAR GLOBAL inverseFp6BLS12381_c2_x
+VAR GLOBAL inverseFp6BLS12381_c2_y
+VAR GLOBAL inverseFp6BLS12381_c3_x
+VAR GLOBAL inverseFp6BLS12381_c3_y
+
+VAR GLOBAL _a1square_x
+VAR GLOBAL _a1square_y
+VAR GLOBAL _a2square_x
+VAR GLOBAL _a2square_y
+VAR GLOBAL _a3square_x
+VAR GLOBAL _a3square_y
+VAR GLOBAL _a1a2mul_x
+VAR GLOBAL _a1a2mul_y
+VAR GLOBAL _a1a3mul_x
+VAR GLOBAL _a1a3mul_y
+VAR GLOBAL _a2a3mul_x
+VAR GLOBAL _a2a3mul_y
+VAR GLOBAL _c1mid_x
+VAR GLOBAL _c1mid_y
+VAR GLOBAL _c2mid_x
+VAR GLOBAL _c2mid_y
+VAR GLOBAL _c3mid_x
+VAR GLOBAL _c3mid_y
+VAR GLOBAL _im_x
+VAR GLOBAL _im_y
+
+VAR GLOBAL _a3c2mid_x
+VAR GLOBAL _a3c2mid_y
+
+VAR GLOBAL _xia2c3mid_x
+VAR GLOBAL _xia2c3mid_y
+VAR GLOBAL _last_x
+VAR GLOBAL _last_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; PATH 1 a1·c1mid + xi·(a3·c2mid + a2·c3mid)_x == 0: [steps: 199, bin: 4, arith: 21]
+; PATH 2 a1·c1mid + xi·(a3·c2mid + a2·c3mid)_x != 0: [steps: 202, bin: 3, arith: 22] <--- w.c.
+; -----------------------------
+
+inverseFp6BLS12381:
+        RR => _RR
+
+        ; 1] a1²
+        inverseFp6BLS12381_a1_x => A
+        inverseFp6BLS12381_a1_y => B    :CALL(squareFp2BLS12381)
+        E => _a1square_x
+        C => _a1square_y
+
+        ; 2] a2²
+        inverseFp6BLS12381_a2_x => A
+        inverseFp6BLS12381_a2_y => B    :CALL(squareFp2BLS12381)
+        E => _a2square_x
+        C => _a2square_y
+
+        ; 3] a3²
+        inverseFp6BLS12381_a3_x => A
+        inverseFp6BLS12381_a3_y => B    :CALL(squareFp2BLS12381)
+        E => _a3square_x
+        C => _a3square_y
+
+        ; 4] a1·a2
+        inverseFp6BLS12381_a1_x => A
+        inverseFp6BLS12381_a1_y => B
+        inverseFp6BLS12381_a2_x => C
+        inverseFp6BLS12381_a2_y => D    :CALL(mulFp2BLS12381)
+        E => _a1a2mul_x
+        C => _a1a2mul_y
+
+        ; 5] a1·a3
+        inverseFp6BLS12381_a1_x => A
+        inverseFp6BLS12381_a1_y => B
+        inverseFp6BLS12381_a3_x => C
+        inverseFp6BLS12381_a3_y => D    :CALL(mulFp2BLS12381)
+        E => _a1a3mul_x
+        C => _a1a3mul_y
+
+        ; 6] a2·a3
+        inverseFp6BLS12381_a2_x => A
+        inverseFp6BLS12381_a2_y => B
+        inverseFp6BLS12381_a3_x => C
+        inverseFp6BLS12381_a3_y => D    :CALL(mulFp2BLS12381)
+        E => _a2a3mul_x
+        C => _a2a3mul_y
+
+        ; 7] c1mid = a1² - (1 + u)·(a2·a3)
+        %BLS12381_EXT_X => A
+        %BLS12381_EXT_Y => B
+        _a2a3mul_x => C
+        _a2a3mul_y => D                 :CALL(mulFp2BLS12381)
+
+        _a1square_x => A
+        _a1square_y => B
+        C => D
+        E => C                          :CALL(subFp2BLS12381)
+        E => _c1mid_x
+        C => _c1mid_y
+
+        ; 8] c2mid = (1 + u)·a3² - (a1·a2)
+        %BLS12381_EXT_X => A
+        %BLS12381_EXT_Y => B
+        _a3square_x => C
+        _a3square_y => D                :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a1a2mul_x => C
+        _a1a2mul_y => D                 :CALL(subFp2BLS12381)
+        E => _c2mid_x
+        C => _c2mid_y
+
+        ; 9] c3mid = a2² - (a1·a3)
+        _a2square_x => A
+        _a2square_y => B
+        _a1a3mul_x => C
+        _a1a3mul_y => D                 :CALL(subFp2BLS12381)
+        E => _c3mid_x
+        C => _c3mid_y
+
+        ; 10] im = a1·c1mid
+        inverseFp6BLS12381_a1_x => A
+        inverseFp6BLS12381_a1_y => B
+        _c1mid_x => C
+        _c1mid_y => D                   :CALL(mulFp2BLS12381)
+        E => _im_x
+        C => _im_y
+
+        ; 11] last = (im + xi·(a3·c2mid + a2·c3mid))⁻¹
+        inverseFp6BLS12381_a3_x => A
+        inverseFp6BLS12381_a3_y => B
+        _c2mid_x => C
+        _c2mid_y => D                   :CALL(mulFp2BLS12381)
+        E => _a3c2mid_x
+        C => _a3c2mid_y
+
+        inverseFp6BLS12381_a2_x => A
+        inverseFp6BLS12381_a2_y => B
+        _c3mid_x => C
+        _c3mid_y => D                   :CALL(mulFp2BLS12381)
+
+        _a3c2mid_x => A
+        _a3c2mid_y => B
+        C => D
+        E => C                          :CALL(addFp2BLS12381)
+
+        %BLS12381_EXT_X => A
+        %BLS12381_EXT_Y => B
+        C => D
+        E => C                          :CALL(mulFp2BLS12381)
+
+        _im_x => A
+        _im_y => B
+        C => D
+        E => C                          :CALL(addFp2BLS12381)
+
+        E => A
+        C => B
+        _xia2c3mid_x => C
+        _xia2c3mid_y => D               :CALL(addFp2BLS12381)
+
+        E => A
+        C => B                          :CALL(invFp2BLS12381)
+        C => _last_x
+        D => _last_y
+
+        ; 12] c1 = c1mid·last, c2 = c2mid·last, c3 = c3mid·last
+        _c1mid_x => A
+        _c1mid_y => B
+        _last_x => C
+        _last_y => D                    :CALL(mulFp2BLS12381)
+        E => inverseFp6BLS12381_c1_x
+        C => inverseFp6BLS12381_c1_y
+
+        _c2mid_x => A
+        _c2mid_y => B
+        _last_x => C
+        _last_y => D                    :CALL(mulFp2BLS12381)
+        E => inverseFp6BLS12381_c2_x
+        C => inverseFp6BLS12381_c2_y
+
+        _c3mid_x => A
+        _c3mid_y => B
+        _last_x => C
+        _last_y => D                    :CALL(mulFp2BLS12381)
+        E => inverseFp6BLS12381_c3_x
+        C => inverseFp6BLS12381_c3_y
+
+        _RR => RR                       :RETURN

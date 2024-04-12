@@ -1,0 +1,63 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; subFp6BLS12381:
+;;             in: (a1 + a2·v + a3·v²),(b1 + b2·v + b3·v²) ∈ Fp6, where ai,bi ∈ Fp2
+;;             out: (c1 + c2·v + c3·v²) = (a1-b1) + (a2-b2)·v + (a3-b3)·v² ∈ Fp6
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL subFp6BLS12381_a1_x
+VAR GLOBAL subFp6BLS12381_a1_y
+VAR GLOBAL subFp6BLS12381_a2_x
+VAR GLOBAL subFp6BLS12381_a2_y
+VAR GLOBAL subFp6BLS12381_a3_x
+VAR GLOBAL subFp6BLS12381_a3_y
+VAR GLOBAL subFp6BLS12381_b1_x
+VAR GLOBAL subFp6BLS12381_b1_y
+VAR GLOBAL subFp6BLS12381_b2_x
+VAR GLOBAL subFp6BLS12381_b2_y
+VAR GLOBAL subFp6BLS12381_b3_x
+VAR GLOBAL subFp6BLS12381_b3_y
+VAR GLOBAL subFp6BLS12381_c1_x
+VAR GLOBAL subFp6BLS12381_c1_y
+VAR GLOBAL subFp6BLS12381_c2_x
+VAR GLOBAL subFp6BLS12381_c2_y
+VAR GLOBAL subFp6BLS12381_c3_x
+VAR GLOBAL subFp6BLS12381_c3_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 30, bin: 0, arith: 3]
+; -----------------------------
+
+subFp6BLS12381:
+        RR => _RR
+
+        ; 1] c1 = a1-b1
+        subFp6BLS12381_a1_x => A
+        subFp6BLS12381_a1_y => B
+        subFp6BLS12381_b1_x => C
+        subFp6BLS12381_b1_y => D        :CALL(subFp2BLS12381)
+        E => subFp6BLS12381_c1_x
+        C => subFp6BLS12381_c1_y
+
+        ; 2] c2 = a2-b2
+        subFp6BLS12381_a2_x => A
+        subFp6BLS12381_a2_y => B
+        subFp6BLS12381_b2_x => C
+        subFp6BLS12381_b2_y => D        :CALL(subFp2BLS12381)
+        E => subFp6BLS12381_c2_x
+        C => subFp6BLS12381_c2_y
+
+        ; 3] c3 = a3-b3
+        subFp6BLS12381_a3_x => A
+        subFp6BLS12381_a3_y => B
+        subFp6BLS12381_b3_x => C
+        subFp6BLS12381_b3_y => D        :CALL(subFp2BLS12381)
+        E => subFp6BLS12381_c3_x
+        C => subFp6BLS12381_c3_y
+
+        _RR => RR                       :RETURN

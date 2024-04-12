@@ -1,0 +1,69 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; sparseMulAFp6BLS12381:
+;;             in: (a1 + a2·v + a3·v²),b2·v ∈ Fp6, where ai,b2 ∈ Fp2
+;;             out: (c1 + c2·v + c3·v²) ∈ Fp6, where:
+;;                  - c1 = b2·a3·(1+u)
+;;                  - c2 = b2·a1
+;;                  - c3 = b2·a2
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL sparseMulAFp6BLS12381_a1_x
+VAR GLOBAL sparseMulAFp6BLS12381_a1_y
+VAR GLOBAL sparseMulAFp6BLS12381_a2_x
+VAR GLOBAL sparseMulAFp6BLS12381_a2_y
+VAR GLOBAL sparseMulAFp6BLS12381_a3_x
+VAR GLOBAL sparseMulAFp6BLS12381_a3_y
+
+VAR GLOBAL sparseMulAFp6BLS12381_b2_x
+VAR GLOBAL sparseMulAFp6BLS12381_b2_y
+
+VAR GLOBAL sparseMulAFp6BLS12381_c1_x
+VAR GLOBAL sparseMulAFp6BLS12381_c1_y
+VAR GLOBAL sparseMulAFp6BLS12381_c2_x
+VAR GLOBAL sparseMulAFp6BLS12381_c2_y
+VAR GLOBAL sparseMulAFp6BLS12381_c3_x
+VAR GLOBAL sparseMulAFp6BLS12381_c3_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 37, bin: 0, arith: 4]
+; -----------------------------
+
+sparseMulAFp6BLS12381:
+        RR => _RR
+
+        ; 1] c1 = b2·a3·(1+u)
+        sparseMulAFp6BLS12381_b2_x => A
+        sparseMulAFp6BLS12381_b2_y => B
+        sparseMulAFp6BLS12381_a3_x => C
+        sparseMulAFp6BLS12381_a3_y => D :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        %BLS12381_EXT_X => C
+        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+        E => sparseMulAFp6BLS12381_c1_x
+        C => sparseMulAFp6BLS12381_c1_y
+
+        ; 2] c2 = b2·a1
+        sparseMulAFp6BLS12381_b2_x => A
+        sparseMulAFp6BLS12381_b2_y => B
+        sparseMulAFp6BLS12381_a1_x => C
+        sparseMulAFp6BLS12381_a1_y => D :CALL(mulFp2BLS12381)
+        E => sparseMulAFp6BLS12381_c2_x
+        C => sparseMulAFp6BLS12381_c2_y
+
+        ; 3] c3 = b2·a2
+        sparseMulAFp6BLS12381_b2_x => A
+        sparseMulAFp6BLS12381_b2_y => B
+        sparseMulAFp6BLS12381_a2_x => C
+        sparseMulAFp6BLS12381_a2_y => D :CALL(mulFp2BLS12381)
+        E => sparseMulAFp6BLS12381_c3_x
+        C => sparseMulAFp6BLS12381_c3_y
+
+        _RR => RR                       :RETURN

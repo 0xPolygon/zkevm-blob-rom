@@ -1,0 +1,136 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; sparseMulCFp6BLS12381:
+;;             in: (a1 + a2·v + a3·v²),(b1 + b3·v²) ∈ Fp6, where ai,bi ∈ Fp2
+;;             out: (c1 + c2·v + c3·v²) ∈ Fp6, where:
+;;                  - c1 = a1·b1 + a2·b3·(1+u)
+;;                  - c2 = a2·b1 + a3·b3·(1+u)
+;;                  - c3 = (a1 + a3)·(b1 + b3) - a1·b1 - a3·b3
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL sparseMulCFp6BLS12381_a1_x
+VAR GLOBAL sparseMulCFp6BLS12381_a1_y
+VAR GLOBAL sparseMulCFp6BLS12381_a2_x
+VAR GLOBAL sparseMulCFp6BLS12381_a2_y
+VAR GLOBAL sparseMulCFp6BLS12381_a3_x
+VAR GLOBAL sparseMulCFp6BLS12381_a3_y
+
+VAR GLOBAL sparseMulCFp6BLS12381_b1_x
+VAR GLOBAL sparseMulCFp6BLS12381_b1_y
+VAR GLOBAL sparseMulCFp6BLS12381_b3_x
+VAR GLOBAL sparseMulCFp6BLS12381_b3_y
+
+VAR GLOBAL sparseMulCFp6BLS12381_c1_x
+VAR GLOBAL sparseMulCFp6BLS12381_c1_y
+VAR GLOBAL sparseMulCFp6BLS12381_c2_x
+VAR GLOBAL sparseMulCFp6BLS12381_c2_y
+VAR GLOBAL sparseMulCFp6BLS12381_c3_x
+VAR GLOBAL sparseMulCFp6BLS12381_c3_y
+
+VAR GLOBAL _a1b1_x
+VAR GLOBAL _a1b1_y
+VAR GLOBAL _a3b3_x
+VAR GLOBAL _a3b3_y
+VAR GLOBAL _a2b1_x
+VAR GLOBAL _a2b1_y
+VAR GLOBAL _a1a3sum_x
+VAR GLOBAL _a1a3sum_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 108, bin: 0, arith: 13]
+; -----------------------------
+
+sparseMulCFp6BLS12381:
+        RR => _RR
+
+        ; 1] a1·b1, a3·b3
+        sparseMulCFp6BLS12381_a1_x => A
+        sparseMulCFp6BLS12381_a1_y => B
+        sparseMulCFp6BLS12381_b1_x => C
+        sparseMulCFp6BLS12381_b1_y => D :CALL(mulFp2BLS12381)
+        E => _a1b1_x
+        C => _a1b1_y
+
+        sparseMulCFp6BLS12381_a3_x => A
+        sparseMulCFp6BLS12381_a3_y => B
+        sparseMulCFp6BLS12381_b3_x => C
+        sparseMulCFp6BLS12381_b3_y => D :CALL(mulFp2BLS12381)
+        E => _a3b3_x
+        C => _a3b3_y
+
+        ; 2] c1 = a1·b1 + a2·b3·(1+u)
+        sparseMulCFp6BLS12381_a2_x => A
+        sparseMulCFp6BLS12381_a2_y => B
+        sparseMulCFp6BLS12381_b3_x => C
+        sparseMulCFp6BLS12381_b3_y => D :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        %BLS12381_EXT_X => C
+        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a1b1_x => C
+        _a1b1_y => D                    :CALL(addFp2BLS12381)
+        E => sparseMulCFp6BLS12381_c1_x
+        C => sparseMulCFp6BLS12381_c1_y
+
+        ; 3] c2 = a2·b1 + a3·b3·(1+u)
+        sparseMulCFp6BLS12381_a2_x => A
+        sparseMulCFp6BLS12381_a2_y => B
+        sparseMulCFp6BLS12381_b1_x => C
+        sparseMulCFp6BLS12381_b1_y => D :CALL(mulFp2BLS12381)
+        E => _a2b1_x
+        C => _a2b1_y
+
+        _a3b3_x => A
+        _a3b3_y => B
+        %BLS12381_EXT_X => C
+        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a2b1_x => C
+        _a2b1_y => D                    :CALL(addFp2BLS12381)
+        E => sparseMulCFp6BLS12381_c2_x
+        C => sparseMulCFp6BLS12381_c2_y
+
+
+        ; 4] c3 = (a1 + a3)·(b1 + b3) - a1·b1 - a3·b3
+        sparseMulCFp6BLS12381_a1_x => A
+        sparseMulCFp6BLS12381_a1_y => B
+        sparseMulCFp6BLS12381_a3_x => C
+        sparseMulCFp6BLS12381_a3_y => D :CALL(addFp2BLS12381)
+        E => _a1a3sum_x
+        C => _a1a3sum_y
+
+        sparseMulCFp6BLS12381_b1_x => A
+        sparseMulCFp6BLS12381_b1_y => B
+        sparseMulCFp6BLS12381_b3_x => C
+        sparseMulCFp6BLS12381_b3_y => D :CALL(addFp2BLS12381)
+
+        E => A
+        C => B
+        _a1a3sum_x => C
+        _a1a3sum_y => D                 :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a1b1_x => C
+        _a1b1_y => D                    :CALL(subFp2BLS12381)
+
+        E => A
+        C => B
+        _a3b3_x => C
+        _a3b3_y => D                    :CALL(subFp2BLS12381)
+        E => sparseMulCFp6BLS12381_c3_x
+        C => sparseMulCFp6BLS12381_c3_y
+
+
+        _RR => RR                       :RETURN
