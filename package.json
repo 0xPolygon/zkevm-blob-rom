@@ -10,7 +10,8 @@
     "eslint:fix": "npx eslint js/**.js --fix",
     "test:zkasm": "node tools/run-tests-zkasm.js ./test --helper js/helper.js",
     "test:gen": "node tools/parallel-testing/gen-parallel-tests.js",
-    "test:start": "npx mocha --timeout 0 --max-old-space-size=8192 --parallel \"tools/parallel-testing/parallel-tests/*.test.js\""
+    "test:start": "npx mocha --timeout 0 --max-old-space-size=8192 --parallel \"tools/parallel-testing/parallel-tests/*.test.js\"",
+    "test:fulltracer": "npx mocha tools/run-tests-fulltracer.js"
   },
   "keywords": [
     "zkrom",
