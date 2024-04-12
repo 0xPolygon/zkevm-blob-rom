@@ -1,0 +1,20 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: ARITH_BLS12381_ADDFP2 ensures that the result is in the range [0,BLS12381_P)
+;;
+;; dblFp2BLS12381:
+;;             in: (A + B·u) ∈ Fp2, where A,B ∈ Fp
+;;             out: E + C·u = (A + A) + (B + B)·u ∈ Fp2
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; RESOURCES:
+; -----------------------------
+; [steps: 2, bin: 0, arith: 1]
+; -----------------------------
+
+dblFp2BLS12381:
+        ; Compute and check the mul
+        ; A + A = [E] + (q0·BLS12381_P)
+        ; B + B = [OP] + (q1·BLS12381_P)
+        ${ARITH_BLS12381_ADDFP2(A,A)} => E
+        ${ARITH_BLS12381_ADDFP2(B,B)} => C      :ARITH_BLS12381_ADDFP2, RETURN
