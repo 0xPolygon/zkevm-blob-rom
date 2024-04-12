@@ -1,0 +1,295 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP6 arithmetic
+;;
+;; sparseMulBFp12BLS12381:
+;;             in: (a1 + a2·w),(b1 + b2·w) ∈ Fp12, where ai ∈ Fp6, b1 = b11 + b13·v² and b2 = b22·v, with b11,b13,b22 ∈ Fp2
+;;             out: (a1 + a2·w)·(b1 + b2·w) = (c1 + c2·w) ∈ Fp12, where:
+;;                  - c1 = a1·b1 + a2·b2·v
+;;                  - c2 = (a1+a2)·(b11 + b22·v + b13·v²) - a1·b1 - a2·b2
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL sparseMulBFp12BLS12381_a11_x
+VAR GLOBAL sparseMulBFp12BLS12381_a11_y
+VAR GLOBAL sparseMulBFp12BLS12381_a12_x
+VAR GLOBAL sparseMulBFp12BLS12381_a12_y
+VAR GLOBAL sparseMulBFp12BLS12381_a13_x
+VAR GLOBAL sparseMulBFp12BLS12381_a13_y
+VAR GLOBAL sparseMulBFp12BLS12381_a21_x
+VAR GLOBAL sparseMulBFp12BLS12381_a21_y
+VAR GLOBAL sparseMulBFp12BLS12381_a22_x
+VAR GLOBAL sparseMulBFp12BLS12381_a22_y
+VAR GLOBAL sparseMulBFp12BLS12381_a23_x
+VAR GLOBAL sparseMulBFp12BLS12381_a23_y
+
+VAR GLOBAL sparseMulBFp12BLS12381_b11_x
+VAR GLOBAL sparseMulBFp12BLS12381_b11_y
+VAR GLOBAL sparseMulBFp12BLS12381_b13_x
+VAR GLOBAL sparseMulBFp12BLS12381_b13_y
+VAR GLOBAL sparseMulBFp12BLS12381_b22_x
+VAR GLOBAL sparseMulBFp12BLS12381_b22_y
+
+VAR GLOBAL sparseMulBFp12BLS12381_c11_x
+VAR GLOBAL sparseMulBFp12BLS12381_c11_y
+VAR GLOBAL sparseMulBFp12BLS12381_c12_x
+VAR GLOBAL sparseMulBFp12BLS12381_c12_y
+VAR GLOBAL sparseMulBFp12BLS12381_c13_x
+VAR GLOBAL sparseMulBFp12BLS12381_c13_y
+VAR GLOBAL sparseMulBFp12BLS12381_c21_x
+VAR GLOBAL sparseMulBFp12BLS12381_c21_y
+VAR GLOBAL sparseMulBFp12BLS12381_c22_x
+VAR GLOBAL sparseMulBFp12BLS12381_c22_y
+VAR GLOBAL sparseMulBFp12BLS12381_c23_x
+VAR GLOBAL sparseMulBFp12BLS12381_c23_y
+
+VAR GLOBAL _a1b1mul1_x
+VAR GLOBAL _a1b1mul1_y
+VAR GLOBAL _a1b1mul2_x
+VAR GLOBAL _a1b1mul2_y
+VAR GLOBAL _a1b1mul3_x
+VAR GLOBAL _a1b1mul3_y
+VAR GLOBAL _a2b2mul1_x
+VAR GLOBAL _a2b2mul1_y
+VAR GLOBAL _a2b2mul2_x
+VAR GLOBAL _a2b2mul2_y
+VAR GLOBAL _a2b2mul3_x
+VAR GLOBAL _a2b2mul3_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 713, bin: 0, arith: 56]
+; -----------------------------
+
+sparseMulBFp12BLS12381:
+        RR => _RR
+
+        ; 1] a1·b1, a2·b2
+        sparseMulBFp12BLS12381_a11_x => A
+        sparseMulBFp12BLS12381_a11_y => B
+        A => sparseMulCFp6BLS12381_a1_x
+        B => sparseMulCFp6BLS12381_a1_y
+        sparseMulBFp12BLS12381_a12_x => A
+        sparseMulBFp12BLS12381_a12_y => B
+        A => sparseMulCFp6BLS12381_a2_x
+        B => sparseMulCFp6BLS12381_a2_y
+        sparseMulBFp12BLS12381_a13_x => A
+        sparseMulBFp12BLS12381_a13_y => B
+        A => sparseMulCFp6BLS12381_a3_x
+        B => sparseMulCFp6BLS12381_a3_y
+        sparseMulBFp12BLS12381_b11_x => A
+        sparseMulBFp12BLS12381_b11_y => B
+        A => sparseMulCFp6BLS12381_b1_x
+        B => sparseMulCFp6BLS12381_b1_y
+        sparseMulBFp12BLS12381_b13_x => A
+        sparseMulBFp12BLS12381_b13_y => B
+        A => sparseMulCFp6BLS12381_b3_x
+        B => sparseMulCFp6BLS12381_b3_y         :CALL(sparseMulCFp6BLS12381)
+        sparseMulCFp6BLS12381_c1_x => A
+        sparseMulCFp6BLS12381_c1_y => B
+        A => _a1b1mul1_x
+        B => _a1b1mul1_y
+        sparseMulCFp6BLS12381_c2_x => A
+        sparseMulCFp6BLS12381_c2_y => B
+        A => _a1b1mul2_x
+        B => _a1b1mul2_y
+        sparseMulCFp6BLS12381_c3_x => A
+        sparseMulCFp6BLS12381_c3_y => B
+        A => _a1b1mul3_x
+        B => _a1b1mul3_y
+
+        sparseMulBFp12BLS12381_a21_x => A
+        sparseMulBFp12BLS12381_a21_y => B
+        A => sparseMulAFp6BLS12381_a1_x
+        B => sparseMulAFp6BLS12381_a1_y
+        sparseMulBFp12BLS12381_a22_x => A
+        sparseMulBFp12BLS12381_a22_y => B
+        A => sparseMulAFp6BLS12381_a2_x
+        B => sparseMulAFp6BLS12381_a2_y
+        sparseMulBFp12BLS12381_a23_x => A
+        sparseMulBFp12BLS12381_a23_y => B
+        A => sparseMulAFp6BLS12381_a3_x
+        B => sparseMulAFp6BLS12381_a3_y
+        sparseMulBFp12BLS12381_b22_x => A
+        sparseMulBFp12BLS12381_b22_y => B
+        A => sparseMulAFp6BLS12381_b2_x
+        B => sparseMulAFp6BLS12381_b2_y         :CALL(sparseMulAFp6BLS12381)
+        sparseMulAFp6BLS12381_c1_x => A
+        sparseMulAFp6BLS12381_c1_y => B
+        A => _a2b2mul1_x
+        B => _a2b2mul1_y
+        sparseMulAFp6BLS12381_c2_x => A
+        sparseMulAFp6BLS12381_c2_y => B
+        A => _a2b2mul2_x
+        B => _a2b2mul2_y
+        sparseMulAFp6BLS12381_c3_x => A
+        sparseMulAFp6BLS12381_c3_y => B
+        A => _a2b2mul3_x
+        B => _a2b2mul3_y
+
+        ; 2] c1 = a1·b1 + a2·b2·v
+        _a2b2mul1_x => A
+        _a2b2mul1_y => B
+        A => sparseMulAFp6BLS12381_a1_x
+        B => sparseMulAFp6BLS12381_a1_y
+        _a2b2mul2_x => A
+        _a2b2mul2_y => B
+        A => sparseMulAFp6BLS12381_a2_x
+        B => sparseMulAFp6BLS12381_a2_y
+        _a2b2mul3_x => A
+        _a2b2mul3_y => B
+        A => sparseMulAFp6BLS12381_a3_x
+        B => sparseMulAFp6BLS12381_a3_y
+        1 => sparseMulAFp6BLS12381_b2_x
+        0 => sparseMulAFp6BLS12381_b2_y         :CALL(sparseMulAFp6BLS12381)
+        sparseMulAFp6BLS12381_c1_x => A
+        sparseMulAFp6BLS12381_c1_y => B
+        A => addFp6BLS12381_a1_x
+        B => addFp6BLS12381_a1_y
+        sparseMulAFp6BLS12381_c2_x => A
+        sparseMulAFp6BLS12381_c2_y => B
+        A => addFp6BLS12381_a2_x
+        B => addFp6BLS12381_a2_y
+        sparseMulAFp6BLS12381_c3_x => A
+        sparseMulAFp6BLS12381_c3_y => B
+        A => addFp6BLS12381_a3_x
+        B => addFp6BLS12381_a3_y
+        _a1b1mul1_x => A
+        _a1b1mul1_y => B
+        A => addFp6BLS12381_b1_x
+        B => addFp6BLS12381_b1_y
+        _a1b1mul2_x => A
+        _a1b1mul2_y => B
+        A => addFp6BLS12381_b2_x
+        B => addFp6BLS12381_b2_y
+        _a1b1mul3_x => A
+        _a1b1mul3_y => B
+        A => addFp6BLS12381_b3_x
+        B => addFp6BLS12381_b3_y                :CALL(addFp6BLS12381)
+        addFp6BLS12381_c1_x => A
+        addFp6BLS12381_c1_y => B
+        A => sparseMulBFp12BLS12381_c11_x
+        B => sparseMulBFp12BLS12381_c11_y
+        addFp6BLS12381_c2_x => A
+        addFp6BLS12381_c2_y => B
+        A => sparseMulBFp12BLS12381_c12_x
+        B => sparseMulBFp12BLS12381_c12_y
+        addFp6BLS12381_c3_x => A
+        addFp6BLS12381_c3_y => B
+        A => sparseMulBFp12BLS12381_c13_x
+        B => sparseMulBFp12BLS12381_c13_y
+
+        ; aux = b11 + b22·v + b13·v²
+
+        ; 3] c2 = (a1+a2)·aux - a1·b1 - a2·b2
+        sparseMulBFp12BLS12381_a11_x => A
+        sparseMulBFp12BLS12381_a11_y => B
+        A => addFp6BLS12381_a1_x
+        B => addFp6BLS12381_a1_y
+        sparseMulBFp12BLS12381_a12_x => A
+        sparseMulBFp12BLS12381_a12_y => B
+        A => addFp6BLS12381_a2_x
+        B => addFp6BLS12381_a2_y
+        sparseMulBFp12BLS12381_a13_x => A
+        sparseMulBFp12BLS12381_a13_y => B
+        A => addFp6BLS12381_a3_x
+        B => addFp6BLS12381_a3_y
+        sparseMulBFp12BLS12381_a21_x => A
+        sparseMulBFp12BLS12381_a21_y => B
+        A => addFp6BLS12381_b1_x
+        B => addFp6BLS12381_b1_y
+        sparseMulBFp12BLS12381_a22_x => A
+        sparseMulBFp12BLS12381_a22_y => B
+        A => addFp6BLS12381_b2_x
+        B => addFp6BLS12381_b2_y
+        sparseMulBFp12BLS12381_a23_x => A
+        sparseMulBFp12BLS12381_a23_y => B
+        A => addFp6BLS12381_b3_x
+        B => addFp6BLS12381_b3_y                :CALL(addFp6BLS12381)
+        addFp6BLS12381_c1_x => A
+        addFp6BLS12381_c1_y => B
+        A => mulFp6BLS12381_a1_x
+        B => mulFp6BLS12381_a1_y
+        addFp6BLS12381_c2_x => A
+        addFp6BLS12381_c2_y => B
+        A => mulFp6BLS12381_a2_x
+        B => mulFp6BLS12381_a2_y
+        addFp6BLS12381_c3_x => A
+        addFp6BLS12381_c3_y => B
+        A => mulFp6BLS12381_a3_x
+        B => mulFp6BLS12381_a3_y
+        sparseMulBFp12BLS12381_b11_x => A
+        sparseMulBFp12BLS12381_b11_y => B
+        A => mulFp6BLS12381_b1_x
+        B => mulFp6BLS12381_b1_y
+        sparseMulBFp12BLS12381_b22_x => A
+        sparseMulBFp12BLS12381_b22_y => B
+        A => mulFp6BLS12381_b2_x
+        B => mulFp6BLS12381_b2_y
+        sparseMulBFp12BLS12381_b13_x => A
+        sparseMulBFp12BLS12381_b13_y => B
+        A => mulFp6BLS12381_b3_x
+        B => mulFp6BLS12381_b3_y                :CALL(mulFp6BLS12381)
+        mulFp6BLS12381_c1_x => A
+        mulFp6BLS12381_c1_y => B
+        A => subFp6BLS12381_a1_x
+        B => subFp6BLS12381_a1_y
+        mulFp6BLS12381_c2_x => A
+        mulFp6BLS12381_c2_y => B
+        A => subFp6BLS12381_a2_x
+        B => subFp6BLS12381_a2_y
+        mulFp6BLS12381_c3_x => A
+        mulFp6BLS12381_c3_y => B
+        A => subFp6BLS12381_a3_x
+        B => subFp6BLS12381_a3_y
+        _a1b1mul1_x => A
+        _a1b1mul1_y => B
+        A => subFp6BLS12381_b1_x
+        B => subFp6BLS12381_b1_y
+        _a1b1mul2_x => A
+        _a1b1mul2_y => B
+        A => subFp6BLS12381_b2_x
+        B => subFp6BLS12381_b2_y
+        _a1b1mul3_x => A
+        _a1b1mul3_y => B
+        A => subFp6BLS12381_b3_x
+        B => subFp6BLS12381_b3_y                :CALL(subFp6BLS12381)
+        subFp6BLS12381_c1_x => A
+        subFp6BLS12381_c1_y => B
+        A => subFp6BLS12381_a1_x
+        B => subFp6BLS12381_a1_y
+        subFp6BLS12381_c2_x => A
+        subFp6BLS12381_c2_y => B
+        A => subFp6BLS12381_a2_x
+        B => subFp6BLS12381_a2_y
+        subFp6BLS12381_c3_x => A
+        subFp6BLS12381_c3_y => B
+        A => subFp6BLS12381_a3_x
+        B => subFp6BLS12381_a3_y
+        _a2b2mul1_x => A
+        _a2b2mul1_y => B
+        A => subFp6BLS12381_b1_x
+        B => subFp6BLS12381_b1_y
+        _a2b2mul2_x => A
+        _a2b2mul2_y => B
+        A => subFp6BLS12381_b2_x
+        B => subFp6BLS12381_b2_y
+        _a2b2mul3_x => A
+        _a2b2mul3_y => B
+        A => subFp6BLS12381_b3_x
+        B => subFp6BLS12381_b3_y                :CALL(subFp6BLS12381)
+        subFp6BLS12381_c1_x => A
+        subFp6BLS12381_c1_y => B
+        A => sparseMulBFp12BLS12381_c21_x
+        B => sparseMulBFp12BLS12381_c21_y
+        subFp6BLS12381_c2_x => A
+        subFp6BLS12381_c2_y => B
+        A => sparseMulBFp12BLS12381_c22_x
+        B => sparseMulBFp12BLS12381_c22_y
+        subFp6BLS12381_c3_x => A
+        subFp6BLS12381_c3_y => B
+        A => sparseMulBFp12BLS12381_c23_x
+        B => sparseMulBFp12BLS12381_c23_y
+
+        _RR => RR         :RETURN

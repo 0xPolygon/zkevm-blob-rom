@@ -56,14 +56,14 @@ _input_is_not_zero:
         0                       :ARITH_BLS12381_MULFP2
 
         ; Check that the resulting elements are lower than BLS12381_P
-        %BLS12381_P => B,D
+        %BLS12381_P => D
 
         ; 1] Check C
         ; 0·B + C = op (mod BLS12381_P)
         0 => A
         ${C % D} => C           :ARITH_MOD
 
-        B - C                   :JMPNZ(failAssert) ; chunk 0
+        _x - C => C             :JMPNZ(failAssert) ; chunk 0
         ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
         ROTL_C => C             :JMPNZ(failAssert) ; chunk 2
         ROTL_C => C             :JMPNZ(failAssert) ; chunk 3
@@ -74,11 +74,10 @@ _input_is_not_zero:
 
         ; 2] Check D
         ; 0·B + C = op (mod BLS12381_P)
-        0 => A
         _y => C
         ${C % D} => D           :ARITH_MOD
 
-        B - D                   :JMPNZ(failAssert) ; chunk 0
+        _y - D => C             :JMPNZ(failAssert) ; chunk 0
         ROTL_C => D             :JMPNZ(failAssert) ; chunk 1
         ROTL_C => D             :JMPNZ(failAssert) ; chunk 2
         ROTL_C => D             :JMPNZ(failAssert) ; chunk 3

@@ -1,0 +1,89 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; frobFp12BLS12381:
+;;             in: (a1 + a2·w) = ((a11 + a12v + a13v²) + (a21 + a22v + a23v²)·w) ∈ Fp12, where ai ∈ Fp6 and aij ∈ Fp2
+;;             out: (a1 + a2·w)ᵖ = (c1 + c2·w) ∈ Fp12, where:
+;;                  - c1 = a̅11     + a̅12·γ12·v + a̅13·γ14·v²
+;;                  - c2 = a̅21·γ11 + a̅22·γ13·v + a̅23·γ15·v²
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL frobFp12BLS12381_a11_x
+VAR GLOBAL frobFp12BLS12381_a11_y
+VAR GLOBAL frobFp12BLS12381_a12_x
+VAR GLOBAL frobFp12BLS12381_a12_y
+VAR GLOBAL frobFp12BLS12381_a13_x
+VAR GLOBAL frobFp12BLS12381_a13_y
+VAR GLOBAL frobFp12BLS12381_a21_x
+VAR GLOBAL frobFp12BLS12381_a21_y
+VAR GLOBAL frobFp12BLS12381_a22_x
+VAR GLOBAL frobFp12BLS12381_a22_y
+VAR GLOBAL frobFp12BLS12381_a23_x
+VAR GLOBAL frobFp12BLS12381_a23_y
+VAR GLOBAL frobFp12BLS12381_c11_x
+VAR GLOBAL frobFp12BLS12381_c11_y
+VAR GLOBAL frobFp12BLS12381_c12_x
+VAR GLOBAL frobFp12BLS12381_c12_y
+VAR GLOBAL frobFp12BLS12381_c13_x
+VAR GLOBAL frobFp12BLS12381_c13_y
+VAR GLOBAL frobFp12BLS12381_c21_x
+VAR GLOBAL frobFp12BLS12381_c21_y
+VAR GLOBAL frobFp12BLS12381_c22_x
+VAR GLOBAL frobFp12BLS12381_c22_y
+VAR GLOBAL frobFp12BLS12381_c23_x
+VAR GLOBAL frobFp12BLS12381_c23_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 63, bin: 6, arith: 5]
+; -----------------------------
+
+frobFp12BLS12381:
+        RR => _RR
+
+        ; 1] c1 = a̅11 + a̅12·γ12·v + a̅13·γ14·v²
+        frobFp12BLS12381_a11_x => A
+        A => frobFp12BLS12381_c11_x
+        frobFp12BLS12381_a11_y => A     :CALL(negFpBLS12381)
+        B => frobFp12BLS12381_c11_y
+
+        frobFp12BLS12381_a12_y => A     :CALL(negFpBLS12381)
+        frobFp12BLS12381_a12_x => A
+        %FROBENIUS_GAMMA12X => C        ; TODO: This is zero! Do scalar mul instead
+        %FROBENIUS_GAMMA12Y => D        :CALL(mulFp2BLS12381)
+        E => frobFp12BLS12381_c12_x
+        C => frobFp12BLS12381_c12_y
+
+        frobFp12BLS12381_a13_y => A     :CALL(negFpBLS12381)
+        frobFp12BLS12381_a13_x => A
+        %FROBENIUS_GAMMA14X => C
+        %FROBENIUS_GAMMA14Y => D        :CALL(mulFp2BLS12381)
+        E => frobFp12BLS12381_c13_x
+        C => frobFp12BLS12381_c13_y
+
+        ; 2] c2 = a̅21·γ11 + a̅22·γ13·v + a̅23·γ15·v²
+        frobFp12BLS12381_a21_y => A     :CALL(negFpBLS12381)
+        frobFp12BLS12381_a21_x => A
+        %FROBENIUS_GAMMA11X => C
+        %FROBENIUS_GAMMA11Y => D        :CALL(mulFp2BLS12381)
+        E => frobFp12BLS12381_c21_x
+        C => frobFp12BLS12381_c21_y
+
+        frobFp12BLS12381_a22_y => A     :CALL(negFpBLS12381)
+        frobFp12BLS12381_a22_x => A
+        %FROBENIUS_GAMMA13X => C
+        %FROBENIUS_GAMMA13Y => D        :CALL(mulFp2BLS12381)
+        E => frobFp12BLS12381_c22_x
+        C => frobFp12BLS12381_c22_y
+
+        frobFp12BLS12381_a23_y => A     :CALL(negFpBLS12381)
+        frobFp12BLS12381_a23_x => A
+        %FROBENIUS_GAMMA15X => C
+        %FROBENIUS_GAMMA15Y => D        :CALL(mulFp2BLS12381)
+        E => frobFp12BLS12381_c23_x
+        C => frobFp12BLS12381_c23_y
+
+        _RR => RR                       :RETURN

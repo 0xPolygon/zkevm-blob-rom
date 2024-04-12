@@ -1,0 +1,84 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;;
+;; frob2Fp12BLS12381:
+;;             in: (a1 + a2·w) = ((a11 + a12v + a13v²) + (a21 + a22v + a23v²)·w) ∈ Fp12, where ai ∈ Fp6 and aij ∈ Fp2
+;;             out: (a1 + a2·w)ᵖ˙ᵖ = (c1 + c2·w) ∈ Fp12, where:
+;;                  - c1 = a11     + a12·γ22·v + a13·γ24·v²
+;;                  - c2 = a21·γ21 + a22·γ23·v + a23·γ25·v²
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL frob2Fp12BLS12381_a11_x
+VAR GLOBAL frob2Fp12BLS12381_a11_y
+VAR GLOBAL frob2Fp12BLS12381_a12_x
+VAR GLOBAL frob2Fp12BLS12381_a12_y
+VAR GLOBAL frob2Fp12BLS12381_a13_x
+VAR GLOBAL frob2Fp12BLS12381_a13_y
+VAR GLOBAL frob2Fp12BLS12381_a21_x
+VAR GLOBAL frob2Fp12BLS12381_a21_y
+VAR GLOBAL frob2Fp12BLS12381_a22_x
+VAR GLOBAL frob2Fp12BLS12381_a22_y
+VAR GLOBAL frob2Fp12BLS12381_a23_x
+VAR GLOBAL frob2Fp12BLS12381_a23_y
+VAR GLOBAL frob2Fp12BLS12381_c11_x
+VAR GLOBAL frob2Fp12BLS12381_c11_y
+VAR GLOBAL frob2Fp12BLS12381_c12_x
+VAR GLOBAL frob2Fp12BLS12381_c12_y
+VAR GLOBAL frob2Fp12BLS12381_c13_x
+VAR GLOBAL frob2Fp12BLS12381_c13_y
+VAR GLOBAL frob2Fp12BLS12381_c21_x
+VAR GLOBAL frob2Fp12BLS12381_c21_y
+VAR GLOBAL frob2Fp12BLS12381_c22_x
+VAR GLOBAL frob2Fp12BLS12381_c22_y
+VAR GLOBAL frob2Fp12BLS12381_c23_x
+VAR GLOBAL frob2Fp12BLS12381_c23_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 52, bin: 0, arith: 5]
+; -----------------------------
+
+frob2Fp12BLS12381:
+        RR => _RR
+
+        ; 1] c1 = a11 + a12·γ22·v + a13·γ24·v²
+        frob2Fp12BLS12381_a11_x => A
+        frob2Fp12BLS12381_a11_y => B
+        A => frob2Fp12BLS12381_c11_x
+        B => frob2Fp12BLS12381_c11_y
+
+        %FROBENIUS_GAMMA22 => A
+        frob2Fp12BLS12381_a12_x => C
+        frob2Fp12BLS12381_a12_y => D    :CALL(scalarMulFp2BLS12381)
+        E => frob2Fp12BLS12381_c12_x
+        C => frob2Fp12BLS12381_c12_y
+
+        %FROBENIUS_GAMMA24 => A
+        frob2Fp12BLS12381_a13_x => C
+        frob2Fp12BLS12381_a13_y => D    :CALL(scalarMulFp2BLS12381)
+        E => frob2Fp12BLS12381_c13_x
+        C => frob2Fp12BLS12381_c13_y
+
+        ; 2] c2 = a21·γ21 + a22·γ23·v + a23·γ25·v²
+        %FROBENIUS_GAMMA21 => A
+        frob2Fp12BLS12381_a21_x => C
+        frob2Fp12BLS12381_a21_y => D    :CALL(scalarMulFp2BLS12381)
+        E => frob2Fp12BLS12381_c21_x
+        C => frob2Fp12BLS12381_c21_y
+
+        %FROBENIUS_GAMMA23 => A
+        frob2Fp12BLS12381_a22_x => C
+        frob2Fp12BLS12381_a22_y => D    :CALL(scalarMulFp2BLS12381)
+        E => frob2Fp12BLS12381_c22_x
+        C => frob2Fp12BLS12381_c22_y
+
+        %FROBENIUS_GAMMA25 => A
+        frob2Fp12BLS12381_a23_x => C
+        frob2Fp12BLS12381_a23_y => D    :CALL(scalarMulFp2BLS12381)
+        E => frob2Fp12BLS12381_c23_x
+        C => frob2Fp12BLS12381_c23_y
+
+        _RR => RR                       :RETURN

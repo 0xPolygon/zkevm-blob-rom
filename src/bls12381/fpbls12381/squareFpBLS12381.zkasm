@@ -1,0 +1,20 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P)
+;;
+;; squareFpBLS12381:
+;;             in: A ∈ Fp
+;;             out: B = A² (mod BLS12381_P) ∈ Fp
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; RESOURCES:
+; -----------------------------
+; [steps: r, bin: 0, arith: 1]
+; -----------------------------
+
+squareFpBLS12381:
+        ; A·A + 0 = op (mod BLS12381_P)
+        A => B
+        0 => C
+        %BLS12381_P => D
+        ${(A*A) % D} => B       :ARITH_MOD, RETURN

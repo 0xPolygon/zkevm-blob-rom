@@ -1,0 +1,19 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BN254_P)
+;;
+;; mulFpBN254:
+;;             in: A,B ∈ Fp
+;;             out: C = A·B (mod BN254_P) ∈ Fp
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; RESOURCES:
+; -----------------------------
+; [steps: 4, bin: 0, arith: 1]
+; -----------------------------
+
+mulFpBN254:
+        ; A·B + 0 = op (mod BN254_P)
+        0 => C
+        %BN254_P => D
+        ${(A*B) % D} => C       :ARITH_MOD, RETURN
