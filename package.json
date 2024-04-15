@@ -25,8 +25,7 @@
     "url": "https://github.com/0xPolygonHermez/zkevm-blob-rom.git"
   },
   "engines": {
-    "node": "=20",
-    "npm": "=10"
+    "node": ">=16"
   },
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/arith-384",
