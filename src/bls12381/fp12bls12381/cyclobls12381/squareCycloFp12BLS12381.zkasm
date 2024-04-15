@@ -1,0 +1,232 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP4/FP2 arithmetic
+;;
+;; squareCycloFp12BLS12381:
+;;             in:  (a1 + a2·w) ∈ GΦ6(p²), where ai ∈ Fp6
+;;             out: (c1 + c2·w) = (a1 + a2·w)² ∈ GΦ6(p²)
+;;
+;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL squareCycloFp12BLS12381_a11_x
+VAR GLOBAL squareCycloFp12BLS12381_a11_y
+VAR GLOBAL squareCycloFp12BLS12381_a12_x
+VAR GLOBAL squareCycloFp12BLS12381_a12_y
+VAR GLOBAL squareCycloFp12BLS12381_a13_x
+VAR GLOBAL squareCycloFp12BLS12381_a13_y
+VAR GLOBAL squareCycloFp12BLS12381_a21_x
+VAR GLOBAL squareCycloFp12BLS12381_a21_y
+VAR GLOBAL squareCycloFp12BLS12381_a22_x
+VAR GLOBAL squareCycloFp12BLS12381_a22_y
+VAR GLOBAL squareCycloFp12BLS12381_a23_x
+VAR GLOBAL squareCycloFp12BLS12381_a23_y
+VAR GLOBAL squareCycloFp12BLS12381_c11_x
+VAR GLOBAL squareCycloFp12BLS12381_c11_y
+VAR GLOBAL squareCycloFp12BLS12381_c12_x
+VAR GLOBAL squareCycloFp12BLS12381_c12_y
+VAR GLOBAL squareCycloFp12BLS12381_c13_x
+VAR GLOBAL squareCycloFp12BLS12381_c13_y
+VAR GLOBAL squareCycloFp12BLS12381_c21_x
+VAR GLOBAL squareCycloFp12BLS12381_c21_y
+VAR GLOBAL squareCycloFp12BLS12381_c22_x
+VAR GLOBAL squareCycloFp12BLS12381_c22_y
+VAR GLOBAL squareCycloFp12BLS12381_c23_x
+VAR GLOBAL squareCycloFp12BLS12381_c23_y
+
+VAR GLOBAL _t11_x
+VAR GLOBAL _t11_y
+VAR GLOBAL _t22_x
+VAR GLOBAL _t22_y
+VAR GLOBAL _t23_x
+VAR GLOBAL _t23_y
+VAR GLOBAL _t12_x
+VAR GLOBAL _t12_y
+VAR GLOBAL _t13_x
+VAR GLOBAL _t13_y
+VAR GLOBAL _aux_x
+VAR GLOBAL _aux_y
+VAR GLOBAL _t21_x
+VAR GLOBAL _t21_y
+
+VAR GLOBAL _RR
+
+; RESOURCES:
+; -----------------------------
+; [steps: 411, bin: 0, arith: 43]
+; -----------------------------
+
+squareCycloFp12BLS12381:
+        RR => _RR
+
+        ; 1] [t11,t22] = (a11 + a22·V)²
+        squareCycloFp12BLS12381_a11_x => A
+        squareCycloFp12BLS12381_a11_y => B
+        squareCycloFp12BLS12381_a22_x => C
+        squareCycloFp12BLS12381_a22_y => D
+        A => squareFp4BLS12381_a1_x
+        B => squareFp4BLS12381_a1_y
+        C => squareFp4BLS12381_a2_x
+        D => squareFp4BLS12381_a2_y             :CALL(squareFp4BLS12381)
+        squareFp4BLS12381_c1_x => A
+        squareFp4BLS12381_c1_y => B
+        squareFp4BLS12381_c2_x => C
+        squareFp4BLS12381_c2_y => D
+        A => _t11_x
+        B => _t11_y
+        C => _t22_x
+        D => _t22_y
+
+        ; 2] [t23,t12] = (a21 + a13·V)²
+        squareCycloFp12BLS12381_a21_x => A
+        squareCycloFp12BLS12381_a21_y => B
+        squareCycloFp12BLS12381_a13_x => C
+        squareCycloFp12BLS12381_a13_y => D
+        A => squareFp4BLS12381_a1_x
+        B => squareFp4BLS12381_a1_y
+        C => squareFp4BLS12381_a2_x
+        D => squareFp4BLS12381_a2_y             :CALL(squareFp4BLS12381)
+        squareFp4BLS12381_c1_x => A
+        squareFp4BLS12381_c1_y => B
+        squareFp4BLS12381_c2_x => C
+        squareFp4BLS12381_c2_y => D
+        A => _t23_x
+        B => _t23_y
+        C => _t12_x
+        D => _t12_y
+
+        ; 3] [t13,aux] = (a12 + a23·V)²
+        squareCycloFp12BLS12381_a12_x => A
+        squareCycloFp12BLS12381_a12_y => B
+        squareCycloFp12BLS12381_a23_x => C
+        squareCycloFp12BLS12381_a23_y => D
+        A => squareFp4BLS12381_a1_x
+        B => squareFp4BLS12381_a1_y
+        C => squareFp4BLS12381_a2_x
+        D => squareFp4BLS12381_a2_y             :CALL(squareFp4BLS12381)
+        squareFp4BLS12381_c1_x => A
+        squareFp4BLS12381_c1_y => B
+        squareFp4BLS12381_c2_x => C
+        squareFp4BLS12381_c2_y => D
+        A => _t13_x
+        B => _t13_y
+        C => _aux_x
+        D => _aux_y
+
+        ; 4] t21 = aux·(1+u)
+        _aux_x => A
+        _aux_y => B
+        %BLS12381_EXT_X => C
+        %BLS12381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        E => _t21_x
+        C => _t21_y
+
+       ; 5] c11 = -2·a11 + 3·t11
+        %BLS12381_P - 2n => A
+        squareCycloFp12BLS12381_a11_x => C
+        squareCycloFp12BLS12381_a11_y => D      :CALL(scalarMulFp2BLS12381)
+        E => squareCycloFp12BLS12381_a11_x
+        C => squareCycloFp12BLS12381_a11_y
+
+        3n => A
+        _t11_x => C
+        _t11_y => D                             :CALL(scalarMulFp2BLS12381)
+
+        E => A
+        C => B
+        squareCycloFp12BLS12381_a11_x => C
+        squareCycloFp12BLS12381_a11_y => D      :CALL(addFp2BLS12381)
+        E => squareCycloFp12BLS12381_c11_x
+        C => squareCycloFp12BLS12381_c11_y
+
+       ; 6] c12 = -2·a12 + 3·t23
+        %BLS12381_P - 2n => A
+        squareCycloFp12BLS12381_a12_x => C
+        squareCycloFp12BLS12381_a12_y => D      :CALL(scalarMulFp2BLS12381)
+        E => squareCycloFp12BLS12381_a12_x
+        C => squareCycloFp12BLS12381_a12_y
+
+        3n => A
+        _t23_x => C
+        _t23_y => D                             :CALL(scalarMulFp2BLS12381)
+
+        E => A
+        C => B
+        squareCycloFp12BLS12381_a12_x => C
+        squareCycloFp12BLS12381_a12_y => D      :CALL(addFp2BLS12381)
+        E => squareCycloFp12BLS12381_c12_x
+        C => squareCycloFp12BLS12381_c12_y
+
+       ; 7] c13 = -2·a13 + 3·t13
+        %BLS12381_P - 2n => A
+        squareCycloFp12BLS12381_a13_x => C
+        squareCycloFp12BLS12381_a13_y => D      :CALL(scalarMulFp2BLS12381)
+        E => squareCycloFp12BLS12381_a13_x
+        C => squareCycloFp12BLS12381_a13_y
+
+        3n => A
+        _t13_x => C
+        _t13_y => D                             :CALL(scalarMulFp2BLS12381)
+
+        E => A
+        C => B
+        squareCycloFp12BLS12381_a13_x => C
+        squareCycloFp12BLS12381_a13_y => D      :CALL(addFp2BLS12381)
+        E => squareCycloFp12BLS12381_c13_x
+        C => squareCycloFp12BLS12381_c13_y
+
+       ; 8] c21 = 2·a21 + 3·t21
+        2n => A
+        squareCycloFp12BLS12381_a21_x => C
+        squareCycloFp12BLS12381_a21_y => D      :CALL(scalarMulFp2BLS12381)
+        E => squareCycloFp12BLS12381_a21_x
+        C => squareCycloFp12BLS12381_a21_y
+
+        3n => A
+        _t21_x => C
+        _t21_y => D                             :CALL(scalarMulFp2BLS12381)
+
+        E => A
+        C => B
+        squareCycloFp12BLS12381_a21_x => C
+        squareCycloFp12BLS12381_a21_y => D      :CALL(addFp2BLS12381)
+        E => squareCycloFp12BLS12381_c21_x
+        C => squareCycloFp12BLS12381_c21_y
+
+       ; 9] c22 = 2·a22 + 3·t22
+        2n => A
+        squareCycloFp12BLS12381_a22_x => C
+        squareCycloFp12BLS12381_a22_y => D      :CALL(scalarMulFp2BLS12381)
+        E => squareCycloFp12BLS12381_a22_x
+        C => squareCycloFp12BLS12381_a22_y
+
+        3n => A
+        _t22_x => C
+        _t22_y => D                             :CALL(scalarMulFp2BLS12381)
+
+        E => A
+        C => B
+        squareCycloFp12BLS12381_a22_x => C
+        squareCycloFp12BLS12381_a22_y => D      :CALL(addFp2BLS12381)
+        E => squareCycloFp12BLS12381_c22_x
+        C => squareCycloFp12BLS12381_c22_y
+
+       ; 9] c23 = 2·a23 + 3·t12
+        2n => A
+        squareCycloFp12BLS12381_a23_x => C
+        squareCycloFp12BLS12381_a23_y => D      :CALL(scalarMulFp2BLS12381)
+        E => squareCycloFp12BLS12381_a23_x
+        C => squareCycloFp12BLS12381_a23_y
+
+        3n => A
+        _t12_x => C
+        _t12_y => D                             :CALL(scalarMulFp2BLS12381)
+
+        E => A
+        C => B
+        squareCycloFp12BLS12381_a23_x => C
+        squareCycloFp12BLS12381_a23_y => D      :CALL(addFp2BLS12381)
+        E => squareCycloFp12BLS12381_c23_x
+        C => squareCycloFp12BLS12381_c23_y
+
+
+        _RR => RR                               :RETURN
