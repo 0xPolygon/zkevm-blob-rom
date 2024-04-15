@@ -44,15 +44,21 @@ start:
         ${getTimestampLimit()}          :MSTORE(timestampLimit)
         ${getSequencerAddr()}           :MSTORE(sequencerAddr)
         ${getZkGasLimit()}              :MSTORE(zkGasLimit)
-        ${getType()}                    :MSTORE(type)
+        $0{getType()}                   :MSTORE(type)
         ${getBlobL2HashData()}          :MSTORE(blobL2HashData) ; used when type = 0
         ${getZ()}                       :MSTORE(polEvalFrBLS12381_z) ; used when type = 1
         ${getY()}                       :MSTORE(y) ; used when type = 1
         ${getForcedHashData()}          :MSTORE(forcedHashData) ; used when type = 2
 
-        ${getBlobLen()} => B            :MSTORE(blobDataLen)
-
         $${eventLog(onStartBlob())}
+
+        ; from the oldStateRootFromBlob:
+        ; read the newLocalExitRoot and set it to the newLocalExitRootFromBlob
+        D => SR
+        %ADDRESS_GLOBAL_EXIT_ROOT_MANAGER_L2  => A
+        %SMT_KEY_SC_STORAGE => B
+        %LOCAL_EXIT_ROOT_STORAGE_POS => C
+        $                               :SLOAD,MSTORE(localExitRootFromBlob)
 
         $ => SR                         :MLOAD(oldBlobStateRoot)
 
@@ -109,97 +115,57 @@ start:
 ;; C - Check type input
 ;;;;;;;;;;;;;;;;;;
         ; B == blobLen
-        $ => A                          :MLOAD(type)
-        A - 1                           :JMPN(standarCalldata)
-        A - 2                           :JMPN(blobData)
-        A - 3                           :JMPN(forcedBlob)
+        $ => A                          :MLOAD(type),JMPZ(standardCalldata)
+        A - 1                           :JMPZ(blobData)
+        A - 2                           :JMPZ(forcedBlob)
                                         :JMP(invalidBlobType)
-
-;;;;;;;;;;;;;;;;;;
-;; C.0 - Type 0
-;;;;;;;;;;;;;;;;;;
-standarCalldata:
-        ; B == blobDataLen (getBlobLen())
-        $ => A                          :MLOAD(blobL2HashData) ; used when type = 0
-        ; load blobL2HashData = keccak256(blobData) to HASHK index 1
-        %INDEX_BLOB_L2_HASH_K_DATA => E
-        A                               :HASHKDIGEST(E)
-        B => HASHPOS
-        HASHPOS                         :HASHKLEN(E)
-        ;if type === 0 -> forcedHashData = 0
-        0                               :MSTORE(forcedHashData)
-                                        :JMP(type0and2)
 
 ;;;;;;;;;;;;;;;;;;
 ;; C.1 - Type 1
 ;;;;;;;;;;;;;;;;;;
 blobData:
-        ; B == blobDataLen (getBlobLen())
         $ => A                          :MLOAD(polEvalFrBLS12381_z)
         ; load z = poseidon(blobData) to HASHP index 0
         %INDEX_Z_HASH_P => E
         A                               :HASHPDIGEST(E)
-        B => HASHPOS
-        HASHPOS                         :HASHPLEN(E)
+        $ => B                          :HASHPLEN(E), MSTORE(blobDataLen)
 
-        ;if type === 1 -> forcedHashData = 0
+        ;if type === 1 --> forcedHashData = 0
         0                               :MSTORE(forcedHashData)
-        ; isEIP4844 = 1 & update lastHASHPIDUsed
+        ; isEIP4844 = 1 & update nextHashPId
         1                               :MSTORE(isEIP4844)
-        1                               :MSTORE(lastHashPIdUsed)
-                                        :JMP(computeBatchHashData)
+        1                               :MSTORE(nextHashPId),JMP(startBlobType1)
 
+;;;;;;;;;;;;;;;;;;
+;; C.0 - Type 0
+;;;;;;;;;;;;;;;;;;
+standardCalldata:
+        ;if type === 0 -> forcedHashData = 0
+        0                               :MSTORE(forcedHashData)
 ;;;;;;;;;;;;;;;;;;
 ;; C.2 - Type 2
 ;;;;;;;;;;;;;;;;;;
 forcedBlob:
-        ; B == blobDataLen (getBlobLen())
         $ => A                          :MLOAD(blobL2HashData) ; used when type = 0
         ; load blobL2HashData = keccak256(blobData) to HASHK index 1
         %INDEX_BLOB_L2_HASH_K_DATA => E
         A                               :HASHKDIGEST(E)
-        B => HASHPOS
-        HASHPOS                         :HASHKLEN(E)
-
-type0and2:
+        $                               :HASHKLEN(E),MSTORE(blobDataLen)
         ; sanity check
         0                               :MSTORE(isEIP4844)
-        0                               :MSTORE(lastHashPIdUsed)
+        0                               :MSTORE(nextHashPId),JMP(startBlobType0and2)
 
 ;;;;;;;;;;;;;;;;;;
 ;; D - batchHashData - finalAccBatchHashData
 ;;;;;;;;;;;;;;;;;;
-computeBatchHashData:
-        0 => HASHPOS ; HASHPOS of blobData
-
-        ; if isEIP4844 = 1
-        ; D.1 ---> blobDataStart
-        $                               :F_MLOAD(isEIP4844),JMPNZ(blobDataStart)
-
-        ; if type = 0 || type = 2
-        $ => E                          :MLOAD(lastHashPIdUsed)
-
-        ; blobData[0] --> compression type
-        1 => D                          :CALL(addBlobInputHashK) ; A = first byte
-        A => C
-        ; blobData[1]-blobData[4] --> totalBodyLen
-        4 => D                          :CALL(addBlobInputHashK) ; A = totalBodyLen
-        ; blobDataLen = totalBody + compression type (1 byte) + totalBodyLen (4 bytes)
-        A                               :MSTORE(totalBodyLen)
-        blobDataLen - A - 5             :JMPNZ(invalidParsing)
-        ; if type = 0 & type = 2 and compression type = 0
-        ; D.0 ---> nonCompression
-        C - 1                           :JMPN(nonCompression)
-                                        :JMP(invalidTypeCompression)
-
 nextBatch:
         ; batchHashData = LinearPoseidon(batchData)
         HASHPOS                         :MSTORE(blobHashPos)
         C => HASHPOS                    :HASHPLEN(E)
         $ => B                          :HASHPDIGEST(E)
         $${eventLog(onAddBatch(E))}
-        B                               :MSTORE(batchHashData)
-        E + 1 => E                      :MSTORE(lastHashPIdUsed)
+        $ => E                          :MLOAD(nextHashPId)
+        E + 1                           :MSTORE(nextHashPId)
 
         ; compute finalAccBatchHashData
         ; finalAccBatchHashData = LinearPoseidon(oldBatchAccInputHash, batchHashData, sequencerAddress, forcedHashData))
@@ -207,7 +173,8 @@ nextBatch:
 
         32 => D
         ${mem.finalAccBatchHashData}    :HASHP(E),MLOAD(finalAccBatchHashData)
-        ${mem.batchHashData}            :HASHP(E),MLOAD(batchHashData)
+        ; B === batchHashData
+        B                               :HASHP(E)
 
         20 => D
         ${mem.sequencerAddr}            :HASHP(E),MLOAD(sequencerAddr)
@@ -220,24 +187,23 @@ nextBatch:
         B                               :MSTORE(finalAccBatchHashData)
         
         ; update numBatches + 1
-        $ => B                          :F_MLOAD(numBatches)
+        $ => B                          :MLOAD(numBatches)
         B + 1                           :MSTORE(numBatches)
 
         0 => B
         $ => HASHPOS                    :MLOAD(blobHashPos)
 
-        ; update last Id hashP used
-        E + 1 => E                      :MSTORE(lastHashPIdUsed)
-        $                               :MLOAD(isEIP4844),JMPZ(nonCompression, readBatchDataLen)
+        ; update batch hash id (E) & nextHashPId
+        $ => E                          :MLOAD(nextHashPId)
+        E + 1                           :MSTORE(nextHashPId)
+        $                               :MLOAD(isEIP4844),JMPZ(nextBatchType0and2, nextBatchBlobData)
 
 ;;;;;;;;;;;;;;;;;;
 ;; E. Finalize execution
 ;;;;;;;;;;;;;;;;;;
 finalizeBlob:
-        $ => A                          :MLOAD(zkGasLimit)
-        A                               :MSTORE(arithA)
-        %ZKGAS_PER_BATCH                :MSTORE(arithB),CALL(divARITH)
-        $ => A                          :MLOAD(arithRes1)
+        $ => E                          :MLOAD(zkGasLimit),CALL(divZKGAS) ; in:[E: zkGasLimit], out: [E: zkGasLimit/ZKGAS_PER_BATCH]
+        E => A                          ; E = zkGasLimit/ZKGAS_PER_BATCH
         $ => B                          :MLOAD(numBatches)
         $                               :LT,JMPC(invalidZkGasLimit)
 
