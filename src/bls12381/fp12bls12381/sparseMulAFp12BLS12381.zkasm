@@ -2,10 +2,10 @@
 ;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP6 arithmetic
 ;;
 ;; sparseMulAFp12BLS12381:
-;;             in: (a1 + a2·w),(b1 + b2·w) ∈ Fp12, where ai ∈ Fp6, b1 = b12·v and b2 = b22·v + b23·v², with b12,b22,b23 ∈ Fp2
+;;             in: (a1 + a2·w),(b1 + b2·w) ∈ Fp12, where ai ∈ Fp6, b1 = (b11 + b12·v) and b2 = b22·v, with b11,b12,b22 ∈ Fp2
 ;;             out: (a1 + a2·w)·(b1 + b2·w) = (c1 + c2·w) ∈ Fp12, where:
-;;                  - c1 = a1·b1 + a2·b2·v
-;;                  - c2 = (a1+a2)·[(b12+b22)·v + b23·v²] - a1·b1 - a2·b2
+;;                  - c1 = a1·(b11 + b12·v) + a2·(b22·v)·v
+;;                  - c2 = (a1+a2)·[b11 + (b12+b22)·v] - a1·(b11 + b12·v) - a2·(b22·v)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -22,12 +22,12 @@ VAR GLOBAL sparseMulAFp12BLS12381_a22_y
 VAR GLOBAL sparseMulAFp12BLS12381_a23_x
 VAR GLOBAL sparseMulAFp12BLS12381_a23_y
 
+VAR GLOBAL sparseMulAFp12BLS12381_b11_x
+VAR GLOBAL sparseMulAFp12BLS12381_b11_y
 VAR GLOBAL sparseMulAFp12BLS12381_b12_x
 VAR GLOBAL sparseMulAFp12BLS12381_b12_y
 VAR GLOBAL sparseMulAFp12BLS12381_b22_x
 VAR GLOBAL sparseMulAFp12BLS12381_b22_y
-VAR GLOBAL sparseMulAFp12BLS12381_b23_x
-VAR GLOBAL sparseMulAFp12BLS12381_b23_y
 
 VAR GLOBAL sparseMulAFp12BLS12381_c11_x
 VAR GLOBAL sparseMulAFp12BLS12381_c11_y
@@ -68,33 +68,37 @@ VAR GLOBAL _RR
 sparseMulAFp12BLS12381:
         RR => _RR
 
-        ; 1] a1·b1, a2·b2
+        ; 1] a1·(b11 + b12·v), a2·(b22·v)·v
         sparseMulAFp12BLS12381_a11_x => A
         sparseMulAFp12BLS12381_a11_y => B
-        A => sparseMulAFp6BLS12381_a1_x
-        B => sparseMulAFp6BLS12381_a1_y
+        A => sparseMulCFp6BLS12381_a1_x
+        B => sparseMulCFp6BLS12381_a1_y
         sparseMulAFp12BLS12381_a12_x => A
         sparseMulAFp12BLS12381_a12_y => B
-        A => sparseMulAFp6BLS12381_a2_x
-        B => sparseMulAFp6BLS12381_a2_y
+        A => sparseMulCFp6BLS12381_a2_x
+        B => sparseMulCFp6BLS12381_a2_y
         sparseMulAFp12BLS12381_a13_x => A
         sparseMulAFp12BLS12381_a13_y => B
-        A => sparseMulAFp6BLS12381_a3_x
-        B => sparseMulAFp6BLS12381_a3_y
+        A => sparseMulCFp6BLS12381_a3_x
+        B => sparseMulCFp6BLS12381_a3_y
+        sparseMulAFp12BLS12381_b11_x => A
+        sparseMulAFp12BLS12381_b11_y => B
+        A => sparseMulCFp6BLS12381_b1_x
+        B => sparseMulCFp6BLS12381_b1_y
         sparseMulAFp12BLS12381_b12_x => A
         sparseMulAFp12BLS12381_b12_y => B
-        A => sparseMulAFp6BLS12381_b2_x
-        B => sparseMulAFp6BLS12381_b2_y         :CALL(sparseMulAFp6BLS12381)
-        sparseMulAFp6BLS12381_c1_x => A
-        sparseMulAFp6BLS12381_c1_y => B
+        A => sparseMulCFp6BLS12381_b2_x
+        B => sparseMulCFp6BLS12381_b2_y         :CALL(sparseMulCFp6BLS12381)
+        sparseMulCFp6BLS12381_c1_x => A
+        sparseMulCFp6BLS12381_c1_y => B
         A => _a1b1mul1_x
         B => _a1b1mul1_y
-        sparseMulAFp6BLS12381_c2_x => A
-        sparseMulAFp6BLS12381_c2_y => B
+        sparseMulCFp6BLS12381_c2_x => A
+        sparseMulCFp6BLS12381_c2_y => B
         A => _a1b1mul2_x
         B => _a1b1mul2_y
-        sparseMulAFp6BLS12381_c3_x => A
-        sparseMulAFp6BLS12381_c3_y => B
+        sparseMulCFp6BLS12381_c3_x => A
+        sparseMulCFp6BLS12381_c3_y => B
         A => _a1b1mul3_x
         B => _a1b1mul3_y
 
@@ -113,11 +117,7 @@ sparseMulAFp12BLS12381:
         sparseMulAFp12BLS12381_b22_x => A
         sparseMulAFp12BLS12381_b22_y => B
         A => sparseMulBFp6BLS12381_b2_x
-        B => sparseMulBFp6BLS12381_b2_y
-        sparseMulAFp12BLS12381_b23_x => A
-        sparseMulAFp12BLS12381_b23_y => B
-        A => sparseMulBFp6BLS12381_b3_x
-        B => sparseMulBFp6BLS12381_b3_y         :CALL(sparseMulBFp6BLS12381)
+        B => sparseMulBFp6BLS12381_b2_y         :CALL(sparseMulBFp6BLS12381)
         sparseMulBFp6BLS12381_c1_x => A
         sparseMulBFp6BLS12381_c1_y => B
         A => _a2b2mul1_x
@@ -131,31 +131,32 @@ sparseMulAFp12BLS12381:
         A => _a2b2mul3_x
         B => _a2b2mul3_y
 
-        ; 2] c1 = a1·b1 + a2·b2·v
+        ; 2] c1 = a1·(b11 + b12·v) + a2·(b22·v)·v
         _a2b2mul1_x => A
         _a2b2mul1_y => B
-        A => sparseMulAFp6BLS12381_a1_x
-        B => sparseMulAFp6BLS12381_a1_y
+        A => sparseMulBFp6BLS12381_a1_x
+        B => sparseMulBFp6BLS12381_a1_y
         _a2b2mul2_x => A
         _a2b2mul2_y => B
-        A => sparseMulAFp6BLS12381_a2_x
-        B => sparseMulAFp6BLS12381_a2_y
+        A => sparseMulBFp6BLS12381_a2_x
+        B => sparseMulBFp6BLS12381_a2_y
         _a2b2mul3_x => A
         _a2b2mul3_y => B
-        A => sparseMulAFp6BLS12381_a3_x
-        B => sparseMulAFp6BLS12381_a3_y
-        1 => sparseMulAFp6BLS12381_b2_x
-        0 => sparseMulAFp6BLS12381_b2_y         :CALL(sparseMulAFp6BLS12381)
-        sparseMulAFp6BLS12381_c1_x => A
-        sparseMulAFp6BLS12381_c1_y => B
+        A => sparseMulBFp6BLS12381_a3_x
+        B => sparseMulBFp6BLS12381_a3_y
+        1 => sparseMulBFp6BLS12381_b2_x
+        0 => sparseMulBFp6BLS12381_b2_y         :CALL(sparseMulBFp6BLS12381)
+
+        sparseMulBFp6BLS12381_c1_x => A
+        sparseMulBFp6BLS12381_c1_y => B
         A => addFp6BLS12381_a1_x
         B => addFp6BLS12381_a1_y
-        sparseMulAFp6BLS12381_c2_x => A
-        sparseMulAFp6BLS12381_c2_y => B
+        sparseMulBFp6BLS12381_c2_x => A
+        sparseMulBFp6BLS12381_c2_y => B
         A => addFp6BLS12381_a2_x
         B => addFp6BLS12381_a2_y
-        sparseMulAFp6BLS12381_c3_x => A
-        sparseMulAFp6BLS12381_c3_y => B
+        sparseMulBFp6BLS12381_c3_x => A
+        sparseMulBFp6BLS12381_c3_y => B
         A => addFp6BLS12381_a3_x
         B => addFp6BLS12381_a3_y
         _a1b1mul1_x => A
@@ -183,7 +184,7 @@ sparseMulAFp12BLS12381:
         A => sparseMulAFp12BLS12381_c13_x
         B => sparseMulAFp12BLS12381_c13_y
 
-        ; 3] aux = (b12+b22)·v + b23·v²
+        ; 3] aux = b12+b22
         sparseMulAFp12BLS12381_b12_x => A
         sparseMulAFp12BLS12381_b12_y => B
         sparseMulAFp12BLS12381_b22_x => C
@@ -191,7 +192,7 @@ sparseMulAFp12BLS12381:
         E => _aux2_x
         C => _aux2_y
 
-        ; 4] c2 = (a1+a2)·aux - a1·b1 - a2·b2
+        ; 4] c2 = (a1+a2)·[b11 + aux·v] - a1·(b11 + b12·v) - a2·(b22·v)
         sparseMulAFp12BLS12381_a11_x => A
         sparseMulAFp12BLS12381_a11_y => B
         A => addFp6BLS12381_a1_x
@@ -216,36 +217,38 @@ sparseMulAFp12BLS12381:
         sparseMulAFp12BLS12381_a23_y => B
         A => addFp6BLS12381_b3_x
         B => addFp6BLS12381_b3_y                :CALL(addFp6BLS12381)
+
         addFp6BLS12381_c1_x => A
         addFp6BLS12381_c1_y => B
-        A => sparseMulBFp6BLS12381_a1_x
-        B => sparseMulBFp6BLS12381_a1_y
+        A => sparseMulCFp6BLS12381_a1_x
+        B => sparseMulCFp6BLS12381_a1_y
         addFp6BLS12381_c2_x => A
         addFp6BLS12381_c2_y => B
-        A => sparseMulBFp6BLS12381_a2_x
-        B => sparseMulBFp6BLS12381_a2_y
+        A => sparseMulCFp6BLS12381_a2_x
+        B => sparseMulCFp6BLS12381_a2_y
         addFp6BLS12381_c3_x => A
         addFp6BLS12381_c3_y => B
-        A => sparseMulBFp6BLS12381_a3_x
-        B => sparseMulBFp6BLS12381_a3_y
+        A => sparseMulCFp6BLS12381_a3_x
+        B => sparseMulCFp6BLS12381_a3_y
+        sparseMulAFp12BLS12381_b11_x => A
+        sparseMulAFp12BLS12381_b11_y => B
+        A => sparseMulCFp6BLS12381_b1_x
+        B => sparseMulCFp6BLS12381_b1_y
         _aux2_x => A
         _aux2_y => B
-        A => sparseMulBFp6BLS12381_b2_x
-        B => sparseMulBFp6BLS12381_b2_y
-        sparseMulAFp12BLS12381_b23_x => A
-        sparseMulAFp12BLS12381_b23_y => B
-        A => sparseMulBFp6BLS12381_b3_x
-        B => sparseMulBFp6BLS12381_b3_y         :CALL(sparseMulBFp6BLS12381)
-        sparseMulBFp6BLS12381_c1_x => A
-        sparseMulBFp6BLS12381_c1_y => B
+        A => sparseMulCFp6BLS12381_b2_x
+        B => sparseMulCFp6BLS12381_b2_y         :CALL(sparseMulCFp6BLS12381)
+
+        sparseMulCFp6BLS12381_c1_x => A
+        sparseMulCFp6BLS12381_c1_y => B
         A => subFp6BLS12381_a1_x
         B => subFp6BLS12381_a1_y
-        sparseMulBFp6BLS12381_c2_x => A
-        sparseMulBFp6BLS12381_c2_y => B
+        sparseMulCFp6BLS12381_c2_x => A
+        sparseMulCFp6BLS12381_c2_y => B
         A => subFp6BLS12381_a2_x
         B => subFp6BLS12381_a2_y
-        sparseMulBFp6BLS12381_c3_x => A
-        sparseMulBFp6BLS12381_c3_y => B
+        sparseMulCFp6BLS12381_c3_x => A
+        sparseMulCFp6BLS12381_c3_y => B
         A => subFp6BLS12381_a3_x
         B => subFp6BLS12381_a3_y
         _a1b1mul1_x => A
@@ -260,6 +263,7 @@ sparseMulAFp12BLS12381:
         _a1b1mul3_y => B
         A => subFp6BLS12381_b3_x
         B => subFp6BLS12381_b3_y                :CALL(subFp6BLS12381)
+
         subFp6BLS12381_c1_x => A
         subFp6BLS12381_c1_y => B
         A => subFp6BLS12381_a1_x
