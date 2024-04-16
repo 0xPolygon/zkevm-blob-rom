@@ -29,7 +29,7 @@ start:
         0                               :ASSERT ; Ensure it is the beginning of the execution
 
         RCX                             :MSTORE(forkID)
-        RCX - %FORK_ID                  :JMPNZ(failAssert)
+        RCX - %FORK_ID                  :JMPNZ(failAssertForkId)
         B => A                          :MSTORE(oldBlobStateRoot)
 
         ; safety check that the input root is indeed inside the range limit of 4 goldilocks fields elements
