@@ -12,6 +12,8 @@ invalidBlobType:
     $${eventLog(onError, error_invalid_blob_type)}          :JMP(invalidBlob)
 invalidForcedBatches:
     $${eventLog(onError, error_invalid_forced_batches)}     :JMP(invalidBlob)
+invalidBlobKzgVerify:
+    $${eventLog(onError, error_invalid_kzgverify)}          :JMP(invalidBlob)
 invalidBlob:
         ; update flag isInvalid
         1                               :MSTORE(isInvalid)
