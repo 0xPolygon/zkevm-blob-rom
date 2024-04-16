@@ -12,10 +12,20 @@ invalidBlobType:
     $${eventLog(onError, error_invalid_blob_type)}          :JMP(invalidBlob)
 invalidForcedBatches:
     $${eventLog(onError, error_invalid_forced_batches)}     :JMP(invalidBlob)
-invalidBlobKzgVerify:
-    $${eventLog(onError, error_invalid_kzgverify)}          :JMP(invalidBlob)
 invalidBlob:
         ; update flag isInvalid
         1                               :MSTORE(isInvalid)
         ; update finalAccBatchHashData = 0
         0                               :MSTORE(finalAccBatchHashData),JMP(finishBlob)
+
+failAssertForkId:
+    $${eventLog(onError, invalid_forkid)}                   :JMP(failAssert)
+failAssertVersionedHash:
+    $${eventLog(onError, invalid_versioned_hash)}           :JMP(failAssert)
+failAssertKzgVerify:
+    $${eventLog(onError, invalid_kzgVerify)}                :JMP(failAssert)
+
+;@info function to force a failed assert
+failAssert:
+    1 => A
+    2               :ASSERT
