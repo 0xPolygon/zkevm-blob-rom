@@ -26,6 +26,11 @@ CONSTL %BLS12_381_R_4096_inv = 0x73e66878b46ae3705eb6a46a89213de7d3686828bfce5c1
 ; in the G1 subgroup check
 CONSTL %GAMMA = 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaacn
 
+; Encodes 1/ω² = (%W_INV_X + %W_INV_Y·u)·ω⁴
+; It also can be used to encode 1/ω³ = (%W_INV_X + %W_INV_Y·u)·ω³
+CONSTL %W_INV_X = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd556n
+CONSTL %W_INV_Y = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd555n
+
 ; Encodes 1 + u, where u is s.t. u² = - 1
 CONST %BLS12381_EXT_X = 1
 CONST %BLS12381_EXT_Y = 1
