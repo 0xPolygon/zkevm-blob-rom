@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/arith-384",
+    "crypto": "^1.0.1",
     "yargs": "^17.5.1"
   },
   "devDependencies": {

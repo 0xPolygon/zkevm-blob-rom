@@ -3,9 +3,33 @@
 ;;;;;;;;;;;;;;;;;;
 startBlobType1:
         ; B === blobDataLen
-        0 => HASHPOS,RR
-        ; check blobDataLen === BYTES_ETH_BLOB_DATA
-        B - %BYTES_ETH_BLOB_DATA        :JMPNZ(failAssert)
+        0 => HASHPOS
+        ; check blobDataLen === BYTES_ETH_BLOB_DATA + bytes kzgCommitment
+        B - %BYTES_ETH_BLOB_DATA - %BYTES_KZGCOMMITMENT   :JMPNZ(failAssert)
+
+        %INDEX_HASH_S_COMMITMENT => E
+        ${getKzgCommitment()} => A      :MSTORE(kzgCommitmentHash)
+
+        A                               :HASHSDIGEST(E) ; used when type = 1
+        ; TODO
+        32 => D
+        $                               :HASHS(E),MSTORE(kzgCommitment[0])
+        16 => D
+        $                               :HASHS(E),MSTORE(kzgCommitment[1])
+
+        1 + 128*31 => C
+        $ => B                          :MEM_ALIGN_RD
+        %VERSIONED_HASH_VERSION_KZG => A
+        31 + 128*1 + 8192 => C
+        $ => A                          :MEM_ALIGN_RD
+        A + B => A
+        $                               :MLOAD(versionedHash),ASSERT
+
+        ${getKzgProof()}                :MSTORE(kzgProof) ; used when type = 1
+
+        ; HASHPOS start after kzgCommitment --> poseidon(kgzCommitment + blobData)
+        48 => HASHPOS
+        0 => RR
 
 ; check first byte == 0x00 from 32 bytes & copy to polEvalFrBLS12381_pol_eval[i]
 addBlobDataMem:
@@ -39,11 +63,10 @@ addBlobDataMemInvalid:
 callAndAssert:
         ; call polEvalFrBLS12381
                                         :CALL(polEvalFrBLS12381) ; ouputs
-        $ => A                          :MLOAD(polEvalFrBLS12381_y)
-        ; assert output pointY
-        $                               :MLOAD(y),ASSERT
+        $ => A                          :MLOAD(polEvalFrBLS12381_y),CALL(kzgVerify)
         $ => B                          :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
-
+        ; A === 1 --> valid, A === 0 --> invalid
+        A                               :JMPZ(invalidBlobKzgVerify)
         ; add batchData to batchHashData = LinearPoseidon(batchData)
         0 => RR
         31 - 1 - 4 => RCX

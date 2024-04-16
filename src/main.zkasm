@@ -16,6 +16,7 @@ INCLUDE "constantsBLS12381.zkasm"
 
 ; type 0 & 1 & 2 : HASHK(0) --> newBlobAccInputHash
 ; type 0 & 2: HASHK(1) --> blobL2Hashdata = keccak256(blobData)
+; type 1: HASHK(1) --> versionedHash' = keccak256(kzgCommitment)
 ; type 1: HASHP(0) --> z = poseidon(blobData)
 ; type 0 & 1 & 2 : HASHP(X) --> batchHashData
 
@@ -46,8 +47,7 @@ start:
         ${getZkGasLimit()}              :MSTORE(zkGasLimit)
         $0{getType()}                   :MSTORE(type)
         ${getBlobL2HashData()}          :MSTORE(blobL2HashData) ; used when type = 0
-        ${getZ()}                       :MSTORE(polEvalFrBLS12381_z) ; used when type = 1
-        ${getY()}                       :MSTORE(y) ; used when type = 1
+        ${getVersionedHash()}           :MSTORE(versionedHash) ; used when type = 1
         ${getForcedHashData()}          :MSTORE(forcedHashData) ; used when type = 2
 
         $${eventLog(onStartBlob())}
@@ -67,7 +67,7 @@ start:
         A + 1                           :MSTORE(newNumBlob)
 
 ;;;;;;;;;;;;;;;;;;
-;; B - Compute newBlobAccInputHash = keccak256(oldBlobAccInputHash, lastL1InfoTreeIndex, lastL1InfoTreeRoot, timestampLimit, sequenceraddress, zkGasLimit, type, z, y, blobL2Hashdata, forcedHashdata)
+;; B - Compute newBlobAccInputHash = keccak256(oldBlobAccInputHash, lastL1InfoTreeIndex, lastL1InfoTreeRoot, timestampLimit, sequenceraddress, zkGasLimit, type, versionedHash, blobL2Hashdata, forcedHashdata)
 ;;;;;;;;;;;;;;;;;;
 
 
@@ -97,9 +97,7 @@ start:
         ${mem.type}                     :HASHK(E),MLOAD(type)
 
         32 => D
-        ${mem.polEvalFrBLS12381_z}      :HASHK(E),MLOAD(polEvalFrBLS12381_z)
-
-        ${mem.y}                        :HASHK(E),MLOAD(y)
+        ${mem.versionedHash}            :HASHK(E),MLOAD(versionedHash)
 
         ${mem.blobL2HashData}           :HASHK(E),MLOAD(blobL2HashData)
 
@@ -124,10 +122,12 @@ start:
 ;; C.1 - Type 1
 ;;;;;;;;;;;;;;;;;;
 blobData:
+        ${getZ()}                       :MSTORE(polEvalFrBLS12381_z) ; used when type = 1
         $ => A                          :MLOAD(polEvalFrBLS12381_z)
-        ; load z = poseidon(blobData) to HASHP index 0
+        ; load z = poseidon(kzgCommitment + blobData) to HASHP index 0
         %INDEX_Z_HASH_P => E
         A                               :HASHPDIGEST(E)
+        ; blobDataLen = kzgCommitmentLen + blobDataLen
         $ => B                          :HASHPLEN(E), MSTORE(blobDataLen)
 
         ;if type === 1 --> forcedHashData = 0
@@ -243,6 +243,7 @@ INCLUDE "utils-blob.zkasm"
 INCLUDE "errors-blob.zkasm"
 INCLUDE "type-0-2.zkasm"
 INCLUDE "type-1.zkasm"
+INCLUDE "mockKzgVerify.zkasm"
 INCLUDE "end-blob.zkasm"
 INCLUDE "./FRBLS12381/reduceFrBLS12381.zkasm"
 INCLUDE "./FRBLS12381/addFrBLS12381.zkasm"
