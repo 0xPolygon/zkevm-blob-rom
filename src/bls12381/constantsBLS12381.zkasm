@@ -19,6 +19,13 @@ CONSTL %BLS12381_R = 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff0
 CONSTL %BLS12_381_R_MINUS_ONE = %BLS12381_R - 1n
 CONSTL %BLS12_381_R_4096_inv = 0x73e66878b46ae3705eb6a46a89213de7d3686828bfce5c19400fffff00100001n
 
+; This is the the order-3 element of Fp defined by
+; the σ endomorphism defined as:
+;              σ : E(Fp)  ->  E(Fp)
+;                  (x,y) |-> (ɣ·x,y)
+; in the G1 subgroup check
+CONSTL %GAMMA = 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaacn
+
 ; Encodes 1 + u, where u is s.t. u² = - 1
 CONST %BLS12381_EXT_X = 1
 CONST %BLS12381_EXT_Y = 1

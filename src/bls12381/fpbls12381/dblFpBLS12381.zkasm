@@ -1,0 +1,21 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: A,C are assumed to be in the range [0,BLS12381_P)
+;; POST: The result is in the range [0,BLS12381_P)
+;;
+;; dblFpBLS12381:
+;;             in: A ∈ Fp
+;;             out: B = A + A (mod BLS12381_P) ∈ Fp
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; RESOURCES:
+; -----------------------------
+; [steps: 3, bin: 0, arith: 1]
+; -----------------------------
+
+dblFpBLS12381:
+        ; A·1 + A = op (mod BLS12381_P)
+        A => C
+        1 => B
+        %BLS12381_P => D
+        ${(A + A) % D} => B     :ARITH_MOD, RETURN
