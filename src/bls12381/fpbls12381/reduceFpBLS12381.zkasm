@@ -16,5 +16,5 @@ reduceFpBLS12381:
         ; A·1 + 0 = op (mod BLS12381_P)
         1 => B
         0 => C
-        %BLS12381_P => D
+        %BLS12_381_P => D
         ${A % D} => A           :ARITH_MOD, RETURN

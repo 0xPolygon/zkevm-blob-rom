@@ -66,7 +66,7 @@ lineSamePointsBLS12381:
 
 
         ; 2] -3·Q.x·P.x1²
-        %BLS12381_P_MINUS_THREE => A
+        %BLS12_381_P_MINUS_THREE => A
         lineSamePointsBLS12381_Q_x => B         :CALL(mulFpBLS12381)
 
         C => A

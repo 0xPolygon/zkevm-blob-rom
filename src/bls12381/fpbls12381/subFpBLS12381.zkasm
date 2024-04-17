@@ -22,14 +22,14 @@ subFpBLS12381:
         ; 1] Negate C
         ; A·B + 0 = op (mod BLS12381_P)
         C => A
-        %BLS12381_P_MINUS_ONE => B
+        %BLS12_381_P_MINUS_ONE => B
         0 => C
-        %BLS12381_P => D
+        %BLS12_381_P => D
         ${(A*B) % D} => C       :ARITH_MOD
 
         ; 2] Compute A - C
         ; A·1 + (-C) = op (mod BLS12381_P)
         _A_saved => A
         1 => B
-        %BLS12381_P => D
+        %BLS12_381_P => D
         ${(A + C) % D} => C     :ARITH_MOD, RETURN

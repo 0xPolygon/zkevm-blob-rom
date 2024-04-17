@@ -17,5 +17,5 @@ dblFpBLS12381:
         ; A·1 + A = op (mod BLS12381_P)
         A => C
         1 => B
-        %BLS12381_P => D
+        %BLS12_381_P => D
         ${(A + A) % D} => B     :ARITH_MOD, RETURN

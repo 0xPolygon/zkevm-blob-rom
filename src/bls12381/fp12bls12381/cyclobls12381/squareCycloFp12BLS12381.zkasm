@@ -121,7 +121,7 @@ squareCycloFp12BLS12381:
         C => _t21_y
 
        ; 5] c11 = -2·a11 + 3·t11
-        %BLS12381_P - 2n => A
+        %BLS12_381_P - 2n => A
         squareCycloFp12BLS12381_a11_x => C
         squareCycloFp12BLS12381_a11_y => D      :CALL(scalarMulFp2BLS12381)
         E => squareCycloFp12BLS12381_a11_x
@@ -139,7 +139,7 @@ squareCycloFp12BLS12381:
         C => squareCycloFp12BLS12381_c11_y
 
        ; 6] c12 = -2·a12 + 3·t23
-        %BLS12381_P - 2n => A
+        %BLS12_381_P - 2n => A
         squareCycloFp12BLS12381_a12_x => C
         squareCycloFp12BLS12381_a12_y => D      :CALL(scalarMulFp2BLS12381)
         E => squareCycloFp12BLS12381_a12_x
@@ -157,7 +157,7 @@ squareCycloFp12BLS12381:
         C => squareCycloFp12BLS12381_c12_y
 
        ; 7] c13 = -2·a13 + 3·t13
-        %BLS12381_P - 2n => A
+        %BLS12_381_P - 2n => A
         squareCycloFp12BLS12381_a13_x => C
         squareCycloFp12BLS12381_a13_y => D      :CALL(scalarMulFp2BLS12381)
         E => squareCycloFp12BLS12381_a13_x

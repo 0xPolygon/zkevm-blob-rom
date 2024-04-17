@@ -64,7 +64,7 @@ halfPairingBLS12381:
 
     ; Let's check whether some P coordinate are too big
     0 => A
-    %BLS12381_P => D
+    %BLS12_381_P => D
 
     halfPairingBLS12381_P_x => B,C
     ; 0·B + C = op (mod BLS12381_P)

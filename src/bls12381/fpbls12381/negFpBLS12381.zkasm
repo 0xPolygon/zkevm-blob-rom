@@ -15,7 +15,7 @@
 
 negFpBLS12381:
         ; A·B + 0 = op (mod BLS12381_P)
-        %BLS12381_P_MINUS_ONE => B
+        %BLS12_381_P_MINUS_ONE => B
         0 => C
-        %BLS12381_P => D
+        %BLS12_381_P => D
         ${(A*B) % D} => B       :ARITH_MOD, RETURN
