@@ -1,40 +1,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP12 arithmetic
 ;;
-;; Optimal Ate Pairing e: G1 x G2 -> GT over the BLS12381 curve
-;;  where G1 = E(Fp)[r], G2 = E'(Fp2)[r] and GT = μ_r (the group of r-th roots of unity over Fp12*) over the curves:
-;;              E/Fp: y² = x³ + 4,    E'/Fp2: y'² = x'³ + 4·(1+u)
-;;
-;;  pairingBLS12381:
+;; halfPairingBLS12381:
 ;;          input: P ∈ G1 and Q ∈ G2
-;;          output: e(P,Q) := conjugate(f_{|x|,Q}(P))^{(p¹²-1)/r} ∈ GT
+;;          output:
+;;                  · conjugate(f_{|x|,Q}(P)) ∈ Fp12, if everything went well
+;;                  · An error code in B, different from 0, otherwise (check list below)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-VAR GLOBAL pairingBLS12381_P_x
-VAR GLOBAL pairingBLS12381_P_y
-VAR GLOBAL pairingBLS12381_Q_x1
-VAR GLOBAL pairingBLS12381_Q_x2
-VAR GLOBAL pairingBLS12381_Q_y1
-VAR GLOBAL pairingBLS12381_Q_y2
-
-VAR GLOBAL pairingBLS12381_out11_x
-VAR GLOBAL pairingBLS12381_out11_y
-VAR GLOBAL pairingBLS12381_out12_x
-VAR GLOBAL pairingBLS12381_out12_y
-VAR GLOBAL pairingBLS12381_out13_x
-VAR GLOBAL pairingBLS12381_out13_y
-VAR GLOBAL pairingBLS12381_out21_x
-VAR GLOBAL pairingBLS12381_out21_y
-VAR GLOBAL pairingBLS12381_out22_x
-VAR GLOBAL pairingBLS12381_out22_y
-VAR GLOBAL pairingBLS12381_out23_x
-VAR GLOBAL pairingBLS12381_out23_y
-
-VAR GLOBAL _P_is_zero
-VAR GLOBAL _Q_is_zero
-VAR GLOBAL _P_and_Q_are_zero
-
-VAR GLOBAL _RR
 
 ; ERROR CODES (B)
 ; 0 - no error
@@ -49,6 +22,35 @@ VAR GLOBAL _RR
 ; 9 - Q is not in tE
 ; 10 - Q is not in G2
 
+; Note: This function is the subgroup checks followed by the Miller loop. The final exponentiation
+;       is yet to be performed to complete the pairing computation
+
+VAR GLOBAL halfPairingBLS12381_P_x
+VAR GLOBAL halfPairingBLS12381_P_y
+VAR GLOBAL halfPairingBLS12381_Q_x1
+VAR GLOBAL halfPairingBLS12381_Q_x2
+VAR GLOBAL halfPairingBLS12381_Q_y1
+VAR GLOBAL halfPairingBLS12381_Q_y2
+
+VAR GLOBAL halfPairingBLS12381_out11_x
+VAR GLOBAL halfPairingBLS12381_out11_y
+VAR GLOBAL halfPairingBLS12381_out12_x
+VAR GLOBAL halfPairingBLS12381_out12_y
+VAR GLOBAL halfPairingBLS12381_out13_x
+VAR GLOBAL halfPairingBLS12381_out13_y
+VAR GLOBAL halfPairingBLS12381_out21_x
+VAR GLOBAL halfPairingBLS12381_out21_y
+VAR GLOBAL halfPairingBLS12381_out22_x
+VAR GLOBAL halfPairingBLS12381_out22_y
+VAR GLOBAL halfPairingBLS12381_out23_x
+VAR GLOBAL halfPairingBLS12381_out23_y
+
+VAR GLOBAL _P_is_zero
+VAR GLOBAL _Q_is_zero
+VAR GLOBAL _P_and_Q_are_zero
+
+VAR GLOBAL _RR
+
 ; RESOURCES (not considering error paths):
 ; -------------------------------------------
 ; PATH 1 P == 𝒪 and Q == 𝒪:     [steps: 40,  bin: 12, arith: 0]
@@ -57,14 +59,14 @@ VAR GLOBAL _RR
 ; PATH 4 P,Q != 𝒪:              [steps: 342758, bin: 1452, arith: 28738] <--- w.c.
 ; -------------------------------------------
 
-pairingBLS12381:
+halfPairingBLS12381:
     RR => _RR
 
     ; Let's check whether some P coordinate are too big
     0 => A
     %BLS12381_P => D
 
-    pairingBLS12381_P_x => B,C
+    halfPairingBLS12381_P_x => B,C
     ; 0·B + C = op (mod BLS12381_P)
     ${C % D} => C                               :ARITH_MOD
     B - C => C                                  :JMPNZ(_Px_too_big)
@@ -76,7 +78,7 @@ pairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_Px_too_big)
     ROTL_C => C                                 :JMPNZ(_Px_too_big)
 
-    pairingBLS12381_P_y => B,C
+    halfPairingBLS12381_P_y => B,C
     ; 0·B + C = op (mod BLS12381_P)
     ${C % D} => C                               :ARITH_MOD
     B - C => C                                  :JMPNZ(_Py_too_big)
@@ -89,7 +91,7 @@ pairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_Py_too_big)
 
     ; Let's check whether some Q coordinate are too big
-    pairingBLS12381_Q_x1 => B,C
+    halfPairingBLS12381_Q_x1 => B,C
     ; 0·B + C = op (mod BLS12381_P)
     ${C % D} => C                               :ARITH_MOD
     B - C => C                                  :JMPNZ(_Qx1_too_big)
@@ -102,7 +104,7 @@ pairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
 
 
-    pairingBLS12381_Q_x2 => B,C
+    halfPairingBLS12381_Q_x2 => B,C
     ; 0·B + C = op (mod BLS12381_P)
     ${C % D} => C                               :ARITH_MOD
     B - C => C                                  :JMPNZ(_Qx2_too_big)
@@ -114,7 +116,7 @@ pairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
     ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
 
-    pairingBLS12381_Q_y1 => B,C
+    halfPairingBLS12381_Q_y1 => B,C
     ; 0·B + C = op (mod BLS12381_P)
     ${C % D} => C                               :ARITH_MOD
     B - C => C                                  :JMPNZ(_Qy1_too_big)
@@ -126,7 +128,7 @@ pairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
     ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
 
-    pairingBLS12381_Q_y2 => B,C
+    halfPairingBLS12381_Q_y2 => B,C
     ; 0·B + C = op (mod BLS12381_P)
     ${C % D} => C                               :ARITH_MOD
     B - C => C                                  :JMPNZ(_Qy2_too_big)
@@ -144,7 +146,7 @@ pairingBLS12381:
     0 => _P_and_Q_are_zero
 
     ; Is P = 𝒪?
-    pairingBLS12381_P_x => C                    :JMPNZ(_continue_to_Q)
+    halfPairingBLS12381_P_x => C                    :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
@@ -152,7 +154,7 @@ pairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
-    pairingBLS12381_P_y => C                    :JMPNZ(_continue_to_Q)
+    halfPairingBLS12381_P_y => C                    :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
@@ -167,7 +169,7 @@ pairingBLS12381:
 _continue_to_Q:
 
     ; Is Q = 𝒪?
-    pairingBLS12381_Q_x1 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_x1 => C                   :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -175,7 +177,7 @@ _continue_to_Q:
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
-    pairingBLS12381_Q_x2 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_x2 => C                   :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -183,7 +185,7 @@ _continue_to_Q:
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
-    pairingBLS12381_Q_y1 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_y1 => C                   :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -191,7 +193,7 @@ _continue_to_Q:
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
-    pairingBLS12381_Q_y2 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_y2 => C                   :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -218,12 +220,12 @@ _continue_P_is_zero:
     _Q_is_zero                                  :JMPNZ(_result_is_one)
 
     ; Check that Q ∈ G2
-    pairingBLS12381_Q_x1 => A
-    pairingBLS12381_Q_x2 => B
+    halfPairingBLS12381_Q_x1 => A
+    halfPairingBLS12381_Q_x2 => B
     A => subCheckG2BLS12381_Q_x1
     B => subCheckG2BLS12381_Q_x2
-    pairingBLS12381_Q_y1 => A
-    pairingBLS12381_Q_y2 => B
+    halfPairingBLS12381_Q_y1 => A
+    halfPairingBLS12381_Q_y2 => B
     A => subCheckG2BLS12381_Q_y1
     B => subCheckG2BLS12381_Q_y2                 :CALL(subCheckG2BLS12381) ; A = 1, if Q ∈ G2
                                                                            ; A = 0, otherwise -> B = 0, if Q is not in tE
@@ -236,8 +238,8 @@ _continue_Q_is_zero:
     ; before (w.c.) -> [steps: 28, bin: 12, arith: 0]
 
     ; Check that P ∈ G1
-    pairingBLS12381_P_x => A
-    pairingBLS12381_P_y => B
+    halfPairingBLS12381_P_x => A
+    halfPairingBLS12381_P_y => B
     A => subCheckG1BLS12381_P_x
     B => subCheckG1BLS12381_P_y                 :CALL(subCheckG1BLS12381) ; A = 1, if P ∈ G1
                                                                           ; A = 0, otherwise -> B = 0, if P is not in E
@@ -250,18 +252,18 @@ _result_is_one:
     ; before (w.c.) -> [steps: 27, bin: 12, arith: 0]
 
     ; e(𝒪,Q) = e(P,𝒪) = e(𝒪,𝒪) = 1
-    1 => pairingBLS12381_out11_x
-    0 => pairingBLS12381_out11_y
-    0 => pairingBLS12381_out12_x
-    0 => pairingBLS12381_out12_y
-    0 => pairingBLS12381_out13_x
-    0 => pairingBLS12381_out13_y
-    0 => pairingBLS12381_out21_x
-    0 => pairingBLS12381_out21_y
-    0 => pairingBLS12381_out22_x
-    0 => pairingBLS12381_out22_y
-    0 => pairingBLS12381_out23_x
-    0 => pairingBLS12381_out23_y
+    1 => halfPairingBLS12381_out11_x
+    0 => halfPairingBLS12381_out11_y
+    0 => halfPairingBLS12381_out12_x
+    0 => halfPairingBLS12381_out12_y
+    0 => halfPairingBLS12381_out13_x
+    0 => halfPairingBLS12381_out13_y
+    0 => halfPairingBLS12381_out21_x
+    0 => halfPairingBLS12381_out21_y
+    0 => halfPairingBLS12381_out22_x
+    0 => halfPairingBLS12381_out22_y
+    0 => halfPairingBLS12381_out23_x
+    0 => halfPairingBLS12381_out23_y
 
     0 => B                                      :JMP(_end)
 
@@ -272,8 +274,8 @@ _P_subgroup_check:
     ; before (w.c.) -> [steps: 28, bin: 12, arith: 0]
 
     ; Check that P ∈ G1
-    pairingBLS12381_P_x => A
-    pairingBLS12381_P_y => B
+    halfPairingBLS12381_P_x => A
+    halfPairingBLS12381_P_y => B
     A => subCheckG1BLS12381_P_x
     B => subCheckG1BLS12381_P_y                 :CALL(subCheckG1BLS12381) ; A = 1, if P ∈ G1
                                                                           ; A = 0, otherwise -> B = 0, if P is not in E
@@ -284,12 +286,12 @@ _P_subgroup_check:
 
 _Q_subgroup_check:
     ; Check that Q ∈ G2
-    pairingBLS12381_Q_x1 => A
-    pairingBLS12381_Q_x2 => B
+    halfPairingBLS12381_Q_x1 => A
+    halfPairingBLS12381_Q_x2 => B
     A => subCheckG2BLS12381_Q_x1
     B => subCheckG2BLS12381_Q_x2
-    pairingBLS12381_Q_y1 => A
-    pairingBLS12381_Q_y2 => B
+    halfPairingBLS12381_Q_y1 => A
+    halfPairingBLS12381_Q_y2 => B
     A => subCheckG2BLS12381_Q_y1
     B => subCheckG2BLS12381_Q_y2                 :CALL(subCheckG2BLS12381) ; A = 1, if Q ∈ G2
                                                                            ; A = 0, otherwise -> B = 0, if Q is not in tE
@@ -299,14 +301,14 @@ _Q_subgroup_check:
     B                                           :JMPZ(_Q_is_not_in_tE, _Q_is_not_in_G2)
 
 _Miller_loop:
-    pairingBLS12381_P_x => A
-    pairingBLS12381_P_y => B
+    halfPairingBLS12381_P_x => A
+    halfPairingBLS12381_P_y => B
     A => millerLoopBLS12381_P_x
     B => millerLoopBLS12381_P_y
-    pairingBLS12381_Q_x1 => A
-    pairingBLS12381_Q_x2 => B
-    pairingBLS12381_Q_y1 => C
-    pairingBLS12381_Q_y2 => D
+    halfPairingBLS12381_Q_x1 => A
+    halfPairingBLS12381_Q_x2 => B
+    halfPairingBLS12381_Q_y1 => C
+    halfPairingBLS12381_Q_y2 => D
     A => millerLoopBLS12381_Q_x1
     B => millerLoopBLS12381_Q_x2
     C => millerLoopBLS12381_Q_y1
@@ -315,53 +317,28 @@ _Miller_loop:
 _final_exponentiation:
     millerLoopBLS12381_f11_x => A
     millerLoopBLS12381_f11_y => B
-    A => finalExpBLS12381_f11_x
-    B => finalExpBLS12381_f11_y
+    A => halfPairingBLS12381_out11_x
+    B => halfPairingBLS12381_out11_y
     millerLoopBLS12381_f12_x => A
     millerLoopBLS12381_f12_y => B
-    A => finalExpBLS12381_f12_x
-    B => finalExpBLS12381_f12_y
+    A => halfPairingBLS12381_out12_x
+    B => halfPairingBLS12381_out12_y
     millerLoopBLS12381_f13_x => A
     millerLoopBLS12381_f13_y => B
-    A => finalExpBLS12381_f13_x
-    B => finalExpBLS12381_f13_y
+    A => halfPairingBLS12381_out13_x
+    B => halfPairingBLS12381_out13_y
     millerLoopBLS12381_f21_x => A
     millerLoopBLS12381_f21_y => B
-    A => finalExpBLS12381_f21_x
-    B => finalExpBLS12381_f21_y
+    A => halfPairingBLS12381_out21_x
+    B => halfPairingBLS12381_out21_y
     millerLoopBLS12381_f22_x => A
     millerLoopBLS12381_f22_y => B
-    A => finalExpBLS12381_f22_x
-    B => finalExpBLS12381_f22_y
+    A => halfPairingBLS12381_out22_x
+    B => halfPairingBLS12381_out22_y
     millerLoopBLS12381_f23_x => A
     millerLoopBLS12381_f23_y => B
-    A => finalExpBLS12381_f23_x
-    B => finalExpBLS12381_f23_y                 :CALL(finalExpBLS12381)
-
-    finalExpBLS12381_f11_x => A
-    finalExpBLS12381_f11_y => B
-    A => pairingBLS12381_out11_x
-    B => pairingBLS12381_out11_y
-    finalExpBLS12381_f12_x => A
-    finalExpBLS12381_f12_y => B
-    A => pairingBLS12381_out12_x
-    B => pairingBLS12381_out12_y
-    finalExpBLS12381_f13_x => A
-    finalExpBLS12381_f13_y => B
-    A => pairingBLS12381_out13_x
-    B => pairingBLS12381_out13_y
-    finalExpBLS12381_f21_x => A
-    finalExpBLS12381_f21_y => B
-    A => pairingBLS12381_out21_x
-    B => pairingBLS12381_out21_y
-    finalExpBLS12381_f22_x => A
-    finalExpBLS12381_f22_y => B
-    A => pairingBLS12381_out22_x
-    B => pairingBLS12381_out22_y
-    finalExpBLS12381_f23_x => A
-    finalExpBLS12381_f23_y => B
-    A => pairingBLS12381_out23_x
-    B => pairingBLS12381_out23_y
+    A => halfPairingBLS12381_out23_x
+    B => halfPairingBLS12381_out23_y
 
     0 => B                                      :JMP(_end)
 
