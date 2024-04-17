@@ -3,7 +3,7 @@
 ;;
 ;; expByXCompCycloFp12BLS12381:
 ;;             in: a = a0 + a2·w + a4·w² + a1·w³ + a3·w⁴ + a5·w⁵ ∈ GΦ6(p²), where ai ∈ Fp2
-;;             out: a^x = c0 + c2·w + c4·w² + c1·w³ + c3·w⁴ + c5·w⁵ ∈ ∈ GΦ6(p²), where where x = 0xd201000000010000
+;;             out: a^|x| = c0 + c2·w + c4·w² + c1·w³ + c3·w⁴ + c5·w⁵ ∈ ∈ GΦ6(p²), where where |x| = 0xd201000000010000
 ;;
 ;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

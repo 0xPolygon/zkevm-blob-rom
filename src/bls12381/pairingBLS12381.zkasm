@@ -34,28 +34,6 @@ VAR GLOBAL _P_is_zero
 VAR GLOBAL _Q_is_zero
 VAR GLOBAL _P_and_Q_are_zero
 
-VAR GLOBAL _sigma_P_x
-VAR GLOBAL _sigma_P_x2
-VAR GLOBAL _neg_P_y
-VAR GLOBAL _P_x3
-VAR GLOBAL _Q_RHS_x
-VAR GLOBAL _Q_RHS_y
-
-
-VAR GLOBAL _phi_Q_x1
-VAR GLOBAL _phi_Q_x2
-VAR GLOBAL _phi_Q_y1
-VAR GLOBAL _phi_Q_y2
-VAR GLOBAL _frob_Q_x1
-VAR GLOBAL _frob_Q_x2
-VAR GLOBAL _frob_Q_y1
-VAR GLOBAL _frob_Q_y2
-VAR GLOBAL _psi_Q_x1
-VAR GLOBAL _psi_Q_x2
-VAR GLOBAL _psi_Q_y1
-VAR GLOBAL _psi_Q_y2
-
-
 VAR GLOBAL _RR
 
 ; ERROR CODES (B)
@@ -82,325 +60,210 @@ VAR GLOBAL _RR
 pairingBLS12381:
     RR => _RR
 
-    ; Let's check whether some P coordinate is too big
+    ; Let's check whether some P coordinate are too big
     0 => A
     %BLS12381_P => D
 
     pairingBLS12381_P_x => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C               :ARITH_MOD
-    B - C => C                  :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
-    ROTL_C => C                 :JMPNZ(_Px_too_big)
+    ${C % D} => C                               :ARITH_MOD
+    B - C => C                                  :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
+    ROTL_C => C                                 :JMPNZ(_Px_too_big)
 
     pairingBLS12381_P_y => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C               :ARITH_MOD
-    B - C => C                  :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
-    ROTL_C => C                 :JMPNZ(_Py_too_big)
+    ${C % D} => C                               :ARITH_MOD
+    B - C => C                                  :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
+    ROTL_C => C                                 :JMPNZ(_Py_too_big)
 
-    ; Let's check whether some Q coordinate is too big
+    ; Let's check whether some Q coordinate are too big
     pairingBLS12381_Q_x1 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C               :ARITH_MOD
-    B - C => C                  :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx1_too_big)
+    ${C % D} => C                               :ARITH_MOD
+    B - C => C                                  :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
 
 
     pairingBLS12381_Q_x2 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C               :ARITH_MOD
-    B - C => C                  :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qx2_too_big)
+    ${C % D} => C                               :ARITH_MOD
+    B - C => C                                  :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
 
     pairingBLS12381_Q_y1 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C               :ARITH_MOD
-    B - C => C                  :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy1_too_big)
+    ${C % D} => C                               :ARITH_MOD
+    B - C => C                                  :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
 
     pairingBLS12381_Q_y2 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C               :ARITH_MOD
-    B - C => C                  :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
-    ROTL_C => C                 :JMPNZ(_Qy2_too_big)
+    ${C % D} => C                               :ARITH_MOD
+    B - C => C                                  :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+    ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
+
+    ; Reset the zero variables
+    0 => _P_is_zero
+    0 => _Q_is_zero
+    0 => _P_and_Q_are_zero
 
     ; Is P = 𝒪?
-    pairingBLS12381_P_x => C    :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    pairingBLS12381_P_y => C    :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_P_is_not_zero)
-    ROTL_C => C                 :JMPZ(_continue_P_is_zero)
+    pairingBLS12381_P_x => C                    :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    pairingBLS12381_P_y => C                    :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
+    ROTL_C => C                                 :JMPNZ(_continue_to_Q)
 
-_continue_P_is_not_zero:
+    ; If got here, mark P as zero
+    1 => _P_is_zero
+
+_continue_to_Q:
 
     ; Is Q = 𝒪?
-    pairingBLS12381_Q_x1 => C   :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    pairingBLS12381_Q_x2 => C   :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    pairingBLS12381_Q_y1 => C   :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    pairingBLS12381_Q_y2 => C   :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPNZ(_continue_Q_is_not_zero)
-    ROTL_C => C                 :JMPZ(_continue_Q_is_zero)
+    pairingBLS12381_Q_x1 => C                   :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    pairingBLS12381_Q_x2 => C                   :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    pairingBLS12381_Q_y1 => C                   :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    pairingBLS12381_Q_y2 => C                   :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
+    ROTL_C => C                                 :JMPNZ(_continue_to_checks)
 
-_continue_Q_is_not_zero:
-                                :JMP(_P_subgroup_check)
+    ; If got here, mark Q as zero
+    1 => _Q_is_zero
+
+_continue_to_checks:
+
+    _P_is_zero                                  :JMPNZ(_continue_P_is_zero)
+    _Q_is_zero                                  :JMPNZ(_continue_Q_is_zero)
+
+    ; P,Q != 𝒪
+                                                :JMP(_P_subgroup_check)
 
 ; Begin of branching
 _continue_P_is_zero:
     ; before (w.c.) -> [steps: 19, bin: 8, arith: 0]
 
-    ; Is Q = 𝒪?
-    pairingBLS12381_Q_x1 => A
-    $       :EQ, JMPNC(__pairingBLS12381_Q_continue2)
-    pairingBLS12381_Q_x2 => A
-    $       :EQ, JMPNC(__pairingBLS12381_Q_continue2)
-    pairingBLS12381_Q_y1 => A
-    $       :EQ, JMPNC(__pairingBLS12381_Q_continue2)
-    pairingBLS12381_Q_y2 => A
-    $       :EQ, JMPC(_continue_P_and_Q_are_zero)
-            __pairingBLS12381_Q_continue2:
-    ; [steps: 27, bin: 12, arith: 0]
+    _Q_is_zero                                  :JMPNZ(_result_is_one)
 
     ; Check that Q ∈ G2
-    ; Q in G2 iff Q in E' and psi(Q) == [6x²]Q as proven in Proposition 3 of 2022/352
-
-    ; 1] Check if Q ∈ E'(Fp2)
-    ; Q in E' iff (Q.y1 + Q.y2·u)² == (Q.x1 + Q.x2·u)³ + 3/(9+u)
-    ; 1.1] Compute LHS and RHS
     pairingBLS12381_Q_x1 => A
-    pairingBLS12381_Q_x2 => B, CALL(squareFp2BLS12381)
-    ; E + C·u = (Q.x1 + Q.x2·u)²
-    ; [steps: 34, bin: 12, arith: 1]
-
-    E => A
-    C => B
-    pairingBLS12381_Q_x1 => C
-    pairingBLS12381_Q_x2 => D, CALL(mulFp2BLS12381)
-    ; E + C·u = (Q.x1 + Q.x2·u)³
-    ; [steps: 41, bin: 12, arith: 2]
-
-    E => A
-    C => B
-    %BLS12381_ETWISTED_B_X => C
-    %BLS12381_ETWISTED_B_Y => D    :CALL(addFp2BLS12381)
-    ; E + C·u = (Q.x1 + Q.x2·u)³ + 3/(9+u)
-    E => _Q_RHS_x
-    C => _Q_RHS_y
-    ; [steps: 50, bin: 12, arith: 3]
-
+    pairingBLS12381_Q_x2 => B
+    A => subCheckG2BLS12381_Q_x1
+    B => subCheckG2BLS12381_Q_x2
     pairingBLS12381_Q_y1 => A
-    pairingBLS12381_Q_y2 => B, CALL(squareFp2BLS12381)
-    ; E + C·u = (Q.y1 + Q.y2·u)²
-    ; [steps: 57, bin: 12, arith: 4]
-
-    ; 1.2] Check if LHS == RHS
-    E => A
-    _Q_RHS_x => B
-    $       :EQ, JMPNC(_Q_is_not_in_G2)
-
-    C => A
-    _Q_RHS_y => B
-    $       :EQ, JMPNC(_Q_is_not_in_G2)
-    ; [steps: 63, bin: 14, arith: 4]
-
-    ; 2] Check if psi(Q) == [6x²]Q
-    ; 2.1] Compute psi(Q)
-    %BLS12381_P => A
-    pairingBLS12381_Q_x2 => B
-    $ => D      :SUB                                ; D = -Qx2
-    %FROBENIUS_GAMMA121 => A
-    %FROBENIUS_GAMMA122 => B
-    pairingBLS12381_Q_x1 => C, CALL(mulFp2BLS12381)
-    E => _psi_x1
-    C => _psi_x2
-    ; [steps: 74, bin: 15, arith: 5]
-
-    %BLS12381_P => A
     pairingBLS12381_Q_y2 => B
-    $ => D      :SUB                                ; D = -Qy2
-    %FROBENIUS_GAMMA131 => A
-    %FROBENIUS_GAMMA132 => B
-    pairingBLS12381_Q_y1 => C, CALL(mulFp2BLS12381)
-    E => _psi_y1
-    C => _psi_y2
-    ; [steps: 85, bin: 16, arith: 6]
+    A => subCheckG2BLS12381_Q_y1
+    B => subCheckG2BLS12381_Q_y2                 :CALL(subCheckG2BLS12381) ; A = 1, if Q ∈ G2
+                                                                           ; A = 0, otherwise -> B = 0, if Q is not in tE
+                                                                           ;                     B = 1, if Q is not in G2
 
-    ; 2.2] Compute [6x²]Q
-    pairingBLS12381_Q_x1 => A
-    pairingBLS12381_Q_x2 => B
-    pairingBLS12381_Q_y1 => C
-    pairingBLS12381_Q_y2 => D
-    A => scalarMulPointBy6X2FP2BLS12381_P_x1
-    B => scalarMulPointBy6X2FP2BLS12381_P_x2
-    C => scalarMulPointBy6X2FP2BLS12381_P_y1
-    D => scalarMulPointBy6X2FP2BLS12381_P_y2, CALL(scalarMulPointBy6X2FP2BLS12381)
-    ; [steps: 20912, bin: 557, arith: 1804]
-
-    ; 2.3] Check if psi(Q) == [6x²]Q
-    _psi_x1 => A
-    scalarMulPointBy6X2FP2BLS12381_Q_x1 => B
-    $           :EQ, JMPNC(_Q_is_not_in_G2)
-
-    _psi_x2 => A
-    scalarMulPointBy6X2FP2BLS12381_Q_x2 => B
-    $           :EQ, JMPNC(_Q_is_not_in_G2)
-
-    _psi_y1 => A
-    scalarMulPointBy6X2FP2BLS12381_Q_y1 => B
-    $           :EQ, JMPNC(_Q_is_not_in_G2)
-
-    _psi_y2 => A
-    scalarMulPointBy6X2FP2BLS12381_Q_y2 => B
-    $           :EQ, JMPNC(_Q_is_not_in_G2)
-    ; [steps: 20924, bin: 561, arith: 1804]
-
-    ; e(O,Q) = 1
-    1n      :MSTORE(pairingBLS12381_out11_x)
-    0n      :MSTORE(pairingBLS12381_out11_y)
-    0n      :MSTORE(pairingBLS12381_out12_x)
-    0n      :MSTORE(pairingBLS12381_out12_y)
-    0n      :MSTORE(pairingBLS12381_out13_x)
-    0n      :MSTORE(pairingBLS12381_out13_y)
-    0n      :MSTORE(pairingBLS12381_out21_x)
-    0n      :MSTORE(pairingBLS12381_out21_y)
-    0n      :MSTORE(pairingBLS12381_out22_x)
-    0n      :MSTORE(pairingBLS12381_out22_y)
-    0n      :MSTORE(pairingBLS12381_out23_x)
-    0n      :MSTORE(pairingBLS12381_out23_y)
-
-    0 => B     :JMP(_end)
-
-    ; till the end -> [steps: 20939, bin: 561, arith: 1804]
+    A                                           :JMPNZ(_result_is_one)
+    B                                           :JMPZ(_Q_is_not_in_tE, _Q_is_not_in_G2)
 
 _continue_Q_is_zero:
     ; before (w.c.) -> [steps: 28, bin: 12, arith: 0]
 
     ; Check that P ∈ G1
-    ; P in G1 iff (Py)² == (Px)³ + 3 (mod p)
-    ; 1] Compute LHS and RHS
-    $ => A,B    :MLOAD(pairingBLS12381_P_x), CALL(mulFpBLS12381); C = (Px)²
-    C => A                                         ; A = (Px)²
-    pairingBLS12381_P_x => B, CALL(mulFpBLS12381); C = (Px)³
+    pairingBLS12381_P_x => A
+    pairingBLS12381_P_y => B
+    A => subCheckG1BLS12381_P_x
+    B => subCheckG1BLS12381_P_y                 :CALL(subCheckG1BLS12381) ; A = 1, if P ∈ G1
+                                                                          ; A = 0, otherwise -> B = 0, if P is not in E
+                                                                          ;                     B = 1, if P is not in G1
 
-    %BLS12381_E_B => A     :CALL(addFpBLS12381)                  ; C = (Px)³ + 3
-    C => _P_x3               ; _P_x3 = (Px)³ + 3
+    A                                           :JMPNZ(_result_is_one)
+    B                                           :JMPZ(_P_is_not_in_E, _P_is_not_in_G1)
 
-    $ => A,B    :MLOAD(pairingBLS12381_P_y), CALL(mulFpBLS12381); C = (Py)²
-    ; [steps: 78, bin: 16, arith: 8]
-
-    ; 2] Check if LHS == RHS
-    C => A
-    _P_x3 => B
-    $           :EQ, JMPNC(_P_is_not_in_G1)
-
-    ; e(P,O) = 1
-    1n      :MSTORE(pairingBLS12381_out11_x)
-    0n      :MSTORE(pairingBLS12381_out11_y)
-    0n      :MSTORE(pairingBLS12381_out12_x)
-    0n      :MSTORE(pairingBLS12381_out12_y)
-    0n      :MSTORE(pairingBLS12381_out13_x)
-    0n      :MSTORE(pairingBLS12381_out13_y)
-    0n      :MSTORE(pairingBLS12381_out21_x)
-    0n      :MSTORE(pairingBLS12381_out21_y)
-    0n      :MSTORE(pairingBLS12381_out22_x)
-    0n      :MSTORE(pairingBLS12381_out22_y)
-    0n      :MSTORE(pairingBLS12381_out23_x)
-    0n      :MSTORE(pairingBLS12381_out23_y)
-
-    0 => B     :JMP(_end)
-
-    ; till the end -> [steps: 96, bin: 17, arith: 8]
-
-_continue_P_and_Q_are_zero:
+_result_is_one:
     ; before (w.c.) -> [steps: 27, bin: 12, arith: 0]
 
-    ; e(O,O) = 1
-    1n      :MSTORE(pairingBLS12381_out11_x)
-    0n      :MSTORE(pairingBLS12381_out11_y)
-    0n      :MSTORE(pairingBLS12381_out12_x)
-    0n      :MSTORE(pairingBLS12381_out12_y)
-    0n      :MSTORE(pairingBLS12381_out13_x)
-    0n      :MSTORE(pairingBLS12381_out13_y)
-    0n      :MSTORE(pairingBLS12381_out21_x)
-    0n      :MSTORE(pairingBLS12381_out21_y)
-    0n      :MSTORE(pairingBLS12381_out22_x)
-    0n      :MSTORE(pairingBLS12381_out22_y)
-    0n      :MSTORE(pairingBLS12381_out23_x)
-    0n      :MSTORE(pairingBLS12381_out23_y)
+    ; e(𝒪,Q) = e(P,𝒪) = e(𝒪,𝒪) = 1
+    1 => pairingBLS12381_out11_x
+    0 => pairingBLS12381_out11_y
+    0 => pairingBLS12381_out12_x
+    0 => pairingBLS12381_out12_y
+    0 => pairingBLS12381_out13_x
+    0 => pairingBLS12381_out13_y
+    0 => pairingBLS12381_out21_x
+    0 => pairingBLS12381_out21_y
+    0 => pairingBLS12381_out22_x
+    0 => pairingBLS12381_out22_y
+    0 => pairingBLS12381_out23_x
+    0 => pairingBLS12381_out23_y
 
-    0 => B     :JMP(_end)
+    0 => B                                      :JMP(_end)
 
     ; till the end -> [steps: 40, bin: 12, arith: 0]
 ; End of branching
@@ -409,183 +272,31 @@ _P_subgroup_check:
     ; before (w.c.) -> [steps: 28, bin: 12, arith: 0]
 
     ; Check that P ∈ G1
-    ; P in G1 iff P ∈ E(Fp) and [(x²-1)/3]([2]σ(P) - P - σ²(P)) == σ²(P), where σ(x,y) = (ɣ·x,y), as proven in 2019/814
-
-    ; 1] Check if P ∈ E(Fp) iff (Py)² == (Px)³ + 4 (mod p)
-    pairingBLS12381_P_x => A    :CALL(squareFpBLS12381)
-
-    pairingBLS12381_P_x => A    :CALL(mulFpBLS12381)
-
-    4 => A                      :CALL(addFpBLS12381)
-    C => _P_x3
-
-    pairingBLS12381_P_y => A    :CALL(squareFpBLS12381)
-
-    _P_x3 => C
-    B - C => C                  :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-    ROTL_C => C                 :JMPNZ(_P_is_not_in_E)
-
-    ; 2] Check if [(x²-1)/3]([2]σ(P) - P - σ²(P)) == σ²(P), where σ(x,y) = (ɣ·x,y)
     pairingBLS12381_P_x => A
-    %GAMMA => B                     :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
-    C => A,_sigma_P_x               :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
-    C => _sigma_P_x2
+    pairingBLS12381_P_y => B
+    A => subCheckG1BLS12381_P_x
+    B => subCheckG1BLS12381_P_y                 :CALL(subCheckG1BLS12381) ; A = 1, if P ∈ G1
+                                                                          ; A = 0, otherwise -> B = 0, if P is not in E
+                                                                          ;                     B = 1, if P is not in G1
 
-    _sigma_P_x => A
-    A => doublePointFPBLS12381_P_x
-    pairingBLS12381_P_y => A
-    A => doublePointFPBLS12381_P_y  :CALL(doublePointFPBLS12381)
-
-    doublePointFPBLS12381_Q_x => A
-    doublePointFPBLS12381_Q_y => B
-    A => addPointFPBLS12381_P1_x
-    B => addPointFPBLS12381_P1_y
-    pairingBLS12381_P_x => A
-    A => addPointFPBLS12381_P2_x
-    pairingBLS12381_P_y => A        :CALL(negFpBLS12381) ; in: [A] out: [B]
-    B => _neg_P_y
-    B => addPointFPBLS12381_P2_y    :CALL(addPointFPBLS12381)
-
-    addPointFPBLS12381_P3_x => A
-    addPointFPBLS12381_P3_y => B
-    A => addPointFPBLS12381_P1_x
-    B => addPointFPBLS12381_P1_y
-    _sigma_P_x2 => A
-    _neg_P_y => B
-    A => addPointFPBLS12381_P2_x
-    B => addPointFPBLS12381_P2_y                :CALL(addPointFPBLS12381)
-
-    addPointFPBLS12381_P3_x => A
-    addPointFPBLS12381_P3_y => B
-    A => scalarMulPointByXThreeFPBLS12381_P_x
-    B => scalarMulPointByXThreeFPBLS12381_P_y   :CALL(scalarMulPointByXThreeFPBLS12381)
-
-    scalarMulPointByXThreeFPBLS12381_Q_x => B
-    _sigma_P_x2 => C
-    B - C => C                                  :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-
-    scalarMulPointByXThreeFPBLS12381_Q_y => B
-    pairingBLS12381_P_y => C
-    B - C => C                                  :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
-    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    A                                           :JMPNZ(_Q_subgroup_check)
+    B                                           :JMPZ(_P_is_not_in_E, _P_is_not_in_G1)
 
 _Q_subgroup_check:
     ; Check that Q ∈ G2
-    ; Q in G2 iff Q ∈ E'(Fp2) and [x]ψ³(Q) + Q == ψ²(Q), where ψ := 𝜑⁻¹𝜋ₚ𝜑, as proven in 2019/814
-
-    ; 1] Check if Q ∈ E'(Fp2) iff (Q.y1 + Q.y2·u)² == (Q.x1 + Q.x2·u)³ + 4·(1+u)
-    ; 1.1] Compute LHS and RHS
     pairingBLS12381_Q_x1 => A
-    pairingBLS12381_Q_x2 => B                   :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
-    ; E + C·u = (Q.x1 + Q.x2·u)²
-
-    E => A
-    C => B
-    pairingBLS12381_Q_x1 => C
-    pairingBLS12381_Q_x2 => D                   :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    ; E + C·u = (Q.x1 + Q.x2·u)³
-
-    E => A
-    C => B
-    4 => C,D                                    :CALL(addFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    ; E + C·u = (Q.x1 + Q.x2·u)³ + 4·(1+u)
-    E => _Q_RHS_x
-    C => _Q_RHS_y
-
+    pairingBLS12381_Q_x2 => B
+    A => subCheckG2BLS12381_Q_x1
+    B => subCheckG2BLS12381_Q_x2
     pairingBLS12381_Q_y1 => A
-    pairingBLS12381_Q_y2 => B                   :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
-    ; E + C·u = (Q.y1 + Q.y2·u)²
-    C => A
+    pairingBLS12381_Q_y2 => B
+    A => subCheckG2BLS12381_Q_y1
+    B => subCheckG2BLS12381_Q_y2                 :CALL(subCheckG2BLS12381) ; A = 1, if Q ∈ G2
+                                                                           ; A = 0, otherwise -> B = 0, if Q is not in tE
+                                                                           ;                     B = 1, if Q is not in G2
 
-    ; 1.2] Check if LHS == RHS
-    _Q_RHS_x - E => C                           :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-
-    _Q_RHS_y - A => C                           :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-    ROTL_C => C                                 :JMPNZ(_Q_is_not_in_tE)
-
-    ; 2] Check if [x]ψ³(Q) + Q == ψ²(Q), where ψ := 𝜑⁻¹𝜋ₚ𝜑
-    ; 2.1] ψ(Q)
-    ;      Compute 𝜑(Q) = (Q.x/ω²,Q.y/ω³) = (Q.x·(%W_INV_X + %W_INV_Y·u)·ω⁴,Q.y·(%W_INV_X + %W_INV_Y·u)·ω³) ∈ E(Fp12)
-    %W_INV_X => A
-    %W_INV_Y => B
-    pairingBLS12381_Q_x1 => C
-    pairingBLS12381_Q_x2 => D                   :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    E => _phi_Q_x1
-    C => _phi_Q_x2
-
-    %W_INV_X => A
-    %W_INV_Y => B
-    pairingBLS12381_Q_y1 => C
-    pairingBLS12381_Q_y2 => D                   :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    E => _phi_Q_y1
-    C => _phi_Q_y2
-    ; Define 𝜑(Q) = (a,b)
-
-    ;      Compute 𝜋ₚ(a,b) = (aᵖ,bᵖ), i.e., apply the frobenius operator
-    ;      Since the previous result has only one non-zero coefficient, we can apply a specialized frobenius directly
-    ;      Frob(a·ω⁴) = a̅·γ14·ω⁴, Frob(a·ω³) = a̅·γ13·ω³
-    _phi_Q_x2 => A                              :CALL(negFpBLS12381) ; in: [A] out: [B]
-    _phi_Q_x1 => A
-    %FROBENIUS_GAMMA14X => C
-    %FROBENIUS_GAMMA14Y => D                    :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    E => _frob_Q_x1
-    C => _frob_Q_x2
-
-    _phi_Q_y2 => A                              :CALL(negFpBLS12381) ; in: [A] out: [B]
-    _phi_Q_y1 => A
-    %FROBENIUS_GAMMA13X => C
-    %FROBENIUS_GAMMA13Y => D                    :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    E => _frob_Q_y1
-    C => _frob_Q_y2
-
-    ;      Compute 𝜑⁻¹(a,b) = (a·ω²,b·ω³) ∈ E'(Fp2). In our particular case, we have:
-    ;               𝜑⁻¹((a̅·γ14·ω⁴)·ω²,(a̅·γ13·ω³)·ω³) = (a̅·γ14·(1+u), a̅·γ13·(1+u))
-    _frob_Q_x1 => A
-    _frob_Q_x2 => B
-    %BLS12381_EXT_X => C
-    %BLS12381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    E => _psi_Q_x1
-    C => _psi_Q_x2
-
-    _frob_Q_y1 => A
-    _frob_Q_y2 => B
-    %BLS12381_EXT_X => C
-    %BLS12381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
-    E => _psi_Q_y1
-    C => _psi_Q_y2
-
+    A                                           :JMPNZ(_Miller_loop)
+    B                                           :JMPZ(_Q_is_not_in_tE, _Q_is_not_in_G2)
 
 _Miller_loop:
     pairingBLS12381_P_x => A
@@ -599,61 +310,33 @@ _Miller_loop:
     A => millerLoopBLS12381_Q_x1
     B => millerLoopBLS12381_Q_x2
     C => millerLoopBLS12381_Q_y1
-    D => millerLoopBLS12381_Q_y2, CALL(millerLoopBLS12381)
-    ; [steps: 171976, bin: 966, arith: 13327]
-
-    millerLoopBLS12381_f11_x => A
-    millerLoopBLS12381_f11_y => B
-    A => pairingBLS12381_out11_x
-    B => pairingBLS12381_out11_y
-    millerLoopBLS12381_f12_x => A
-    millerLoopBLS12381_f12_y => B
-    A => pairingBLS12381_out12_x
-    B => pairingBLS12381_out12_y
-    millerLoopBLS12381_f13_x => A
-    millerLoopBLS12381_f13_y => B
-    A => pairingBLS12381_out13_x
-    B => pairingBLS12381_out13_y
-    millerLoopBLS12381_f21_x => A
-    millerLoopBLS12381_f21_y => B
-    A => pairingBLS12381_out21_x
-    B => pairingBLS12381_out21_y
-    millerLoopBLS12381_f22_x => A
-    millerLoopBLS12381_f22_y => B
-    A => pairingBLS12381_out22_x
-    B => pairingBLS12381_out22_y
-    millerLoopBLS12381_f23_x => A
-    millerLoopBLS12381_f23_y => B
-    A => pairingBLS12381_out23_x
-    B => pairingBLS12381_out23_y
-    ; [steps: 172002, bin: 966, arith: 13327]
+    D => millerLoopBLS12381_Q_y2                :CALL(millerLoopBLS12381)
 
 _final_exponentiation:
-    pairingBLS12381_out11_x => A
-    pairingBLS12381_out11_y => B
+    millerLoopBLS12381_f11_x => A
+    millerLoopBLS12381_f11_y => B
     A => finalExpBLS12381_f11_x
     B => finalExpBLS12381_f11_y
-    pairingBLS12381_out12_x => A
-    pairingBLS12381_out12_y => B
+    millerLoopBLS12381_f12_x => A
+    millerLoopBLS12381_f12_y => B
     A => finalExpBLS12381_f12_x
     B => finalExpBLS12381_f12_y
-    pairingBLS12381_out13_x => A
-    pairingBLS12381_out13_y => B
+    millerLoopBLS12381_f13_x => A
+    millerLoopBLS12381_f13_y => B
     A => finalExpBLS12381_f13_x
     B => finalExpBLS12381_f13_y
-    pairingBLS12381_out21_x => A
-    pairingBLS12381_out21_y => B
+    millerLoopBLS12381_f21_x => A
+    millerLoopBLS12381_f21_y => B
     A => finalExpBLS12381_f21_x
     B => finalExpBLS12381_f21_y
-    pairingBLS12381_out22_x => A
-    pairingBLS12381_out22_y => B
+    millerLoopBLS12381_f22_x => A
+    millerLoopBLS12381_f22_y => B
     A => finalExpBLS12381_f22_x
     B => finalExpBLS12381_f22_y
-    pairingBLS12381_out23_x => A
-    pairingBLS12381_out23_y => B
+    millerLoopBLS12381_f23_x => A
+    millerLoopBLS12381_f23_y => B
     A => finalExpBLS12381_f23_x
-    B => finalExpBLS12381_f23_y, CALL(finalExpBLS12381)
-    ; [steps: 342733, bin: 1452, arith: 28738]
+    B => finalExpBLS12381_f23_y                 :CALL(finalExpBLS12381)
 
     finalExpBLS12381_f11_x => A
     finalExpBLS12381_f11_y => B
@@ -680,44 +363,38 @@ _final_exponentiation:
     A => pairingBLS12381_out23_x
     B => pairingBLS12381_out23_y
 
-    0 => B     :JMP(_end)
-
-    ; till the end -> [steps: 342758, bin: 1452, arith: 28738]
+    0 => B                                      :JMP(_end)
 
 ; ERRORS
 _Px_too_big:
-    1 => B      :JMP(_error)
+    1 => B                                      :JMP(_end)
 
 _Py_too_big:
-    2 => B      :JMP(_error)
+    2 => B                                      :JMP(_end)
 
 _Qx1_too_big:
-    3 => B      :JMP(_error)
+    3 => B                                      :JMP(_end)
 
 _Qx2_too_big:
-    4 => B      :JMP(_error)
+    4 => B                                      :JMP(_end)
 
 _Qy1_too_big:
-    5 => B      :JMP(_error)
+    5 => B                                      :JMP(_end)
 
 _Qy2_too_big:
-    6 => B      :JMP(_error)
+    6 => B                                      :JMP(_end)
 
 _P_is_not_in_E:
-    7 => B      :JMP(_error)
+    7 => B                                      :JMP(_end)
 
 _P_is_not_in_G1:
-    8 => B      :JMP(_error)
+    8 => B                                      :JMP(_end)
 
 _Q_is_not_in_tE:
-    9 => B      :JMP(_error)
+    9 => B                                      :JMP(_end)
 
 _Q_is_not_in_G2:
-    10 => B      :JMP(_error)
-
-_error:
-    0 => A
+    10 => B                                     :JMP(_end)
 
 _end:
-        $ => RR     :MLOAD(_RR)
-        :RETURN
+    _RR => RR                                   :RETURN

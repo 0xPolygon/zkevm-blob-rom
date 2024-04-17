@@ -1,0 +1,118 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P coordinates are in the range [0,BLS12381_P)
+;;
+;;  subCheckG1BLS12381:
+;;          input: P = (x,y), x,y ∈ Fp
+;;          output: A = 1, if P ∈ G1
+;;                  A = 0, otherwise -> B = 0, if P is not in E
+;;                                      B = 1, if P is not in G1
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VAR GLOBAL subCheckG1BLS12381_P_x
+VAR GLOBAL subCheckG1BLS12381_P_y
+
+VAR GLOBAL _P_x3
+VAR GLOBAL _sigma_P_x
+VAR GLOBAL _sigma_P_x_sq
+VAR GLOBAL _neg_P_y
+
+VAR GLOBAL _RR
+
+; ERROR CODES (B)
+; 0 - P is not in E
+; 1 - P is not in G1
+
+subCheckG1BLS12381:
+    RR => _RR
+
+    ; P in G1 iff P ∈ E(Fp) and [(x²-1)/3]([2]σ(P) - P - σ²(P)) == σ²(P), where σ(x,y) = (ɣ·x,y), as proven in 2019/814
+
+    ; 1] Check if P ∈ E(Fp) iff (Py)² == (Px)³ + 4 (mod p)
+    subCheckG1BLS12381_P_x => A                 :CALL(squareFpBLS12381) ; in: [A] out: [B]
+
+    subCheckG1BLS12381_P_x => A                 :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+
+    4 => A                                      :CALL(addFpBLS12381) ; in: [A,C] out: [C]
+    C => _P_x3
+
+    subCheckG1BLS12381_P_y => A                 :CALL(squareFpBLS12381) ; in: [A] out: [B]
+
+    _P_x3 => C
+    B - C => C                                  :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_E)
+
+    ; 2] Check if [(x²-1)/3]([2]σ(P) - P - σ²(P)) == σ²(P), where σ(x,y) = (ɣ·x,y)
+    subCheckG1BLS12381_P_x => A
+    %GAMMA => B                                 :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+    C => A,_sigma_P_x                           :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+    C => _sigma_P_x_sq
+
+    _sigma_P_x => A
+    A => doublePointFPBLS12381_P_x
+    subCheckG1BLS12381_P_y => A
+    A => doublePointFPBLS12381_P_y              :CALL(doublePointFPBLS12381)
+
+    doublePointFPBLS12381_Q_x => A
+    doublePointFPBLS12381_Q_y => B
+    A => addPointFPBLS12381_P1_x
+    B => addPointFPBLS12381_P1_y
+    subCheckG1BLS12381_P_x => A
+    A => addPointFPBLS12381_P2_x
+    subCheckG1BLS12381_P_y => A                 :CALL(negFpBLS12381) ; in: [A] out: [B]
+    B => _neg_P_y
+    B => addPointFPBLS12381_P2_y                :CALL(addPointFPBLS12381)
+
+    addPointFPBLS12381_P3_x => A
+    addPointFPBLS12381_P3_y => B
+    A => addPointFPBLS12381_P1_x
+    B => addPointFPBLS12381_P1_y
+    _sigma_P_x_sq => A
+    _neg_P_y => B
+    A => addPointFPBLS12381_P2_x
+    B => addPointFPBLS12381_P2_y                :CALL(addPointFPBLS12381)
+
+    addPointFPBLS12381_P3_x => A
+    addPointFPBLS12381_P3_y => B
+    A => scalarMulPointByXThreeFPBLS12381_P_x
+    B => scalarMulPointByXThreeFPBLS12381_P_y   :CALL(scalarMulPointByXThreeFPBLS12381)
+
+    scalarMulPointByXThreeFPBLS12381_Q_x => B
+    _sigma_P_x_sq => C
+    B - C => C                                  :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+
+    scalarMulPointByXThreeFPBLS12381_Q_y => B
+    subCheckG1BLS12381_P_y => C
+    B - C => C                                  :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+    ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
+
+    1 => A                                      :JMP(_end)
+
+_P_is_not_in_E:
+    0 => A,B                                    :JMP(_end)
+
+_P_is_not_in_G1:
+    0 => A
+    1 => B                                      :JMP(_end)
+
+_end:
+    _RR => RR                                   :RETURN
