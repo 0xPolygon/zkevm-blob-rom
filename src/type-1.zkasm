@@ -133,7 +133,7 @@ readBatchData:
         4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidParsing)
         
         RCX                             :JMP_EQ(0, loopHash31BytesOfBatchData)
-        D - RCX                         :JMPN(allBatchDataInRemainingBytes)
+        D - RCX - 1                     :JMPN(allBatchDataInRemainingBytes)
 
 allRemainingBytesBelongsBatchData:
         RCX => D
@@ -153,6 +153,7 @@ loopHash31BytesOfBatchData:
         RR + 1 => RR
         ${mem.polEvalFrBLS12381_pol_eval[RR]}     :HASHP31(E),MLOAD(polEvalFrBLS12381_pol_eval[RR])
         D - 31 => D                               :JMP_GE(31, loopHash31BytesOfBatchData)
+        D => RCX                                  :JMP_EQ(0,hashBatchDataEnd)
 
 ; hash the last bytes of batch
 hashLastBytesOfBatchData:
