@@ -8,7 +8,7 @@ CONST %MAX_CNT_KECCAK_F_LIMIT = %N
 CONST %MAX_CNT_PADDING_PG_LIMIT = %N
 CONST %MAX_CNT_POSEIDON_G_LIMIT = %N
 
-INCLUDE "../src/constantsBLS12381.zkasm"
+CONSTL %BLS12_381_R = 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n
 
 VAR GLOBAL lastHashKId
 VAR GLOBAL lastHashPId
@@ -442,10 +442,10 @@ opINVALID:
 checkAndSaveFrom:
                          :JMP(opINVALID)
 
-INCLUDE "../src/FRBLS12381/reduceFrBLS12381.zkasm"
-INCLUDE "../src/FRBLS12381/addFrBLS12381.zkasm"
-INCLUDE "../src/FRBLS12381/subFrBLS12381.zkasm"
-INCLUDE "../src/FRBLS12381/mulFrBLS12381.zkasm"
-INCLUDE "../src/FRBLS12381/squareFrBLS12381.zkasm"
-INCLUDE "../src/FRBLS12381/invFrBLS12381.zkasm"
-INCLUDE "../src/FRBLS12381/expBy4096FrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/reduceFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/addFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/subFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/mulFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/squareFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/invFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/expBy4096FrBLS12381.zkasm"
