@@ -108,16 +108,16 @@ module.exports = class myHelper {
         return scalar2fea(ctx.Fr, Scalar.e(ctx.input.versionedHash));
     }
 
-    eval_getKzgCommitment(ctx, tag) {
+    eval_getKzgCommitmentHash(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
         return scalar2fea(ctx.Fr, Scalar.e(ctx.input.kzgCommitmentHash));
     }
 
     eval_getKzgProof(ctx, tag) {
         if (tag.params.length != 1) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-        if(tag.params[0].num === '0') {
+        if(tag.params[0].varName === 'high') {
             return scalar2fea(ctx.Fr, Scalar.e("0x"+ctx.input.kzgProof.replace("0x","").substring(0,16*2)));
-        } else if(tag.params[0].num === '1') {
+        } else if(tag.params[0].varName === 'low') {
             return scalar2fea(ctx.Fr, Scalar.e("0x"+ctx.input.kzgProof.replace("0x","").substring(16*2)));
         }
     }
