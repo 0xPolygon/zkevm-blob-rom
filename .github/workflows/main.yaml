@@ -33,3 +33,6 @@ jobs:
           export NUM_CPUS=1
           npm run test:start
           sh tools/parallel-testing/checker.sh
+      - name: Run tests fulltracer
+        run: |
+          npm run test:fulltracer
