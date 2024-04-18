@@ -3,9 +3,32 @@
 ;;;;;;;;;;;;;;;;;;
 startBlobType1:
         ; B === blobDataLen
-        0 => HASHPOS,RR
-        ; check blobDataLen === BYTES_ETH_BLOB_DATA
-        B - %BYTES_ETH_BLOB_DATA        :JMPNZ(failAssert)
+        0 => HASHPOS
+        ; check blobDataLen === BYTES_ETH_BLOB_DATA + bytes kzgCommitment
+        B - %BYTES_ETH_BLOB_DATA - %BYTES_KZGCOMMITMENT   :JMPNZ(failAssert)
+
+        %INDEX_HASH_S_COMMITMENT => E
+        ${getKzgCommitmentHash()} => A
+
+        A                               :HASHSDIGEST(E) ; used when type = 1
+
+        $                               :HASHS16(E),MSTORE(kzgCommitment_high)
+        $                               :HASHS32(E),MSTORE(kzgCommitment_low)
+
+        1 + %MEM_ALIGN_LEN*31 => C
+        $ => B                          :MEM_ALIGN_RD
+        %VERSIONED_HASH_VERSION_KZG => A
+        31 + %MEM_ALIGN_LEN*1 + %MEM_ALIGN_LEFT_ALIGNMENT => C
+        $ => A                          :MEM_ALIGN_RD
+        A + B => A
+        $ => B                          :MLOAD(versionedHash)
+        $                               :EQ,JMPNC(failAssertVersionedHash)
+        ${getKzgProof(high)}            :MSTORE(kzgProof_high) ; used when type = 1
+        ${getKzgProof(low)}             :MSTORE(kzgProof_low) ; used when type = 1
+
+        ; HASHPOS start after kzgCommitment --> poseidon(kgzCommitment + blobData)
+        %BYTES_KZGCOMMITMENT => HASHPOS
+        0 => RR
 
 ; check first byte == 0x00 from 32 bytes & copy to polEvalFrBLS12381_pol_eval[i]
 addBlobDataMem:
@@ -22,7 +45,7 @@ invalidBlobData:
         RR + 1                          :MSTORE(polEvalFrBLS12381_index)
         ; offset = 1 byte + len = 1 byte + left_alignment
         ; store in 31th byte, 0th byte of A
-        31 + 128 * 1 + 8192 => C ; constantes mem_align %MEM_ALIGN_LEFT_ALIGNMENT, %MEM_ALIGN_LEN
+        31 + %MEM_ALIGN_LEN * 1 + %MEM_ALIGN_LEFT_ALIGNMENT => C ; constantes mem_align %MEM_ALIGN_LEFT_ALIGNMENT, %MEM_ALIGN_LEN
         ; A --> invalid byte
         $ => A                          :MEM_ALIGN_RD
         ; A --> invalid byte shift left
@@ -39,21 +62,18 @@ addBlobDataMemInvalid:
 callAndAssert:
         ; call polEvalFrBLS12381
                                         :CALL(polEvalFrBLS12381) ; ouputs
-        $ => A                          :MLOAD(polEvalFrBLS12381_y)
-        ; assert output pointY
-        $                               :MLOAD(y),ASSERT
-        $ => B                          :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
-
+        $                               :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
+        
         ; add batchData to batchHashData = LinearPoseidon(batchData)
         0 => RR
         31 - 1 - 4 => RCX
         ; reading type
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
-        1 + 128 * 1 => C
+        1 + %MEM_ALIGN_LEN * 1 => C
         $                               :MEM_ALIGN_RD,JMPNZ(invalidTypeCompression)
 
         ; getting totalBodyLen
-        2 + 128 * 4 => C
+        2 + %MEM_ALIGN_LEN * 4 => C
         $ => B                          :MEM_ALIGN_RD,MSTORE(totalBodyLen)
         ; BYTES_ETH_BLOB_DATA >= 5 + totalBodyLen
         %BYTES_ETH_BLOB_DATA - 5 - B    :JMPN(invalidParsing)
@@ -75,7 +95,7 @@ readBatchDataLen:
         0 => HASHPOS, B
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         ; if RCX (remaining bytes on A) === 0 --> readBytesBatchDataLenOnTop
-        32 - RCX + 128 * 4  => C        :JMP_EQ(32+128*4,readBytesBatchDataLenOnTop)
+        32 - RCX + %MEM_ALIGN_LEN * 4  => C     :JMP_EQ(32+128*4,readBytesBatchDataLenOnTop)
 
         ; read 4 bytes, if there are not enought bytes it's filled with zero of m1(B)
         $ => D                          :MEM_ALIGN_RD
@@ -86,7 +106,7 @@ readBytesBatchDataLenOnTop:
         RR + 1 => RR
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         ; offset = 1, len = 4 bytes
-        1 + 128 * 4 => C
+        1 + %MEM_ALIGN_LEN * 4 => C
         $ => D                          :MEM_ALIGN_RD
         31 - 4 => RCX                   :JMP(readBatchData)
     
@@ -95,7 +115,7 @@ readRemainingBatchDataLen:
         RR + 1 => RR
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         RCX + 31 => RCX                 :JMP_EQ(31, readBatchData)
-        1 - 128 * RCX + 31 * 128  => C
+        1 - %MEM_ALIGN_LEN * RCX + 31 * %MEM_ALIGN_LEN => C
         $ => C                          :MEM_ALIGN_RD
         D + C => D
         
@@ -110,17 +130,17 @@ readBatchData:
         4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidParsing)
         
         RCX                             :JMP_EQ(0, loopHash31BytesOfBatchData)
-        D - RCX                         :JMPN(allBatchDataInRemainingBytes)
+        D - RCX - 1                     :JMPN(allBatchDataInRemainingBytes)
 
 allRemainingBytesBelongsBatchData:
         RCX => D
-        32 - RCX + 128 * D => C
+        32 - RCX + %MEM_ALIGN_LEN * D => C
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)
         batchLen - RCX => D             :JMP_GE(31, loopHash31BytesOfBatchData, hashLastBytesOfBatchData)
         
 allBatchDataInRemainingBytes:
-        32 - RCX + 128 * D => C
+        32 - RCX + %MEM_ALIGN_LEN * D => C
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)
         RCX - D => RCX                  :JMP(hashBatchDataEnd)
@@ -130,12 +150,13 @@ loopHash31BytesOfBatchData:
         RR + 1 => RR
         ${mem.polEvalFrBLS12381_pol_eval[RR]}     :HASHP31(E),MLOAD(polEvalFrBLS12381_pol_eval[RR])
         D - 31 => D                               :JMP_GE(31, loopHash31BytesOfBatchData)
+        D => RCX                                  :JMP_EQ(0,hashBatchDataEnd)
 
 ; hash the last bytes of batch
 hashLastBytesOfBatchData:
         31 - D => RCX
         RR + 1 => RR
-        1 + 128 * D  => C               :JMP_EQ(1, hashBatchDataEnd)
+        1 + %MEM_ALIGN_LEN * D  => C    :JMP_EQ(1, hashBatchDataEnd)
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)

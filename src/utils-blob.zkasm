@@ -1,8 +1,3 @@
-;@info function to force a failed assert
-failAssert:
-    1 => A
-    2               :ASSERT
-
 ; @info Get D bytes from HASHK with %INDEX_BLOB_L2_HASH_K_DATA (with HASHPOS)
 ; @in D, E, HASHPOS
 ; @out A
