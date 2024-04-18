@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P ∈ E'(Fp2) and Q ∈ E(Fp) with P != -P and their coordinates are in the range [0,BLS12381_P)
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;; PRE: P ∈ E'(Fp2) and Q ∈ E(Fp) with P != -P and their coordinates are in the range [0,BLS12_381_P)
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; lineSamePointsBLS12381:
 ;;              in: P = (P.x1 + P.x2·u, P.y1 + P.y2·u) ∈ E'(Fp2) and Q = (Q.x,Q.y) ∈ E(Fp)

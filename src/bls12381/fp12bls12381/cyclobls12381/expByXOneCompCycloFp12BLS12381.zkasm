@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP12 arithmetic
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
 ;;
 ;; expByXOneCompCycloFp12BLS12381:
 ;;             in: a = a0 + a2·w + a4·w² + a1·w³ + a3·w⁴ + a5·w⁵ ∈ GΦ6(p²), where ai ∈ Fp2

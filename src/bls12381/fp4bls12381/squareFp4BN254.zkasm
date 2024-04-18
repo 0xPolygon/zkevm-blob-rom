@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; squareFp4BLS12381:
 ;;             in: (a1 + a2·V) ∈ Fp4, where ai ∈ Fp2

@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP4/FP2 arithmetic
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP4/FP2 arithmetic
 ;;
 ;; squareCycloFp12BLS12381:
 ;;             in:  (a1 + a2·w) ∈ GΦ6(p²), where ai ∈ Fp6

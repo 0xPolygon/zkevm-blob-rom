@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P is in E(Fp)\{𝒪} with P != -P and its coordinates are in the range [0,BLS12381_P)
-;; POST: The resulting coordinates are in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;; PRE: P is in E(Fp)\{𝒪} with P != -P and its coordinates are in the range [0,BLS12_381_P)
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; doublePointFPBLS12381:
 ;;             in: P = (P.x, P.y) ∈ E(Fp)

@@ -1,3 +1,4 @@
+const { loadKZG } = require('kzg-wasm');
 const { Scalar, F1Field } = require("ffjavascript");
 const rootsOfUnity4096 = require("./rootsOfUnity4096.json");
 const {
@@ -8,7 +9,7 @@ module.exports = class myHelper {
     blobSize = 4096;
 
     constructor() {
-        this.FrBLS12_381 = new F1Field(0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n);
+        this.FrBLS12_381 = new F1Field(0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn);
     }
 
     setup(props) {
@@ -17,12 +18,29 @@ module.exports = class myHelper {
         }
     }
 
+    async eval_computeKZGProof() {
+        /**
+         * loadTrustedSetup
+         * freeTrustedSetup
+         * blobToKzgCommitment - KZG commitment corresponding to the input blob formatted as a 48 byte Uint8Array
+         * verifyKzgProof - (commitment: Uint8Array, z: Uint8Array, y: Uint8Array, proof: Uint8Array): boolean
+         */
+
+        const kzg = await loadKZG();
+
+        const ts = kzg.loadTrustedSetup();
+
+        console.log(kzg.loadTrustedSetup());
+        EXIT
+        return kzg;
+    }
+
     /**
      * Computes the inverse of the given element of the BLS12-381 scalar field.
      * @param ctx - Context.
      * @param tag - Tag.
     */
-    eval_frBLS12_381inv(ctx, tag) {
+    eval_frBLS12_381_inv(ctx, tag) {
         const ctxFullFe = { ...ctx, fullFe: true };
         const a = this.evalCommand(ctxFullFe, tag.params[0]);
         return this.FrBLS12_381.inv(a);
@@ -71,7 +89,7 @@ module.exports = class myHelper {
 
     eval_getLastL1InfoTreeIndex(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    
+
         return [ctx.Fr.e(ctx.input.lastL1InfoTreeIndex), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
@@ -82,19 +100,19 @@ module.exports = class myHelper {
 
     eval_getTimestampLimit(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    
+
         return [ctx.Fr.e(ctx.input.timestampLimit), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
     eval_getZkGasLimit(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-    
+
         return scalar2fea(ctx.Fr, Scalar.e(ctx.input.zkGasLimit));
     }
 
     eval_getType(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
-        
+
         return [ctx.Fr.e(ctx.input.blobType), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 

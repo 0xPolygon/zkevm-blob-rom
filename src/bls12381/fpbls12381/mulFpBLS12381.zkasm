@@ -7,6 +7,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 ; RESOURCES:
 ; -----------------------------
 ; [steps: 4, bin: 0, arith: 1]
@@ -16,4 +18,4 @@ mulFpBLS12381:
         ; A·B + 0 = op (mod BLS12_381_P)
         0 => C
         %BLS12_381_P => D
-        ${(A*B) % D} => C       :ARITH_MOD, RETURN
+        ${(A*B) % D} => C       :ARITH_384_MOD, RETURN

@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PRE: Q ∈ E'(Fp2)
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2/FP arithmetic
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2/FP arithmetic
 ;;
 ;;  This function applies the untwist-Frobenius-twist endomorphism 𝜑⁻¹𝜋ₚ𝜑 to a point Q ∈ E'(Fp2), where
 ;;  𝜑 : E'(Fp2) -> E(Fp12) defined by 𝜑(x,y) = (x/ω²,y/ω³) = (x·(%W_INV_X + %W_INV_Y·u)·ω⁴,y·(%W_INV_X + %W_INV_Y·u)·ω³) is the untwist map

@@ -29,18 +29,19 @@
     "npm": "=10"
   },
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#develop-feijoa",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/arith-384",
     "yargs": "^17.5.1"
   },
   "devDependencies": {
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xPolygonHermez/zkevm-commonjs#v7.0.0-rc.1-fork.10",
-    "@0xpolygonhermez/zkevm-proverjs": "github:0xPolygonHermez/zkevm-proverjs#a50796b81ee70adbeef2fcbc8f683722a79c34b3",
+    "@0xpolygonhermez/zkevm-commonjs": "github:0xPolygonHermez/zkevm-commonjs#develop-feijoa",
+    "@0xpolygonhermez/zkevm-proverjs": "github:0xPolygonHermez/zkevm-proverjs#feature/arith-384",
     "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#v7.0.0-rc.1-fork.10",
     "chai": "^4.3.6",
     "chalk": "^3.0.0",
     "eslint": "^8.25.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-mocha": "^10.1.0",
+    "kzg-wasm": "^0.3.1",
     "mocha": "^10.2.0"
   }
 }

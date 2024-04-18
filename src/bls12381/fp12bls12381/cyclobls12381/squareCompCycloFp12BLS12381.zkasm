@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP2 arithmetic
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; squareCompCycloFp12BLS12381:
 ;;             in: [a2,a3,a4,a5] ∈ Fp2⁴, where ai ∈ Fp2

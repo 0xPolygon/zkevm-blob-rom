@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; POST: The result is in the range [0,BLS12381_P) because if falls back to FP6 arithmetic
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP6 arithmetic
 ;;
 ;; mulFp12BLS12381:
 ;;             in: (a1 + a2·w),(b1 + b2·w) ∈ Fp12, where ai,bi ∈ Fp6

@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P ∈ E(Fp)\{𝒪} with P of order larger than (x²-1)/3 and its coordinates are in the range [0,BLS12381_P)
-;; POST: The resulting coordinates are in the range [0,BLS12381_P) because if falls back to addPointFPBLS12381
+;; PRE: P ∈ E(Fp)\{𝒪} with P of order larger than (x²-1)/3 and its coordinates are in the range [0,BLS12_381_P)
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFPBLS12381
 ;;
 ;;
 ;; scalarMulPointByXThreeFPBLS12381:
