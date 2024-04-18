@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: A is assumed to be in the range [0,BLS12_381_P)
+;;  PRE: A is assumed to be distinct from 0 modulo BLS12_381_P
 ;; POST: The result is in the range [0,BLS12_381_P)
 ;;
 ;; invFpBLS12381:
