@@ -24,11 +24,6 @@ VAR GLOBAL zkGasLimit
 VAR GLOBAL type ; 0: standard calldata, 1: blob data, 2: forced blob
 VAR GLOBAL y ; blobType = 1
 VAR GLOBAL versionedHash
-VAR GLOBAL kzgCommitment_low ; blobType = 1
-VAR GLOBAL kzgCommitment_high ; blobType = 1
-VAR GLOBAL kzgCommitmentHash 
-VAR GLOBAL kzgProof_low ; blobType = 1
-VAR GLOBAL kzgProof_high ; blobType = 1
 VAR GLOBAL blobL2HashData ; blobType = 0 || blobType = 2
 VAR GLOBAL forcedHashData ; blobType = 2
 

@@ -8,7 +8,7 @@ startBlobType1:
         B - %BYTES_ETH_BLOB_DATA - %BYTES_KZGCOMMITMENT   :JMPNZ(failAssert)
 
         %INDEX_HASH_S_COMMITMENT => E
-        ${getKzgCommitment()} => A      :MSTORE(kzgCommitmentHash)
+        ${getKzgCommitmentHash()} => A
 
         A                               :HASHSDIGEST(E) ; used when type = 1
 
@@ -23,12 +23,11 @@ startBlobType1:
         A + B => A
         $ => B                          :MLOAD(versionedHash)
         $                               :EQ,JMPNC(failAssertVersionedHash)
-
-        ${getKzgProof(0)} => A          :MSTORE(kzgProof_high) ; used when type = 1
-        ${getKzgProof(1)} => A          :MSTORE(kzgProof_low) ; used when type = 1
+        ${getKzgProof(high)}            :MSTORE(kzgProof_high) ; used when type = 1
+        ${getKzgProof(low)}             :MSTORE(kzgProof_low) ; used when type = 1
 
         ; HASHPOS start after kzgCommitment --> poseidon(kgzCommitment + blobData)
-        48 => HASHPOS
+        %BYTES_KZGCOMMITMENT => HASHPOS
         0 => RR
 
 ; check first byte == 0x00 from 32 bytes & copy to polEvalFrBLS12381_pol_eval[i]
@@ -63,10 +62,8 @@ addBlobDataMemInvalid:
 callAndAssert:
         ; call polEvalFrBLS12381
                                         :CALL(polEvalFrBLS12381) ; ouputs
-        $ => A                          :MLOAD(polEvalFrBLS12381_y),CALL(kzgVerify)
-        $ => B                          :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
-        ; A === 1 --> valid, A === 0 --> invalid
-        A                               :JMPZ(failAssertKzgVerify)
+        $                               :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
+        
         ; add batchData to batchHashData = LinearPoseidon(batchData)
         0 => RR
         31 - 1 - 4 => RCX

@@ -16,8 +16,8 @@ INCLUDE "constantsBLS12381.zkasm"
 
 ; type 0 & 1 & 2 : HASHK(0) --> newBlobAccInputHash
 ; type 0 & 2: HASHK(1) --> blobL2Hashdata = keccak256(blobData)
-; type 1: HASHK(1) --> versionedHash' = keccak256(kzgCommitment)
-; type 1: HASHP(0) --> z = poseidon(blobData)
+; type 1: HASHS(0) --> kzgCommitmentHash = sha256(kzgCommitment)
+; type 1: HASHP(0) --> z = poseidon(kzgCommitment + blobData)
 ; type 0 & 1 & 2 : HASHP(X) --> batchHashData
 
 start:
@@ -122,8 +122,7 @@ start:
 ;; C.1 - Type 1
 ;;;;;;;;;;;;;;;;;;
 blobData:
-        ${getZ()}                       :MSTORE(polEvalFrBLS12381_z) ; used when type = 1
-        $ => A                          :MLOAD(polEvalFrBLS12381_z)
+        ${getZ()} => A                  :MSTORE(polEvalFrBLS12381_z) ; used when type = 1
         ; load z = poseidon(kzgCommitment + blobData) to HASHP index 0
         %INDEX_Z_HASH_P => E
         A                               :HASHPDIGEST(E)
@@ -208,6 +207,10 @@ finalizeBlob:
         $                               :LT,JMPC(invalidZkGasLimit)
 
 finishBlob:
+                                        :CALL(kzgVerify)
+        ; A === 1 --> valid, A === 0 --> invalid
+        A                               :JMPZ(failAssertKzgVerify)
+
         $${eventLog(onFinishBlob())}
 
         ; safety check that the output root is indeed inside the range limit of 4 goldilocks fields elements
@@ -243,7 +246,7 @@ INCLUDE "utils-blob.zkasm"
 INCLUDE "errors-blob.zkasm"
 INCLUDE "type-0-2.zkasm"
 INCLUDE "type-1.zkasm"
-INCLUDE "mockKzgVerify.zkasm"
+INCLUDE "mock-kzg-verify.zkasm"
 INCLUDE "end-blob.zkasm"
 INCLUDE "./FRBLS12381/reduceFrBLS12381.zkasm"
 INCLUDE "./FRBLS12381/addFrBLS12381.zkasm"
