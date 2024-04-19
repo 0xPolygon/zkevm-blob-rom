@@ -7,6 +7,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 ; RESOURCES:
 ; -----------------------------
 ; [steps: 2, bin: 0, arith: 1]
@@ -16,5 +18,7 @@ dblFp2BLS12381:
         ; Compute and check the mul
         ; A + A = [E] + (q0·BLS12381_P)
         ; B + B = [OP] + (q1·BLS12381_P)
+        A => C
+        B => D
         ${ARITH_BLS12381_ADDFP2(A,A)} => E
-        ${ARITH_BLS12381_ADDFP2(B,B)} => C      :ARITH_BLS12381_ADDFP2, RETURN
+        ${ARITH_BLS12381_ADDFP2(B,B)} => C              :ARITH_BLS12381_ADDFP2, RETURN

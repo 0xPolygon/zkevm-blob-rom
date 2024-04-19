@@ -8,6 +8,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL millerLoopBLS12381_P_x
 VAR GLOBAL millerLoopBLS12381_P_y
 VAR GLOBAL millerLoopBLS12381_Q_x1
@@ -266,20 +268,20 @@ _add:
     ; 1.1] line_{twist(R),twist(Q)}(P)
     _R_x1 => A
     _R_x2 => B
-    _R_y1 => C
-    _R_y2 => D
     A => lineDiffPointsBLS12381_P1_x1
     B => lineDiffPointsBLS12381_P1_x2
-    C => lineDiffPointsBLS12381_P1_y1
-    D => lineDiffPointsBLS12381_P1_y2
+    _R_y1 => A
+    _R_y2 => B
+    A => lineDiffPointsBLS12381_P1_y1
+    B => lineDiffPointsBLS12381_P1_y2
     millerLoopBLS12381_Q_x1 => A
     millerLoopBLS12381_Q_x2 => B
-    millerLoopBLS12381_Q_y1 => C
-    millerLoopBLS12381_Q_y2 => D
     A => lineDiffPointsBLS12381_P2_x1
     B => lineDiffPointsBLS12381_P2_x2
-    C => lineDiffPointsBLS12381_P2_y1
-    D => lineDiffPointsBLS12381_P2_y2
+    millerLoopBLS12381_Q_y1 => A
+    millerLoopBLS12381_Q_y2 => B
+    A => lineDiffPointsBLS12381_P2_y1
+    B => lineDiffPointsBLS12381_P2_y2
     millerLoopBLS12381_P_x => A
     millerLoopBLS12381_P_y => B
     A => lineDiffPointsBLS12381_Q_x

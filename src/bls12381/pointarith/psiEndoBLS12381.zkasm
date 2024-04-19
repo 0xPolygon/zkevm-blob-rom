@@ -13,6 +13,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL psiEndoBLS12381_Q_x1
 VAR GLOBAL psiEndoBLS12381_Q_x2
 VAR GLOBAL psiEndoBLS12381_Q_y1
@@ -57,9 +59,9 @@ psiEndoBLS12381:
     ;    Since the previous result has only one non-zero coefficient, we can apply a specialized frobenius directly
     ;    Frob(a·ω⁴) = a̅·γ14·ω⁴, Frob(a·ω³) = a̅·γ13·ω³
     _phi_Q_x2 => A                              :CALL(negFpBLS12381) ; in: [A] out: [B]
-    _phi_Q_x1 => A
-    %FROBENIUS_GAMMA14X => C
-    %FROBENIUS_GAMMA14Y => D                    :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    %FROBENIUS_GAMMA14 => A
+    _phi_Q_x1 => C
+    B => D                                      :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
     E => _frob_Q_x1
     C => _frob_Q_x2
 
@@ -74,15 +76,15 @@ psiEndoBLS12381:
     ;         𝜑⁻¹((a̅·γ14·ω⁴)·ω²,(a̅·γ13·ω³)·ω³) = (a̅·γ14·(1+u), a̅·γ13·(1+u))
     _frob_Q_x1 => A
     _frob_Q_x2 => B
-    %BLS12381_EXT_X => C
-    %BLS12381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    %BLS12_381_EXT_X => C
+    %BLS12_381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
     E => psiEndoBLS12381_psi_Q_x1
     C => psiEndoBLS12381_psi_Q_x2
 
     _frob_Q_y1 => A
     _frob_Q_y2 => B
-    %BLS12381_EXT_X => C
-    %BLS12381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    %BLS12_381_EXT_X => C
+    %BLS12_381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
     E => psiEndoBLS12381_psi_Q_y1
     C => psiEndoBLS12381_psi_Q_y2
 

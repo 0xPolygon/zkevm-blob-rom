@@ -34,7 +34,7 @@ doublePointFPBLS12381:
         ; B = 1 / 2·P.y
         B => _lambda
 
-        3 => A                          :CALL(mulFpBN254) ; in: [A,B] out: [C]
+        3 => A                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
         ; C = 3/2y
 
         doublePointFPBLS12381_P_x => A

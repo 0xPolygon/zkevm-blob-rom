@@ -232,8 +232,8 @@ sparseMulBFp12BLS12381:
         _a1b2mul2_y => B
         A => addFp6BLS12381_a2_x
         B => addFp6BLS12381_a2_y
-        _a1b2mule_x => A
-        _a1b2mule_y => B
+        _a1b2mul3_x => A
+        _a1b2mul3_y => B
         A => addFp6BLS12381_a3_x
         B => addFp6BLS12381_a3_y                :CALL(addFp6BLS12381)
         addFp6BLS12381_c1_x => A

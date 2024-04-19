@@ -110,8 +110,8 @@ inverseFp6BLS12381:
         C => _a2a3mul_y
 
         ; 7] c1mid = a1² - (1 + u)·(a2·a3)
-        %BLS12381_EXT_X => A
-        %BLS12381_EXT_Y => B
+        %BLS12_381_EXT_X => A
+        %BLS12_381_EXT_Y => B
         _a2a3mul_x => C
         _a2a3mul_y => D                 :CALL(mulFp2BLS12381)
 
@@ -123,8 +123,8 @@ inverseFp6BLS12381:
         C => _c1mid_y
 
         ; 8] c2mid = (1 + u)·a3² - (a1·a2)
-        %BLS12381_EXT_X => A
-        %BLS12381_EXT_Y => B
+        %BLS12_381_EXT_X => A
+        %BLS12_381_EXT_Y => B
         _a3square_x => C
         _a3square_y => D                :CALL(mulFp2BLS12381)
 
@@ -169,8 +169,8 @@ inverseFp6BLS12381:
         C => D
         E => C                          :CALL(addFp2BLS12381)
 
-        %BLS12381_EXT_X => A
-        %BLS12381_EXT_Y => B
+        %BLS12_381_EXT_X => A
+        %BLS12_381_EXT_Y => B
         C => D
         E => C                          :CALL(mulFp2BLS12381)
 

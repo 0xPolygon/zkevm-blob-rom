@@ -1,82 +1,73 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
 ;;
-;; expByXCompCycloFp12BLS12381:
-;;             in: a = a0 + a2·w + a4·w² + a1·w³ + a3·w⁴ + a5·w⁵ ∈ GΦ6(p²), where ai ∈ Fp2
-;;             out: a^|x| = c0 + c2·w + c4·w² + c1·w³ + c3·w⁴ + c5·w⁵ ∈ ∈ GΦ6(p²), where where |x| = 0xd201000000010000
+;; expCycloFp12BLS12381:
+;;             in: e ∈ [0,p¹²-2], a = a0 + a2·w + a4·w² + a1·w³ + a3·w⁴ + a5·w⁵ ∈ GΦ6(p²), where ai ∈ Fp2
+;;             out: a^e = c0 + c2·w + c4·w² + c1·w³ + c3·w⁴ + c5·w⁵ ∈ ∈ GΦ6(p²)
 ;;
-;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-VAR GLOBAL expByXCompCycloFp12BLS12381_a0_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_a0_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_a2_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_a2_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_a4_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_a4_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_a1_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_a1_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_a3_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_a3_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_a5_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_a5_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_c0_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_c0_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_c2_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_c2_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_c4_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_c4_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_c1_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_c1_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_c3_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_c3_y
-VAR GLOBAL expByXCompCycloFp12BLS12381_c5_x
-VAR GLOBAL expByXCompCycloFp12BLS12381_c5_y
+; WARNING: This function is unsafe, do not use it in production code, it is only for testing purposes
+
+VAR GLOBAL expCycloFp12BLS12381_e
+VAR GLOBAL expCycloFp12BLS12381_a0_x
+VAR GLOBAL expCycloFp12BLS12381_a0_y
+VAR GLOBAL expCycloFp12BLS12381_a4_x
+VAR GLOBAL expCycloFp12BLS12381_a4_y
+VAR GLOBAL expCycloFp12BLS12381_a3_x
+VAR GLOBAL expCycloFp12BLS12381_a3_y
+VAR GLOBAL expCycloFp12BLS12381_a2_x
+VAR GLOBAL expCycloFp12BLS12381_a2_y
+VAR GLOBAL expCycloFp12BLS12381_a1_x
+VAR GLOBAL expCycloFp12BLS12381_a1_y
+VAR GLOBAL expCycloFp12BLS12381_a5_x
+VAR GLOBAL expCycloFp12BLS12381_a5_y
+VAR GLOBAL expCycloFp12BLS12381_c0_x
+VAR GLOBAL expCycloFp12BLS12381_c0_y
+VAR GLOBAL expCycloFp12BLS12381_c4_x
+VAR GLOBAL expCycloFp12BLS12381_c4_y
+VAR GLOBAL expCycloFp12BLS12381_c3_x
+VAR GLOBAL expCycloFp12BLS12381_c3_y
+VAR GLOBAL expCycloFp12BLS12381_c2_x
+VAR GLOBAL expCycloFp12BLS12381_c2_y
+VAR GLOBAL expCycloFp12BLS12381_c1_x
+VAR GLOBAL expCycloFp12BLS12381_c1_y
+VAR GLOBAL expCycloFp12BLS12381_c5_x
+VAR GLOBAL expCycloFp12BLS12381_c5_y
+
+VAR GLOBAL _len_e
 
 VAR GLOBAL _RR
 
-; TODO: unroll the loop
-
-; RESOURCES:
-; -------------------------------------------
-;  [steps: 2338, bin: 29, arith: 216]                  // setup
-;   + 58 * [steps: 237, bin: 0, arith: 27]             // squarings
-;   + 26 * [steps: 1305, bin: 5, arith: 108]           // multiplications
-;   + [steps: 26]                                      // last iteration + end
-;  total (w.c.): [steps: 50040 bin: 159, arith: 4590]  // [2338 + 58*237 + 26*1305 + 26,
-;                                                          29            + 26*5,
-;                                                          216  + 58*27  + 26*108]
-; -------------------------------------------
-
-expByXCompCycloFp12BLS12381:
+expCycloFp12BLS12381:
         RR => _RR
 
         0 => RCX
 
         ; Start by compressing the input C(a)
         ; Store it in the output mulFp12 for future multiplications
-        expByXCompCycloFp12BLS12381_a0_x => A
-        expByXCompCycloFp12BLS12381_a0_y => B
+        expCycloFp12BLS12381_a0_x => A
+        expCycloFp12BLS12381_a0_y => B
         A => compressFp12BLS12381_a0_x
         B => compressFp12BLS12381_a0_y
-        expByXCompCycloFp12BLS12381_a2_x => A
-        expByXCompCycloFp12BLS12381_a2_y => B
+        expCycloFp12BLS12381_a2_x => A
+        expCycloFp12BLS12381_a2_y => B
         A => compressFp12BLS12381_a2_x
         B => compressFp12BLS12381_a2_y
-        expByXCompCycloFp12BLS12381_a4_x => A
-        expByXCompCycloFp12BLS12381_a4_y => B
+        expCycloFp12BLS12381_a4_x => A
+        expCycloFp12BLS12381_a4_y => B
         A => compressFp12BLS12381_a4_x
         B => compressFp12BLS12381_a4_y
-        expByXCompCycloFp12BLS12381_a1_x => A
-        expByXCompCycloFp12BLS12381_a1_y => B
+        expCycloFp12BLS12381_a1_x => A
+        expCycloFp12BLS12381_a1_y => B
         A => compressFp12BLS12381_a1_x
         B => compressFp12BLS12381_a1_y
-        expByXCompCycloFp12BLS12381_a3_x => A
-        expByXCompCycloFp12BLS12381_a3_y => B
+        expCycloFp12BLS12381_a3_x => A
+        expCycloFp12BLS12381_a3_y => B
         A => compressFp12BLS12381_a3_x
         B => compressFp12BLS12381_a3_y
-        expByXCompCycloFp12BLS12381_a5_x => A
-        expByXCompCycloFp12BLS12381_a5_y => B
+        expCycloFp12BLS12381_a5_x => A
+        expCycloFp12BLS12381_a5_y => B
         A => compressFp12BLS12381_a5_x
         B => compressFp12BLS12381_a5_y                  :CALL(compressFp12BLS12381)
         ; [steps: 106, bin: 24, arith: 0]
@@ -114,15 +105,19 @@ expByXCompCycloFp12BLS12381:
         0 => mulFp12BLS12381_c23_x
         0 => mulFp12BLS12381_c23_y
 
+        $0{receiveLenCyclo(mem.expCycloFp12BLS12381_e)} => _len_e ; receive the length of the binary representation of e
+        ; TODO: Check its correctness
+
+        ; ; start the acummulator with the MSB of k
+        ; 0 => A  :CALL(@bitwiseReconstruction + E)
+        ; A       :MSTORE(ecMul_acummulator)
+
 
 _loop:
-        RCX => RR                                       :JMP_EQ(64, _last)
+        _len_e - RCX                                            :JMPZ(_last)
 
-        ; We check if the next bit is either 1 or 0
-                                                        :CALL(@loopLengthBLS12381 + RR)
-
-        ; if bit = 0, then avoid the multiplication and just square
-        B                                               :JMPZ(_square)
+        ; Receive the next bit of e. Of bit = 0, then avoid the multiplication and just square
+        $0{(mem.expCycloFp12BLS12381_e) >> RCX & 0x1}         :JMPZ(_square)
 
         ; else, multiply by the last result
 
@@ -213,6 +208,8 @@ _square:
         A => squareCompCycloFp12BLS12381_Ca5_x
         B => squareCompCycloFp12BLS12381_Ca5_y          :CALL(squareCompCycloFp12BLS12381)
 
+        ; TODO: Update and check the acumulator
+
         ; update the index
         RCX + 1 => RCX                                  :JMP(_loop)
 
@@ -222,27 +219,27 @@ _last:
         ; Last asignment
         mulFp12BLS12381_c11_x => A
         mulFp12BLS12381_c11_y => B
-        A => expByXCompCycloFp12BLS12381_c0_x
-        B => expByXCompCycloFp12BLS12381_c0_y
+        A => expCycloFp12BLS12381_c0_x
+        B => expCycloFp12BLS12381_c0_y
         mulFp12BLS12381_c12_x => A
         mulFp12BLS12381_c12_y => B
-        A => expByXCompCycloFp12BLS12381_c4_x
-        B => expByXCompCycloFp12BLS12381_c4_y
+        A => expCycloFp12BLS12381_c4_x
+        B => expCycloFp12BLS12381_c4_y
         mulFp12BLS12381_c13_x => A
         mulFp12BLS12381_c13_y => B
-        A => expByXCompCycloFp12BLS12381_c3_x
-        B => expByXCompCycloFp12BLS12381_c3_y
+        A => expCycloFp12BLS12381_c3_x
+        B => expCycloFp12BLS12381_c3_y
         mulFp12BLS12381_c21_x => A
         mulFp12BLS12381_c21_y => B
-        A => expByXCompCycloFp12BLS12381_c2_x
-        B => expByXCompCycloFp12BLS12381_c2_y
+        A => expCycloFp12BLS12381_c2_x
+        B => expCycloFp12BLS12381_c2_y
         mulFp12BLS12381_c22_x => A
         mulFp12BLS12381_c22_y => B
-        A => expByXCompCycloFp12BLS12381_c1_x
-        B => expByXCompCycloFp12BLS12381_c1_y
+        A => expCycloFp12BLS12381_c1_x
+        B => expCycloFp12BLS12381_c1_y
         mulFp12BLS12381_c23_x => A
         mulFp12BLS12381_c23_y => B
-        A => expByXCompCycloFp12BLS12381_c5_x
-        B => expByXCompCycloFp12BLS12381_c5_y
+        A => expCycloFp12BLS12381_c5_x
+        B => expCycloFp12BLS12381_c5_y
 
         _RR => RR                               :RETURN

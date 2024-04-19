@@ -34,7 +34,7 @@ _zero_check:
 
 _input_is_not_zero:
         ; A·A⁻¹ + 0 = 1 (mod BLS12381_P)
-        ${frBLS12_381_inv(A)} => B
+        ${fpBLS12_381_inv(A)} => B
         0 => C
         %BLS12_381_P => D
         1                       :ARITH_384_MOD

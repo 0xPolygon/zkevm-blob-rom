@@ -8,6 +8,8 @@
 ;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a0_x
 VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a0_y
 VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a2_x
@@ -37,63 +39,52 @@ VAR GLOBAL _RR
 
 ; TODO: unroll the loop
 
-; RESOURCES:
-; -------------------------------------------
-;  [steps: 2338, bin: 29, arith: 216]                  // setup
-;   + 58 * [steps: 237, bin: 0, arith: 27]             // squarings
-;   + 26 * [steps: 1305, bin: 5, arith: 108]           // multiplications
-;   + [steps: 26]                                      // last iteration + end
-;  total (w.c.): [steps: 50040 bin: 159, arith: 4590]  // [2338 + 58*237 + 26*1305 + 26,
-;                                                          29            + 26*5,
-;                                                          216  + 58*27  + 26*108]
-; -------------------------------------------
+;     let Ca = comp(a);
+;     let result = [[1n]];
+;     for (let i = 0; i < e_bin.length; i++) {
+;         if (e_bin[i] === 1n) {
+;             result = Fp12_o2.mul(decomp(Ca),result);
+;         }
+
+;         Ca = squarecomp(Ca);
+;     }
+
+;     return result;
 
 expByXThreeCompCycloFp12BLS12381:
         RR => _RR
 
-        64 => RCX
+        0 => RCX
 
         ; Start by compressing the input C(a)
-        ; Store it in mulFp12 for future multiplications
+        ; Store it in the output mulFp12 for future multiplications
         expByXThreeCompCycloFp12BLS12381_a0_x => A
         expByXThreeCompCycloFp12BLS12381_a0_y => B
         A => compressFp12BLS12381_a0_x
         B => compressFp12BLS12381_a0_y
-        A => mulFp12BLS12381_c11_x
-        B => mulFp12BLS12381_c11_y
         expByXThreeCompCycloFp12BLS12381_a2_x => A
         expByXThreeCompCycloFp12BLS12381_a2_y => B
         A => compressFp12BLS12381_a2_x
         B => compressFp12BLS12381_a2_y
-        A => mulFp12BLS12381_c21_x
-        B => mulFp12BLS12381_c21_y
         expByXThreeCompCycloFp12BLS12381_a4_x => A
         expByXThreeCompCycloFp12BLS12381_a4_y => B
         A => compressFp12BLS12381_a4_x
         B => compressFp12BLS12381_a4_y
-        A => mulFp12BLS12381_c12_x
-        B => mulFp12BLS12381_c12_y
         expByXThreeCompCycloFp12BLS12381_a1_x => A
         expByXThreeCompCycloFp12BLS12381_a1_y => B
         A => compressFp12BLS12381_a1_x
         B => compressFp12BLS12381_a1_y
-        A => mulFp12BLS12381_c22_x
-        B => mulFp12BLS12381_c22_y
         expByXThreeCompCycloFp12BLS12381_a3_x => A
         expByXThreeCompCycloFp12BLS12381_a3_y => B
         A => compressFp12BLS12381_a3_x
         B => compressFp12BLS12381_a3_y
-        A => mulFp12BLS12381_c13_x
-        B => mulFp12BLS12381_c13_y
         expByXThreeCompCycloFp12BLS12381_a5_x => A
         expByXThreeCompCycloFp12BLS12381_a5_y => B
         A => compressFp12BLS12381_a5_x
-        B => compressFp12BLS12381_a5_y
-        A => mulFp12BLS12381_c23_x
-        B => mulFp12BLS12381_c23_y              :CALL(compressFp12BLS12381)
+        B => compressFp12BLS12381_a5_y                  :CALL(compressFp12BLS12381)
         ; [steps: 106, bin: 24, arith: 0]
 
-        ; Store it in squareCompCyclo for future compressed squarings
+        ; Store it in the output squareCompCyclo for future compressed squarings
         compressFp12BLS12381_Ca2_x => A
         compressFp12BLS12381_Ca2_y => B
         A => squareCompCycloFp12BLS12381_Cb2_x
@@ -112,42 +103,31 @@ expByXThreeCompCycloFp12BLS12381:
         B => squareCompCycloFp12BLS12381_Cb5_y
         ; [steps: 338, bin: 24, arith: 27]
 
+        ; Set the result to 1
+        1 => mulFp12BLS12381_c11_x
+        0 => mulFp12BLS12381_c11_y
+        0 => mulFp12BLS12381_c12_x
+        0 => mulFp12BLS12381_c12_y
+        0 => mulFp12BLS12381_c13_x
+        0 => mulFp12BLS12381_c13_y
+        0 => mulFp12BLS12381_c21_x
+        0 => mulFp12BLS12381_c21_y
+        0 => mulFp12BLS12381_c22_x
+        0 => mulFp12BLS12381_c22_y
+        0 => mulFp12BLS12381_c23_x
+        0 => mulFp12BLS12381_c23_y
+
+
 _loop:
-        ; block costs:
-        ;       no_last: [steps: 237, bin: 0, arith: 27]
-        ;       last:    [steps: 1]
+        RCX => RR                                       :JMP_EQ(63, _last)
 
-        RCX - 1 => RCX                          :JMPZ(_last)
+        ; We check if the next bit is either 1 or 0
+                                                        :CALL(@xAbsThreeBinBLS12381 + RR)
 
-        ; We always square C(c)
-        squareCompCycloFp12BLS12381_Cb2_x => A
-        squareCompCycloFp12BLS12381_Cb2_y => B
-        A => squareCompCycloFp12BLS12381_Ca2_x
-        B => squareCompCycloFp12BLS12381_Ca2_y
-        squareCompCycloFp12BLS12381_Cb3_x => A
-        squareCompCycloFp12BLS12381_Cb3_y => B
-        A => squareCompCycloFp12BLS12381_Ca3_x
-        B => squareCompCycloFp12BLS12381_Ca3_y
-        squareCompCycloFp12BLS12381_Cb4_x => A
-        squareCompCycloFp12BLS12381_Cb4_y => B
-        A => squareCompCycloFp12BLS12381_Ca4_x
-        B => squareCompCycloFp12BLS12381_Ca4_y
-        squareCompCycloFp12BLS12381_Cb5_x => A
-        squareCompCycloFp12BLS12381_Cb5_y => B
-        A => squareCompCycloFp12BLS12381_Ca5_x
-        B => squareCompCycloFp12BLS12381_Ca5_y  :CALL(squareCompCycloFp12BLS12381)
-
-        ; We check if the MSB b of x is either 1 or 0
-        RCX - 1 => RR
-                                                :CALL(@xAbsThreeBinBLS12381 + RR)
-
-        ; if bit = 0, then repeat
-        B                                       :JMPZ(_loop)
+        ; if bit = 0, then avoid the multiplication and just square
+        B                                               :JMPZ(_square)
 
         ; else, multiply by the last result
-
-_multiply:
-        ; block costs: [steps: 1305, bin: 5, arith: 108]
 
         ; We decompress D(C(c)) = c
         squareCompCycloFp12BLS12381_Cb2_x => A
@@ -165,9 +145,9 @@ _multiply:
         squareCompCycloFp12BLS12381_Cb5_x => A
         squareCompCycloFp12BLS12381_Cb5_y => B
         A => decompressFp12BLS12381_Ca5_x
-        B => decompressFp12BLS12381_Ca5_y       :CALL(decompressFp12BLS12381)
+        B => decompressFp12BLS12381_Ca5_y               :CALL(decompressFp12BLS12381)
 
-        ; We multiply the decompressed c with the last result
+        ; We multiply the last result with the decompressed c
         mulFp12BLS12381_c11_x => A
         mulFp12BLS12381_c11_y => B
         A => mulFp12BLS12381_a11_x
@@ -215,8 +195,29 @@ _multiply:
         decompressFp12BLS12381_a5_x => A
         decompressFp12BLS12381_a5_y => B
         A => mulFp12BLS12381_b23_x
-        B => mulFp12BLS12381_b23_y              :CALL(mulFp12BLS12381)
-                                                :JMP(_loop)
+        B => mulFp12BLS12381_b23_y                      :CALL(mulFp12BLS12381)
+
+_square:
+        ; We always square C(c)
+        squareCompCycloFp12BLS12381_Cb2_x => A
+        squareCompCycloFp12BLS12381_Cb2_y => B
+        A => squareCompCycloFp12BLS12381_Ca2_x
+        B => squareCompCycloFp12BLS12381_Ca2_y
+        squareCompCycloFp12BLS12381_Cb3_x => A
+        squareCompCycloFp12BLS12381_Cb3_y => B
+        A => squareCompCycloFp12BLS12381_Ca3_x
+        B => squareCompCycloFp12BLS12381_Ca3_y
+        squareCompCycloFp12BLS12381_Cb4_x => A
+        squareCompCycloFp12BLS12381_Cb4_y => B
+        A => squareCompCycloFp12BLS12381_Ca4_x
+        B => squareCompCycloFp12BLS12381_Ca4_y
+        squareCompCycloFp12BLS12381_Cb5_x => A
+        squareCompCycloFp12BLS12381_Cb5_y => B
+        A => squareCompCycloFp12BLS12381_Ca5_x
+        B => squareCompCycloFp12BLS12381_Ca5_y          :CALL(squareCompCycloFp12BLS12381)
+
+        ; update the index
+        RCX + 1 => RCX                                  :JMP(_loop)
 
 _last:
         ; block costs till end: [steps: 26, bin: 0, arith: 0]

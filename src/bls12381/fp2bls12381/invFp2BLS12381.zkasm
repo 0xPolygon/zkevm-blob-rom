@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: A,B are assumed to be in the range [0,BLS12_381_P)
+;;  PRE: A,B are assumed to be distinct from 0 modulo BLS12_381_P
 ;; POST: ARITH_BLS12381_MULFP2 ensures that the result is in the range [0,BLS12_381_P)
 ;;
 ;; invFp2BLS12381
@@ -9,14 +9,16 @@
 ;; NOTE: On input 0, it returns 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 ; RESOURCES:
 ; -------------------------------------------
 ; PATH 1 A,B == 0:       [steps: 3,  bin: 0, arith: 0]
 ; PATH 2 A != 0, B == 0: [steps: 16, bin: 3, arith: 1]
 ; PATH 3 A,B != 0:       [steps: 18, bin: 4, arith: 1] <-- w.c.
 ; -------------------------------------------
-CONST GLOBAL _x
-CONST GLOBAL _y
+VAR GLOBAL _x
+VAR GLOBAL _y
 
 invFp2BLS12381:
         ; Check if A = B = 0, and if so, return 0
@@ -50,8 +52,8 @@ _input_is_not_zero:
         ; We therefore check that (A + B·u)·(C + D·u) = 1 + 0·u
         ; A·[C] - B·[D] = 1 + (q0·BLS12381_P)
         ; A·[D] + B·[C] = 0 + (q1·BLS12381_P)
-        ${fp2InvBLS12381_x(A,B)} => C,_x
-        ${fp2InvBLS12381_y(A,B)} => _y
+        ${fp2BLS12_381_inv_x(A,B)} => C,_x
+        ${fp2BLS12_381_inv_y(A,B)} => D,_y
         1 => E
         0                       :ARITH_BLS12381_MULFP2
 
@@ -61,7 +63,7 @@ _input_is_not_zero:
         ; 1] Check C
         ; 0·B + C = op (mod BLS12381_P)
         0 => A
-        ${C % D} => C           :ARITH_MOD
+        ${C % D} => C           :ARITH_384_MOD
 
         _x - C => C             :JMPNZ(failAssert) ; chunk 0
         ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
@@ -75,16 +77,16 @@ _input_is_not_zero:
         ; 2] Check D
         ; 0·B + C = op (mod BLS12381_P)
         _y => C
-        ${C % D} => D           :ARITH_MOD
+        ${C % D} => D           :ARITH_384_MOD
 
         _y - D => C             :JMPNZ(failAssert) ; chunk 0
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 1
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 2
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 3
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 4
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 5
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 6
-        ROTL_C => D             :JMPNZ(failAssert) ; chunk 7
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 2
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 3
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 4
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 5
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 6
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 7
 
         _x => C                 :RETURN
 

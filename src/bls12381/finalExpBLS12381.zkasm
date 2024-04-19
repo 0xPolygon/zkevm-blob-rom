@@ -8,6 +8,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL finalExpBLS12381_f11_x
 VAR GLOBAL finalExpBLS12381_f11_y
 VAR GLOBAL finalExpBLS12381_f12_x
@@ -125,15 +127,15 @@ finalExpBLS12381:
         millerLoopBLS12381_f21_x => C
         millerLoopBLS12381_f21_y => D                   :CALL(negFp2BLS12381)
         E => mulFp12BLS12381_a21_x
-        C => mulFp12BLS12381_a21_x
+        C => mulFp12BLS12381_a21_y
         millerLoopBLS12381_f22_x => C
         millerLoopBLS12381_f22_y => D                   :CALL(negFp2BLS12381)
         E => mulFp12BLS12381_a22_x
-        C => mulFp12BLS12381_a22_x
+        C => mulFp12BLS12381_a22_y
         millerLoopBLS12381_f23_x => C
         millerLoopBLS12381_f23_y => D                   :CALL(negFp2BLS12381)
         E => mulFp12BLS12381_a23_x
-        C => mulFp12BLS12381_a23_x                      :CALL(mulFp12BLS12381)
+        C => mulFp12BLS12381_a23_y                      :CALL(mulFp12BLS12381)
 
         ; 2] m = f^(p⁶-1)(p²-1) = (f^(p⁶-1))^p²·f^(p⁶-1)
         ; The previous result goes to Frob2 and mulFp12_b
@@ -212,31 +214,31 @@ finalExpBLS12381:
         mulFp12BLS12381_c12_x => A
         mulFp12BLS12381_c12_y => B
         A => _m12_x
-        B => _m12_x
+        B => _m12_y
         A => expByXThreeCompCycloFp12BLS12381_a4_x
         B => expByXThreeCompCycloFp12BLS12381_a4_y
         mulFp12BLS12381_c13_x => A
         mulFp12BLS12381_c13_y => B
         A => _m13_x
-        B => _m13_x
+        B => _m13_y
         A => expByXThreeCompCycloFp12BLS12381_a3_x
         B => expByXThreeCompCycloFp12BLS12381_a3_y
         mulFp12BLS12381_c21_x => A
         mulFp12BLS12381_c21_y => B
         A => _m21_x
-        B => _m21_x
+        B => _m21_y
         A => expByXThreeCompCycloFp12BLS12381_a2_x
         B => expByXThreeCompCycloFp12BLS12381_a2_y
         mulFp12BLS12381_c22_x => A
         mulFp12BLS12381_c22_y => B
         A => _m22_x
-        B => _m22_x
+        B => _m22_y
         A => expByXThreeCompCycloFp12BLS12381_a1_x
         B => expByXThreeCompCycloFp12BLS12381_a1_y
         mulFp12BLS12381_c23_x => A
         mulFp12BLS12381_c23_y => B
         A => _m23_x
-        B => _m23_x
+        B => _m23_y
         A => expByXThreeCompCycloFp12BLS12381_a5_x
         B => expByXThreeCompCycloFp12BLS12381_a5_y      :CALL(expByXThreeCompCycloFp12BLS12381)
 

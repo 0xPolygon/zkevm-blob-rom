@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL frobFp12BLS12381_a11_x
 VAR GLOBAL frobFp12BLS12381_a11_y
 VAR GLOBAL frobFp12BLS12381_a12_x
@@ -57,10 +59,10 @@ frobFp12BLS12381:
         E => frobFp12BLS12381_c12_x
         C => frobFp12BLS12381_c12_y
 
-        frobFp12BLS12381_a13_y => A     :CALL(negFpBLS12381)
-        frobFp12BLS12381_a13_x => A
-        %FROBENIUS_GAMMA14X => C
-        %FROBENIUS_GAMMA14Y => D        :CALL(mulFp2BLS12381)
+        frobFp12BLS12381_a13_y => A     :CALL(negFpBLS12381) ; in: [A] out: [B]
+        %FROBENIUS_GAMMA14 => A
+        frobFp12BLS12381_a13_x => C
+        B => D                          :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
         E => frobFp12BLS12381_c13_x
         C => frobFp12BLS12381_c13_y
 

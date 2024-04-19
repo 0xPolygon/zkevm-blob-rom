@@ -59,14 +59,12 @@ squareFp6BLS12381:
         ; 2] a3²
         squareFp6BLS12381_a3_x => A
         squareFp6BLS12381_a3_y => B     :CALL(squareFp2BLS12381)
-        E =>
-        C =>
+        E => A,_a3square_x
+        C => B,_a3square_y
 
         ; 3] c2 = a3²·(1+u) + 2·a1·a2
-        _a3square_x => A
-        _a3square_y => B
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_y => D            :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D            :CALL(mulFp2BLS12381)
 
         _2a1a2mul_x => A
         _2a1a2mul_y => B
@@ -117,8 +115,8 @@ squareFp6BLS12381:
         C => B,_2a2a3mul_y
 
         ; 8] c1 = 2·a2·a3·(1+u) + a1²
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D            :CALL(mulFp2BLS12381)
 
         E => A
         C => B

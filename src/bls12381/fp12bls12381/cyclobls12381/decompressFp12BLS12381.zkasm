@@ -148,8 +148,8 @@ _Ca2_is_zero:
         E => C                                  :CALL(subFp2BLS12381)
         E => A
         C => B
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
         C => decompressFp12BLS12381_a0_y
         E => A
         1n => C                                 :CALL(addFpBLS12381)
@@ -169,8 +169,8 @@ _Ca2_is_not_zero:
         decompressFp12BLS12381_Ca5_y => B       :CALL(squareFp2BLS12381)
         E => A
         C => B
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
         E => _Ca5sq_x
         C => _Ca5sq_y
 
@@ -234,8 +234,8 @@ _Ca2_is_not_zero:
         E => C                                  :CALL(subFp2BLS12381)
         E => A
         C => B
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
         C => decompressFp12BLS12381_a0_y
         E => A
         1n => C                                 :CALL(addFpBLS12381)

@@ -61,8 +61,8 @@ sparseMulCFp6BLS12381:
 
         E => A
         C => B
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D            :CALL(mulFp2BLS12381)
 
         E => A
         C => B

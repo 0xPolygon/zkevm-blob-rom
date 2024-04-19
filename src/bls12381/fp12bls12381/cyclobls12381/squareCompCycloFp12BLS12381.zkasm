@@ -5,8 +5,8 @@
 ;;             in: [a2,a3,a4,a5] ∈ Fp2⁴, where ai ∈ Fp2
 ;;             out: C(a²) = [b2, b3, b4, b5] ∈ Fp2⁴, where:
 ;;                  - b2 = 2(a2 + 3·(1+u)·B45)
-;;                  - b3 = 3·(A45 - (10+u)·B45) - 2·a3
-;;                  - b4 = 3·(A23 - (10+u)·B23) - 2·a4
+;;                  - b3 = 3·(A45 - (2+u)·B45) - 2·a3
+;;                  - b4 = 3·(A23 - (2+u)·B23) - 2·a4
 ;;                  - b5 = 2·(a5 + 3·B23)
 ;;                 - A23 = (a2 + a3)·(a2 + (1+u)·a3)
 ;;                 - A45 = (a4 + a5)·(a4 + (1+u)·a5)
@@ -16,6 +16,8 @@
 ;; NOTE: If the input is not of the form C(a), where a ∈ GΦ6(p²), then the compression-decompression
 ;;       technique will not be well defined after the squaring. This means that D(C(a²)) != a².
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
 
 VAR GLOBAL squareCompCycloFp12BLS12381_Ca2_x
 VAR GLOBAL squareCompCycloFp12BLS12381_Ca2_y
@@ -80,8 +82,8 @@ squareCompCycloFp12BLS12381:
         C => _B45_y
 
         ; 2] A23 = (a2 + a3)·(a2 + (1+u)·a3)
-        %BLS12381_EXT_X => A
-        %BLS12381_EXT_Y => B
+        %BLS12_381_EXT_X => A
+        %BLS12_381_EXT_Y => B
         squareCompCycloFp12BLS12381_Ca3_x => C
         squareCompCycloFp12BLS12381_Ca3_y => D  :CALL(mulFp2BLS12381)
         E => A
@@ -103,8 +105,8 @@ squareCompCycloFp12BLS12381:
         C => _A23_y
 
         ; 3] A45 = (a4 + a5)·(a4 + (1+u)·a5)
-        %BLS12381_EXT_X => A
-        %BLS12381_EXT_Y => B
+        %BLS12_381_EXT_X => A
+        %BLS12_381_EXT_Y => B
         squareCompCycloFp12BLS12381_Ca5_x => C
         squareCompCycloFp12BLS12381_Ca5_y => D  :CALL(mulFp2BLS12381)
         E => A
@@ -126,8 +128,8 @@ squareCompCycloFp12BLS12381:
         C => _A45_y
 
         ; 4] b2 = 2(a2 + 3·(1+u)·B45)
-        %BLS12381_EXT_X => A
-        %BLS12381_EXT_Y => B
+        %BLS12_381_EXT_X => A
+        %BLS12_381_EXT_Y => B
         _B45_x => C
         _B45_y => D                             :CALL(mulFp2BLS12381)
         3n => A
@@ -143,14 +145,14 @@ squareCompCycloFp12BLS12381:
         E => squareCompCycloFp12BLS12381_Cb2_x
         C => squareCompCycloFp12BLS12381_Cb2_y
 
-        ; 5] b3 = 3·(A45 - (10+u)·B45) - 2·a3
+        ; 5] b3 = 3·(A45 - (2+u)·B45) - 2·a3
         2n => A
         squareCompCycloFp12BLS12381_Ca3_x => C
         squareCompCycloFp12BLS12381_Ca3_y => D  :CALL(scalarMulFp2BLS12381)
         E => _twoCa3_x
         C => _twoCa3_y
 
-        10n => A
+        2n => A
         1n => B
         _B45_x => C
         _B45_y => D                             :CALL(mulFp2BLS12381)
@@ -170,14 +172,14 @@ squareCompCycloFp12BLS12381:
         E => squareCompCycloFp12BLS12381_Cb3_x
         C => squareCompCycloFp12BLS12381_Cb3_y
 
-        ; 6] b4 = 3·(A23 - (10+u)·B23) - 2·a4
+        ; 6] b4 = 3·(A23 - (2+u)·B23) - 2·a4
         2n => A
         squareCompCycloFp12BLS12381_Ca4_x => C
         squareCompCycloFp12BLS12381_Ca4_y => D  :CALL(scalarMulFp2BLS12381)
         E => _twoCa4_x
         C => _twoCa4_y
 
-        10n => A
+        2n => A
         1n => B
         _B23_x => C
         _B23_y => D                             :CALL(mulFp2BLS12381)

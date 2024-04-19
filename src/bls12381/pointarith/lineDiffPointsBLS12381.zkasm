@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL lineDiffPointsBLS12381_P1_x1
 VAR GLOBAL lineDiffPointsBLS12381_P1_x2
 VAR GLOBAL lineDiffPointsBLS12381_P1_y1
@@ -38,7 +40,7 @@ VAR GLOBAL _RR
 ; -----------------------------
 
 lineDiffPointsBLS12381:
-        RR              :MSTORE(_RR)
+        RR => _RR
 
         ; 1] (P1.x·P2.y - P2.x·P1.y)
         lineDiffPointsBLS12381_P2_x1 => A

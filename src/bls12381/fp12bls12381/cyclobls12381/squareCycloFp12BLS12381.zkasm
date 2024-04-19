@@ -8,6 +8,8 @@
 ;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL squareCycloFp12BLS12381_a11_x
 VAR GLOBAL squareCycloFp12BLS12381_a11_y
 VAR GLOBAL squareCycloFp12BLS12381_a12_x
@@ -115,8 +117,8 @@ squareCycloFp12BLS12381:
         ; 4] t21 = aux·(1+u)
         _aux_x => A
         _aux_y => B
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
         E => _t21_x
         C => _t21_y
 

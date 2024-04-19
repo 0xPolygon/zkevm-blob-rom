@@ -48,8 +48,8 @@ squareFp4BLS12381:
         ; [steps: 19, bin: 0, arith: 2]
 
         ; 3] c1 = a2²·(1 + u) + a1²
-        %BLS12381_EXT_X => C
-        %BLS12381_EXT_Y => D            :CALL(mulFp2BLS12381)
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D            :CALL(mulFp2BLS12381)
         ; [steps: 26, bin: 0, arith: 3]
 
         E => A

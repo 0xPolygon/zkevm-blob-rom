@@ -9,13 +9,30 @@ module.exports = class myHelper {
     blobSize = 4096;
 
     constructor() {
-        this.FrBLS12_381 = new F1Field(0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn);
+        this.FrBLS12_381 = new F1Field(0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n);
+        this.FpBLS12_381 = new F1Field(0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn);
     }
 
     setup(props) {
         for (const name in props) {
             this[name] = props[name];
         }
+    }
+
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
+     */
+    eval_receiveLenCyclo(ctx, tag) {
+        let k = this.evalCommand(ctx, tag.params[0]);
+        let len = 0;
+        while (k > 0n) {
+            k >>= 1n;
+            len++;
+        }
+        return len;
     }
 
     async eval_computeKZGProof() {
@@ -44,6 +61,47 @@ module.exports = class myHelper {
         const ctxFullFe = { ...ctx, fullFe: true };
         const a = this.evalCommand(ctxFullFe, tag.params[0]);
         return this.FrBLS12_381.inv(a);
+    }
+
+    /**
+     * Computes the inverse of the given element of the BLS12-381 base field.
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
+    eval_fpBLS12_381_inv(ctx, tag) {
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const a = this.evalCommand(ctxFullFe, tag.params[0]);
+        return this.FpBLS12_381.inv(a);
+    }
+
+    /**
+     * Computes the "real" part of the inverse of the given Fp2 element.
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
+    eval_fp2BLS12_381_inv_x(ctx, tag) {
+        const Fp = this.FpBLS12_381;
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const a = this.evalCommand(ctxFullFe, tag.params[0]);
+        const b = this.evalCommand(ctxFullFe, tag.params[1]);
+        const den = Fp.add(Fp.mul(a, a), Fp.mul(b, b));
+
+        return Fp.div(a, den);
+    }
+
+    /**
+     * Computes the "imaginary" part of the inverse of the given Fp2 element.
+     * @param ctx - Context.
+     * @param tag - Tag.
+    */
+    eval_fp2BLS12_381_inv_y(ctx, tag) {
+        const Fp = this.FpBLS12_381;
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const a = this.evalCommand(ctxFullFe, tag.params[0]);
+        const b = this.evalCommand(ctxFullFe, tag.params[1]);
+        const den = Fp.add(Fp.mul(a, a), Fp.mul(b, b));
+
+        return Fp.div(Fp.neg(b), den);
     }
 
     /**

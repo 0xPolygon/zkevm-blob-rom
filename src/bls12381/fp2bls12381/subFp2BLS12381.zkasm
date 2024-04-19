@@ -7,6 +7,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 ; RESOURCES:
 ; -----------------------------
 ; [steps: 2, bin: 0, arith: 1]
@@ -17,4 +19,4 @@ subFp2BLS12381:
         ; A - C = [E] + (q0·BLS12381_P)
         ; B - D = [OP] + (q1·BLS12381_P)
         ${ARITH_BLS12381_SUBFP2(A,C)} => E
-        ${ARITH_BLS12381_SUBFP2(B,D)} => C      :ARITH_BLS12381_SUBFP2, RETURN
+        ${ARITH_BLS12381_SUBFP2(B,D)} => C              :ARITH_BLS12381_SUBFP2, RETURN

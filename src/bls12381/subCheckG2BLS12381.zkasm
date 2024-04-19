@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL subCheckG2BLS12381_Q_x1
 VAR GLOBAL subCheckG2BLS12381_Q_x2
 VAR GLOBAL subCheckG2BLS12381_Q_y1
@@ -108,7 +110,7 @@ subCheckG2BLS12381:
     A => psiEndoBLS12381_Q_y1
     B => psiEndoBLS12381_Q_y2                   :CALL(psiEndoBLS12381)
 
-    ; 2.2] [x]ψ³(Q) + Q
+    ; 2.2] [x]ψ³(Q) + Q (notice that x is negative)
     psiEndoBLS12381_psi_Q_x1 => A
     psiEndoBLS12381_psi_Q_x2 => B
     A => scalarMulPointByXFP2BLS12381_P_x1
@@ -122,10 +124,10 @@ subCheckG2BLS12381:
     scalarMulPointByXFP2BLS12381_Q_x2 => B
     A => addPointFP2BLS12381_P1_x1
     B => addPointFP2BLS12381_P1_x2
-    scalarMulPointByXFP2BLS12381_Q_y1 => A
-    scalarMulPointByXFP2BLS12381_Q_y2 => B
-    A => addPointFP2BLS12381_P1_y1
-    B => addPointFP2BLS12381_P1_y2
+    scalarMulPointByXFP2BLS12381_Q_y1 => C
+    scalarMulPointByXFP2BLS12381_Q_y2 => D      :CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
+    E => addPointFP2BLS12381_P1_y1
+    C => addPointFP2BLS12381_P1_y2
     subCheckG2BLS12381_Q_x1 => A
     subCheckG2BLS12381_Q_x2 => B
     A => addPointFP2BLS12381_P2_x1

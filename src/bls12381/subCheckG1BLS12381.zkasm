@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL subCheckG1BLS12381_P_x
 VAR GLOBAL subCheckG1BLS12381_P_y
 

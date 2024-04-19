@@ -8,6 +8,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL lineSamePointsBLS12381_P_x1
 VAR GLOBAL lineSamePointsBLS12381_P_x2
 VAR GLOBAL lineSamePointsBLS12381_P_y1
