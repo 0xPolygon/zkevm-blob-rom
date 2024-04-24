@@ -8,6 +8,16 @@ getFromBlobHashK:
         $ => A                          :HASHK(E)
         B => E                          :RETURN
 
+; @info Get D bytes from HASHP with %INDEX_BLOB_L2_HASH_P_DATA (with HASHPOS)
+; @in D, E, HASHPOS
+; @out A
+getFromBlobHashP:
+        $ - HASHPOS - D                 :F_MLOAD(blobDataLen),JMPN(invalidParsing)
+        E => B
+        %INDEX_BLOB_L2_HASH_P_DATA => E
+        $ => A                          :HASHP(E)
+        B => E                          :RETURN
+
 ; @info Add A bytes with D len to HASHP with index E and HASHPOS in C
 ; @in A, D, E, C
 ; @out C new HASHPOS

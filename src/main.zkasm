@@ -9,16 +9,19 @@ INCLUDE "constantsBLS12381.zkasm"
 ;               C.0 - Type 0: calldata
 ;               C.1 - Type 1: ethereum blob transaction
 ;               C.2 - Type 2: forced
+;               C.3 - Type 3: validium
 ;       D - batchHashData - finalAccBatchHashData
 ;       D.0 - type 0 & 2: Prepare batchHashData & finalAccBatchHashData
 ;       D.1 - type 1: check 0x00, compute batchHashData & finalAccBatchHashData
+;       D.2 - type 3: Prepare batchHashData & finalAccBatchHashData
 ;       E - Finalize execution
 
 ; type 0 & 1 & 2 : HASHK(0) --> newBlobAccInputHash
 ; type 0 & 2: HASHK(1) --> blobL2Hashdata = keccak256(blobData)
 ; type 1: HASHS(0) --> kzgCommitmentHash = sha256(kzgCommitment)
 ; type 1: HASHP(0) --> z = poseidon(kzgCommitment + blobData)
-; type 0 & 1 & 2 : HASHP(X) --> batchHashData
+; type 3: HASHP(0) --> blobL2Hashdata = poseidon(blobData)
+; type 0 & 1 & 2 & 3 : HASHP(X) --> batchHashData
 
 start:
 
@@ -116,6 +119,7 @@ start:
         $ => A                          :MLOAD(type),JMPZ(standardCalldata)
         A - 1                           :JMPZ(blobData)
         A - 2                           :JMPZ(forcedBlob)
+        A - 3                           :JMPZ(validium)
                                         :JMP(invalidBlobType)
 
 ;;;;;;;;;;;;;;;;;;
@@ -129,10 +133,9 @@ blobData:
         ; blobDataLen = kzgCommitmentLen + blobDataLen
         $ => B                          :HASHPLEN(E), MSTORE(blobDataLen)
 
-        ;if type === 1 --> forcedHashData = 0
+        ; if type === 1 --> forcedHashData = 0
         0                               :MSTORE(forcedHashData)
-        ; isEIP4844 = 1 & update nextHashPId
-        1                               :MSTORE(isEIP4844)
+        ; update nextHashPId
         1                               :MSTORE(nextHashPId),JMP(startBlobType1)
 
 ;;;;;;;;;;;;;;;;;;
@@ -151,8 +154,19 @@ forcedBlob:
         A                               :HASHKDIGEST(E)
         $                               :HASHKLEN(E),MSTORE(blobDataLen)
         ; sanity check
-        0                               :MSTORE(isEIP4844)
         0                               :MSTORE(nextHashPId),JMP(startBlobType0and2)
+;;;;;;;;;;;;;;;;;;
+;; C.3 - Type 3
+;;;;;;;;;;;;;;;;;;
+validium:
+        ;if type === 3 -> forcedHashData = 0
+        0                               :MSTORE(forcedHashData)
+        $ => A                          :MLOAD(blobL2HashData)
+        %INDEX_BLOB_L2_HASH_P_DATA => E
+        A                               :HASHPDIGEST(E)
+        $                               :HASHPLEN(E),MSTORE(blobDataLen)
+        ; sanity check
+        1                               :MSTORE(nextHashPId),JMP(startBlobType3)
 
 ;;;;;;;;;;;;;;;;;;
 ;; D - batchHashData - finalAccBatchHashData
@@ -195,8 +209,10 @@ nextBatch:
         ; update batch hash id (E) & nextHashPId
         $ => E                          :MLOAD(nextHashPId)
         E + 1                           :MSTORE(nextHashPId)
-        $                               :MLOAD(isEIP4844),JMPZ(nextBatchType0and2, nextBatchBlobData)
-
+        $ => A                          :MLOAD(type),JMPZ(nextBatchType0and2)
+        A - 1                           :JMPZ(nextBatchBlobData)
+        A - 2                           :JMPZ(nextBatchType0and2)
+                                        :JMP(nextBatchType3)
 ;;;;;;;;;;;;;;;;;;
 ;; E. Finalize execution
 ;;;;;;;;;;;;;;;;;;
@@ -246,6 +262,7 @@ INCLUDE "utils-blob.zkasm"
 INCLUDE "errors-blob.zkasm"
 INCLUDE "type-0-2.zkasm"
 INCLUDE "type-1.zkasm"
+INCLUDE "type-3.zkasm"
 INCLUDE "mock-kzg-verify.zkasm"
 INCLUDE "end-blob.zkasm"
 INCLUDE "./FRBLS12381/reduceFrBLS12381.zkasm"
