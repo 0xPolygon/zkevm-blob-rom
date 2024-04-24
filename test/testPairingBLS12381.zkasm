@@ -201,6 +201,7 @@ PRAGMA MODE_384_BITS
         ; 1                                                                                       :EQ
 
         ; Test Vector https://www.ietf.org/archive/id/draft-irtf-cfrg-pairing-friendly-curves-11.html#appendix-B-9
+        ${dump(STEP,CNT_BINARY,CNT_ARITH)}
         %BLS12_381_G1X => pairingBLS12381_P_x
         %BLS12_381_G1Y => pairingBLS12381_P_y
         %BLS12_381_G2X1 => pairingBLS12381_Q_x1
@@ -220,7 +221,7 @@ PRAGMA MODE_384_BITS
         0xfe63f185f56dd29150fc498bbeea78969e7e783043620db33f75a05a0a2ce5c442beaff9da195ff15164c00ab66bdden      :MLOAD(pairingBLS12381_out22_y)
         0x10900338a92ed0b47af211636f7cfdec717b7ee43900eee9b5fc24f0000c5874d4801372db478987691c566a8c474978n     :MLOAD(pairingBLS12381_out23_x)
         0x1454814f3085f0e6602247671bc408bbce2007201536818c901dbd4d2095dd86c1ec8b888e59611f60a301af7776be3dn     :MLOAD(pairingBLS12381_out23_y)
-
+        ${dump(STEP,CNT_BINARY,CNT_ARITH)}
 
         ; 6] Bilinearity test: e(2G₁,12G₂) = e(G₁,12G₂)² = e(2G₁,G₂)¹² = e(G₁,G₂)²⁴ = e(12G₁,2G₂)
         ; e(2G₁,12G₂)
@@ -449,13 +450,13 @@ INCLUDE "../src/bls12381/millerLoopBLS12381.zkasm"
 INCLUDE "../src/bls12381/finalExpBLS12381.zkasm"
 
 ; Point arithmetic
-INCLUDE "../src/bls12381/pointarith/addPointFPBLS12381.zkasm"
-INCLUDE "../src/bls12381/pointarith/doublePointFP2BLS12381.zkasm"
-INCLUDE "../src/bls12381/pointarith/addPointFP2BLS12381.zkasm"
-INCLUDE "../src/bls12381/pointarith/doublePointFPBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/addPointFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/doublePointFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/addPointFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/doublePointFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/pointarith/xSqThreeBinBLS12381.zkasm"
-INCLUDE "../src/bls12381/pointarith/scalarMulPointByXThreeFPBLS12381.zkasm"
-INCLUDE "../src/bls12381/pointarith/scalarMulPointByXFP2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/scalarMulPointByXThreeFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/scalarMulPointByXFp2BLS12381.zkasm"
 INCLUDE "../src/bls12381/pointarith/psiEndoBLS12381.zkasm"
 INCLUDE "../src/bls12381/pointarith/lineSamePointsBLS12381.zkasm"
 INCLUDE "../src/bls12381/pointarith/lineDiffPointsBLS12381.zkasm"

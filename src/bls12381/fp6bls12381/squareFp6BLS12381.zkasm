@@ -8,6 +8,9 @@
 ;;                  - c2 = a3²·(1+u) + 2·a1·a2
 ;;                  - c3 = 2·a1·a2 - a3² + (a1 - a2 + a3)² + 2·a2·a3 - a1²
 ;;
+;;                  - c1 = a1² + 2·a2·a3·(1+u)
+;;                  - c2 = a3²·(1+u) + 2·a1·a2
+;;                  - c3 = a2² + 2·a1·a3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VAR GLOBAL squareFp6BLS12381_a1_x
@@ -25,16 +28,10 @@ VAR GLOBAL squareFp6BLS12381_c3_y
 
 VAR GLOBAL _2a1a2mul_x
 VAR GLOBAL _2a1a2mul_y
-VAR GLOBAL _a3square_x
-VAR GLOBAL _a3square_y
-VAR GLOBAL _2a1a2a3sqsub_x
-VAR GLOBAL _2a1a2a3sqsub_y
-VAR GLOBAL _a1square_x
-VAR GLOBAL _a1square_y
-VAR GLOBAL _a1a2a3sub_x
-VAR GLOBAL _a1a2a3sub_y
-VAR GLOBAL _2a2a3mul_x
-VAR GLOBAL _2a2a3mul_y
+VAR GLOBAL _a1sq_x
+VAR GLOBAL _a1sq_y
+VAR GLOBAL _a2sq_x
+VAR GLOBAL _a2sq_y
 
 VAR GLOBAL _RR
 
@@ -59,8 +56,8 @@ squareFp6BLS12381:
         ; 2] a3²
         squareFp6BLS12381_a3_x => A
         squareFp6BLS12381_a3_y => B     :CALL(squareFp2BLS12381)
-        E => A,_a3square_x
-        C => B,_a3square_y
+        E => A
+        C => B
 
         ; 3] c2 = a3²·(1+u) + 2·a1·a2
         %BLS12_381_EXT_X => C
@@ -73,35 +70,11 @@ squareFp6BLS12381:
         E => squareFp6BLS12381_c2_x
         C => squareFp6BLS12381_c2_y
 
-        ; 4] 2·a1·a2 - a3²
-        _2a1a2mul_x => A
-        _2a1a2mul_y => B
-        _a3square_x => C
-        _a3square_y => D                :CALL(subFp2BLS12381)
-        E => _2a1a2a3sqsub_x
-        C => _2a1a2a3sqsub_y
-
         ; 5] a1²
         squareFp6BLS12381_a1_x => A
         squareFp6BLS12381_a1_y => B     :CALL(squareFp2BLS12381)
-        E => _a1square_x
-        C => _a1square_y
-
-        ; 6] (a1 - a2 + a3)²
-        squareFp6BLS12381_a1_x => A
-        squareFp6BLS12381_a1_y => B
-        squareFp6BLS12381_a2_x => C
-        squareFp6BLS12381_a2_y => D     :CALL(subFp2BLS12381)
-
-        E => A
-        C => B
-        squareFp6BLS12381_a3_x => C
-        squareFp6BLS12381_a3_y => D     :CALL(addFp2BLS12381)
-
-        E => A
-        C => B                          :CALL(squareFp2BLS12381)
-        E => _a1a2a3sub_x
-        C => _a1a2a3sub_y
+        E => _a1sq_x
+        C => _a1sq_y
 
         ; 7] 2·a2·a3
         squareFp6BLS12381_a2_x => A
@@ -111,8 +84,8 @@ squareFp6BLS12381:
 
         E => A
         C => B                          :CALL(dblFp2BLS12381)
-        E => A,_2a2a3mul_x
-        C => B,_2a2a3mul_y
+        E => A
+        C => B
 
         ; 8] c1 = 2·a2·a3·(1+u) + a1²
         %BLS12_381_EXT_X => C
@@ -120,26 +93,29 @@ squareFp6BLS12381:
 
         E => A
         C => B
-        _a1square_x => C
-        _a1square_y => D                :CALL(addFp2BLS12381)
+        _a1sq_x => C
+        _a1sq_y => D                :CALL(addFp2BLS12381)
         E => squareFp6BLS12381_c1_x
         C => squareFp6BLS12381_c1_y
 
-        ; 9] c3 = 2·a1·a2 - a3² + (a1 - a2 + a3)² + 2·a2·a3 - a1²
-        _2a1a2a3sqsub_x => A
-        _2a1a2a3sqsub_y => B
-        _a1a2a3sub_x => C
-        _a1a2a3sub_y => D               :CALL(addFp2BLS12381)
+        ; 9] c3 = a2² + 2·a1·a3
+        squareFp6BLS12381_a2_x => A
+        squareFp6BLS12381_a2_y => B     :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
+        E => _a2sq_x
+        C => _a2sq_y
+
+        squareFp6BLS12381_a1_x => A
+        squareFp6BLS12381_a1_y => B
+        squareFp6BLS12381_a3_x => C
+        squareFp6BLS12381_a3_y => D     :CALL(mulFp2BLS12381) ; in: [A,B] out: [E,C]
 
         E => A
-        C => B
-        _2a2a3mul_x => C
-        _2a2a3mul_y => D                :CALL(addFp2BLS12381)
+        C => B                          :CALL(dblFp2BLS12381) ; in: [A,B] out: [E,C]
 
-        E => A
-        C => B
-        _a1square_x => C
-        _a1square_y => D                :CALL(subFp2BLS12381)
+        _a2sq_x => A
+        _a2sq_y => B
+        C => D
+        E => C                          :CALL(addFp2BLS12381) ; in: [A,B] out: [E,C]
         E => squareFp6BLS12381_c3_x
         C => squareFp6BLS12381_c3_y
 

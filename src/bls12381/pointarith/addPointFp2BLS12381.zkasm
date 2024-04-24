@@ -2,7 +2,7 @@
 ;; PRE: P1,P2 ∈ E'(Fp2)\{𝒪} with P1 != P2,-P2 and their coordinates are in the range [0,BLS12_381_P)
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
-;; addPointFP2BLS12381:
+;; addPointFp2BLS12381:
 ;;             in: P1 = (P1.x1 + P1.x2·u, P1.y1 + P1.y2·u), P2 = (P2.x1 + P2.x2·u, P2.y1 + P2.y2·u) ∈ E'(Fp2)
 ;;             out: P1 + P2 = (P3.x1 + P3.x2·u, P3.y1 + P3.y2·u) ∈ E'(Fp2)
 ;;
@@ -10,18 +10,18 @@
 
 ; Since the curve is E'/Fp2: y² = x³ + 4·(1+u), there is no issue in representing the point at infinity as (0, 0).
 
-VAR GLOBAL addPointFP2BLS12381_P1_x1
-VAR GLOBAL addPointFP2BLS12381_P1_x2
-VAR GLOBAL addPointFP2BLS12381_P1_y1
-VAR GLOBAL addPointFP2BLS12381_P1_y2
-VAR GLOBAL addPointFP2BLS12381_P2_x1
-VAR GLOBAL addPointFP2BLS12381_P2_x2
-VAR GLOBAL addPointFP2BLS12381_P2_y1
-VAR GLOBAL addPointFP2BLS12381_P2_y2
-VAR GLOBAL addPointFP2BLS12381_P3_x1
-VAR GLOBAL addPointFP2BLS12381_P3_x2
-VAR GLOBAL addPointFP2BLS12381_P3_y1
-VAR GLOBAL addPointFP2BLS12381_P3_y2
+VAR GLOBAL addPointFp2BLS12381_P1_x1
+VAR GLOBAL addPointFp2BLS12381_P1_x2
+VAR GLOBAL addPointFp2BLS12381_P1_y1
+VAR GLOBAL addPointFp2BLS12381_P1_y2
+VAR GLOBAL addPointFp2BLS12381_P2_x1
+VAR GLOBAL addPointFp2BLS12381_P2_x2
+VAR GLOBAL addPointFp2BLS12381_P2_y1
+VAR GLOBAL addPointFp2BLS12381_P2_y2
+VAR GLOBAL addPointFp2BLS12381_P3_x1
+VAR GLOBAL addPointFp2BLS12381_P3_x2
+VAR GLOBAL addPointFp2BLS12381_P3_y1
+VAR GLOBAL addPointFp2BLS12381_P3_y2
 
 VAR GLOBAL _lambda_x
 VAR GLOBAL _lambda_y
@@ -33,13 +33,13 @@ VAR GLOBAL _RR
 ; [steps: 101, bin: 4, arith: 10]
 ; -------------------------------------------
 
-addPointFP2BLS12381:
+addPointFp2BLS12381:
         RR => _RR
 
-        addPointFP2BLS12381_P2_x1 => A
-        addPointFP2BLS12381_P2_x2 => B
-        addPointFP2BLS12381_P1_x1 => C
-        addPointFP2BLS12381_P1_x2 => D  :CALL(subFp2BLS12381)
+        addPointFp2BLS12381_P2_x1 => A
+        addPointFp2BLS12381_P2_x2 => B
+        addPointFp2BLS12381_P1_x1 => C
+        addPointFp2BLS12381_P1_x2 => D  :CALL(subFp2BLS12381)
         ; E + C·u = P2.x - P1.x
 
         E => A
@@ -48,10 +48,10 @@ addPointFP2BLS12381:
         C => _lambda_x
         D => _lambda_y
 
-        addPointFP2BLS12381_P2_y1 => A
-        addPointFP2BLS12381_P2_y2 => B
-        addPointFP2BLS12381_P1_y1 => C
-        addPointFP2BLS12381_P1_y2 => D  :CALL(subFp2BLS12381)
+        addPointFp2BLS12381_P2_y1 => A
+        addPointFp2BLS12381_P2_y2 => B
+        addPointFp2BLS12381_P1_y1 => C
+        addPointFp2BLS12381_P1_y2 => D  :CALL(subFp2BLS12381)
         ; E + C·u = P2.y - P1.y
 
         _lambda_x => A
@@ -68,22 +68,22 @@ addPointFP2BLS12381:
 
         E => A
         C => B
-        addPointFP2BLS12381_P1_x1 => C
-        addPointFP2BLS12381_P1_x2 => D  :CALL(subFp2BLS12381)
+        addPointFp2BLS12381_P1_x1 => C
+        addPointFp2BLS12381_P1_x2 => D  :CALL(subFp2BLS12381)
         ; E + C·u = lambda² - P1.x
 
         E => A
         C => B
-        addPointFP2BLS12381_P2_x1 => C
-        addPointFP2BLS12381_P2_x2 => D  :CALL(subFp2BLS12381)
+        addPointFp2BLS12381_P2_x1 => C
+        addPointFp2BLS12381_P2_x2 => D  :CALL(subFp2BLS12381)
         ; E + C·u = lambda² - P1.x - P2.x
 
-        E => addPointFP2BLS12381_P3_x1
-        C => addPointFP2BLS12381_P3_x2
+        E => addPointFp2BLS12381_P3_x1
+        C => addPointFp2BLS12381_P3_x2
         ; P3.x = lambda² - P1.x - P2.x
 
-        addPointFP2BLS12381_P1_x1 => A
-        addPointFP2BLS12381_P1_x2 => B
+        addPointFp2BLS12381_P1_x1 => A
+        addPointFp2BLS12381_P1_x2 => B
         C => D
         E => C                          :CALL(subFp2BLS12381)
         ; E + C·u = P1.x - P3.x
@@ -96,11 +96,11 @@ addPointFP2BLS12381:
 
         E => A
         C => B
-        addPointFP2BLS12381_P1_y1 => C
-        addPointFP2BLS12381_P1_y2 => D  :CALL(subFp2BLS12381)
+        addPointFp2BLS12381_P1_y1 => C
+        addPointFp2BLS12381_P1_y2 => D  :CALL(subFp2BLS12381)
         ; E + C·u = lambda·(P1.x - P3.x) - P1.y
 
-        E => addPointFP2BLS12381_P3_y1
-        C => addPointFP2BLS12381_P3_y2
+        E => addPointFp2BLS12381_P3_y1
+        C => addPointFp2BLS12381_P3_y2
 
         _RR => RR                       :RETURN

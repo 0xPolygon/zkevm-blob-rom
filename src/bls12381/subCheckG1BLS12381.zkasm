@@ -57,35 +57,35 @@ subCheckG1BLS12381:
     C => _sigma_P_x_sq
 
     _sigma_P_x => A
-    A => doublePointFPBLS12381_P_x
+    A => doublePointFpBLS12381_P_x
     subCheckG1BLS12381_P_y => A
-    A => doublePointFPBLS12381_P_y              :CALL(doublePointFPBLS12381)
+    A => doublePointFpBLS12381_P_y              :CALL(doublePointFpBLS12381)
 
-    doublePointFPBLS12381_Q_x => A
-    doublePointFPBLS12381_Q_y => B
-    A => addPointFPBLS12381_P1_x
-    B => addPointFPBLS12381_P1_y
+    doublePointFpBLS12381_Q_x => A
+    doublePointFpBLS12381_Q_y => B
+    A => addPointFpBLS12381_P1_x
+    B => addPointFpBLS12381_P1_y
     subCheckG1BLS12381_P_x => A
-    A => addPointFPBLS12381_P2_x
+    A => addPointFpBLS12381_P2_x
     subCheckG1BLS12381_P_y => A                 :CALL(negFpBLS12381) ; in: [A] out: [B]
     B => _neg_P_y
-    B => addPointFPBLS12381_P2_y                :CALL(addPointFPBLS12381)
+    B => addPointFpBLS12381_P2_y                :CALL(addPointFpBLS12381)
 
-    addPointFPBLS12381_P3_x => A
-    addPointFPBLS12381_P3_y => B
-    A => addPointFPBLS12381_P1_x
-    B => addPointFPBLS12381_P1_y
+    addPointFpBLS12381_P3_x => A
+    addPointFpBLS12381_P3_y => B
+    A => addPointFpBLS12381_P1_x
+    B => addPointFpBLS12381_P1_y
     _sigma_P_x_sq => A
     _neg_P_y => B
-    A => addPointFPBLS12381_P2_x
-    B => addPointFPBLS12381_P2_y                :CALL(addPointFPBLS12381)
+    A => addPointFpBLS12381_P2_x
+    B => addPointFpBLS12381_P2_y                :CALL(addPointFpBLS12381)
 
-    addPointFPBLS12381_P3_x => A
-    addPointFPBLS12381_P3_y => B
-    A => scalarMulPointByXThreeFPBLS12381_P_x
-    B => scalarMulPointByXThreeFPBLS12381_P_y   :CALL(scalarMulPointByXThreeFPBLS12381)
+    addPointFpBLS12381_P3_x => A
+    addPointFpBLS12381_P3_y => B
+    A => scalarMulPointByXThreeFpBLS12381_P_x
+    B => scalarMulPointByXThreeFpBLS12381_P_y   :CALL(scalarMulPointByXThreeFpBLS12381)
 
-    scalarMulPointByXThreeFPBLS12381_Q_x => B
+    scalarMulPointByXThreeFpBLS12381_Q_x => B
     _sigma_P_x_sq => C
     B - C => C                                  :JMPNZ(_P_is_not_in_G1)
     ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
@@ -96,7 +96,7 @@ subCheckG1BLS12381:
     ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
     ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)
 
-    scalarMulPointByXThreeFPBLS12381_Q_y => B
+    scalarMulPointByXThreeFpBLS12381_Q_y => B
     subCheckG1BLS12381_P_y => C
     B - C => C                                  :JMPNZ(_P_is_not_in_G1)
     ROTL_C => C                                 :JMPNZ(_P_is_not_in_G1)

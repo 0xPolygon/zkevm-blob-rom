@@ -113,32 +113,32 @@ subCheckG2BLS12381:
     ; 2.2] [x]ψ³(Q) + Q (notice that x is negative)
     psiEndoBLS12381_psi_Q_x1 => A
     psiEndoBLS12381_psi_Q_x2 => B
-    A => scalarMulPointByXFP2BLS12381_P_x1
-    B => scalarMulPointByXFP2BLS12381_P_x2
+    A => scalarMulPointByXFp2BLS12381_P_x1
+    B => scalarMulPointByXFp2BLS12381_P_x2
     psiEndoBLS12381_psi_Q_y1 => A
     psiEndoBLS12381_psi_Q_y2 => B
-    A => scalarMulPointByXFP2BLS12381_P_y1
-    B => scalarMulPointByXFP2BLS12381_P_y2      :CALL(scalarMulPointByXFP2BLS12381)
+    A => scalarMulPointByXFp2BLS12381_P_y1
+    B => scalarMulPointByXFp2BLS12381_P_y2      :CALL(scalarMulPointByXFp2BLS12381)
 
-    scalarMulPointByXFP2BLS12381_Q_x1 => A
-    scalarMulPointByXFP2BLS12381_Q_x2 => B
-    A => addPointFP2BLS12381_P1_x1
-    B => addPointFP2BLS12381_P1_x2
-    scalarMulPointByXFP2BLS12381_Q_y1 => C
-    scalarMulPointByXFP2BLS12381_Q_y2 => D      :CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
-    E => addPointFP2BLS12381_P1_y1
-    C => addPointFP2BLS12381_P1_y2
+    scalarMulPointByXFp2BLS12381_Q_x1 => A
+    scalarMulPointByXFp2BLS12381_Q_x2 => B
+    A => addPointFp2BLS12381_P1_x1
+    B => addPointFp2BLS12381_P1_x2
+    scalarMulPointByXFp2BLS12381_Q_y1 => C
+    scalarMulPointByXFp2BLS12381_Q_y2 => D      :CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
+    E => addPointFp2BLS12381_P1_y1
+    C => addPointFp2BLS12381_P1_y2
     subCheckG2BLS12381_Q_x1 => A
     subCheckG2BLS12381_Q_x2 => B
-    A => addPointFP2BLS12381_P2_x1
-    B => addPointFP2BLS12381_P2_x2
+    A => addPointFp2BLS12381_P2_x1
+    B => addPointFp2BLS12381_P2_x2
     subCheckG2BLS12381_Q_y1 => A
     subCheckG2BLS12381_Q_y2 => B
-    A => addPointFP2BLS12381_P2_y1
-    B => addPointFP2BLS12381_P2_y2              :CALL(addPointFP2BLS12381)
+    A => addPointFp2BLS12381_P2_y1
+    B => addPointFp2BLS12381_P2_y2              :CALL(addPointFp2BLS12381)
 
     ; 2.3] Check if LHS == RHS
-    addPointFP2BLS12381_P3_x1 => A
+    addPointFp2BLS12381_P3_x1 => A
     _psi2_Q_x1 => B
     A - B => C                                  :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
@@ -149,7 +149,7 @@ subCheckG2BLS12381:
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
 
-    addPointFP2BLS12381_P3_x2 => A
+    addPointFp2BLS12381_P3_x2 => A
     _psi2_Q_x2 => B
     A - B => C                                  :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
@@ -160,7 +160,7 @@ subCheckG2BLS12381:
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
 
-    addPointFP2BLS12381_P3_y1 => A
+    addPointFp2BLS12381_P3_y1 => A
     _psi2_Q_y1 => B
     A - B => C                                  :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
@@ -171,7 +171,7 @@ subCheckG2BLS12381:
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
 
-    addPointFP2BLS12381_P3_y2 => A
+    addPointFp2BLS12381_P3_y2 => A
     _psi2_Q_y2 => B
     A - B => C                                  :JMPNZ(_Q_is_not_in_G2)
     ROTL_C => C                                 :JMPNZ(_Q_is_not_in_G2)
