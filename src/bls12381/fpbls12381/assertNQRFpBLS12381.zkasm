@@ -1,0 +1,4140 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: C is not alias free
+;;
+;; assertNQRFpBLS12381:
+;;             in: C
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+; This function is using Euler's criterion pow(C, (p-1)/2) == -1 to determine that a given number is not a quadratic residue modulo p
+
+; Efficiency of the exponentiation:
+; (p-1)/2 = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd555
+;             (*) 1 x 1, 1 x 0,  1 x 1, 8 x 0,  1 x 1, 3 x 0, 1 x 1, 3 x 0, 4 x 1, 1 x 0,  1 x 1, 1 x 0,  1 x 1, 3 x 0,
+;                 3 x 1, 2 x 0,  1 x 1, 1 x 0, 10 x 1, 2 x 0, 2 x 1, 1 x 0, 1 x 1, 2 x 0,  2 x 1, 1 x 0,  1 x 1, 2 x 0,
+;                 1 x 1, 2 x 0,  1 x 1, 1 x 0,  2 x 1, 3 x 0, 2 x 1, 1 x 0, 3 x 1, 1 x 0,  1 x 1, 2 x 0,  4 x 1, 1 x 0,
+;                 2 x 1, 1 x 0,  2 x 1, 2 x 0,  1 x 1, 4 x 0, 2 x 1, 1 x 0, 1 x 1, 2 x 0,  1 x 1, 1 x 0,  3 x 1, 1 x 0,
+;                 1 x 1, 1 x 0,  2 x 1, 2 x 0,  2 x 1, 1 x 0, 1 x 1, 1 x 0, 3 x 1, 1 x 0,  2 x 1, 2 x 0,  1 x 1, 3 x 0,
+;                 3 x 1, 1 x 0,  3 x 1, 1 x 0,  1 x 1, 2 x 0, 1 x 1, 1 x 0, 3 x 1, 4 x 0,  1 x 1, 2 x 0,  4 x 1, 2 x 0,
+;                 3 x 1, 4 x 0,  1 x 1, 1 x 0,  1 x 1, 3 x 0, 1 x 1, 2 x 0, 1 x 1, 1 x 0,  1 x 1, 1 x 0,  6 x 1, 1 x 0,
+;                 2 x 1, 2 x 0,  3 x 1, 2 x 0,  2 x 1, 4 x 0, 2 x 1, 1 x 0, 1 x 1, 2 x 0,  1 x 1, 1 x 0,  1 x 1, 1 x 0,
+;                 1 x 1, 5 x 0,  4 x 1, 1 x 0,  2 x 1, 1 x 0, 1 x 1, 1 x 0, 2 x 1, 4 x 0,  4 x 1, 1 x 0,  2 x 1, 3 x 0,
+;                 1 x 1, 2 x 0,  1 x 1, 5 x 0,  4 x 1, 1 x 0, 1 x 1, 1 x 0, 1 x 1, 1 x 0,  1 x 1, 1 x 0, 17 x 1, 1 x 0,
+;                 1 x 1, 1 x 0,  2 x 1, 3 x 0,  1 x 1, 1 x 0, 1 x 1, 1 x 0, 1 x 1, 2 x 0, 19 x 1, 1 x 0,  3 x 1, 2 x 0,
+;                 8 x 1, 1 x 0, 33 x 1, 1 x 0,  1 x 1, 1 x 0, 1 x 1, 1 x 0, 1 x 1, 1 x 0,  1 x 1, 1 x 0,  1 x 1, 1 x 0, 1 x 1, 1 x 0, 1 x 1
+;             (*) 222 x SM, 1 x S, 22 x SM, 4 x S, 1 x SM, 1 x S, 3 x SM    (S=square M=multiplication)
+;         BLOCK:  1         2      3        4      5       6      7
+;             (*) 222 + initial initialization
+
+VAR GLOBAL _base
+
+assertNQRFpBLS12381:
+        C => _base
+
+        ; Set the modulus
+        %BLS12_381_P => D
+
+        ; === BLOCK1: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK2: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK3: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 1/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 2/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 3/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 4/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 5/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 6/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 7/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK4: 8/8 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK5: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK6: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK6: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK6: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK7: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK8: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK8: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK8: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK9: 1/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK9: 2/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK9: 3/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK9: 4/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK10: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK11: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK12: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK13: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK14: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK14: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK14: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK15: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK15: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK15: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK16: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK16: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK17: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK18: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 1/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 2/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 3/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 4/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 5/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 6/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 7/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 8/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 9/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK19: 10/10 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK20: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK20: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK21: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK21: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK22: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK23: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK24: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK24: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK25: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK25: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK26: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK27: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK28: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK28: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK29: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK30: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK30: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK31: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK32: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK33: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK33: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK34: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK34: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK34: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK35: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK35: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK36: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK37: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK37: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK37: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK38: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK39: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK40: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK40: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK41: 1/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK41: 2/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK41: 3/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK41: 4/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK42: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK43: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK43: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK44: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK45: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK45: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK46: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK46: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK47: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK48: 1/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK48: 2/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK48: 3/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK48: 4/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK49: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK49: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK50: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK51: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK52: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK52: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK53: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK54: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK55: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK55: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK55: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK56: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK57: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK58: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK59: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK59: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK60: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK60: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK61: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK61: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK62: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK63: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK64: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK65: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK65: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK65: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK66: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK67: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK67: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK68: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK68: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK69: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK70: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK70: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK70: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK71: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK71: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK71: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK72: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK73: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK73: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK73: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK74: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK75: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK76: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK76: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK77: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK78: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK79: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK79: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK79: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK80: 1/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK80: 2/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK80: 3/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK80: 4/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK81: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK82: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK82: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK83: 1/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK83: 2/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK83: 3/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK83: 4/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK84: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK84: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK85: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK85: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK85: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK86: 1/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK86: 2/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK86: 3/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK86: 4/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK87: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK88: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK89: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK90: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK90: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK90: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK91: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK92: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK92: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK93: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK94: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK95: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK96: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK97: 1/6 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK97: 2/6 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK97: 3/6 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK97: 4/6 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK97: 5/6 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK97: 6/6 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK98: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK99: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK99: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK100: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK100: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK101: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK101: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK101: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK102: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK102: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK103: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK103: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK104: 1/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK104: 2/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK104: 3/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK104: 4/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK105: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK105: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK106: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK107: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK108: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK108: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK109: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK110: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK111: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK112: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK113: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK114: 1/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK114: 2/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK114: 3/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK114: 4/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK114: 5/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK115: 1/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK115: 2/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK115: 3/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK115: 4/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK116: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK117: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK117: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK118: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK119: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK120: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK121: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK121: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK122: 1/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK122: 2/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK122: 3/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK122: 4/4 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK123: 1/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK123: 2/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK123: 3/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK123: 4/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK124: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK125: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK125: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK126: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK126: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK126: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK127: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK128: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK128: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK129: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK130: 1/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK130: 2/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK130: 3/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK130: 4/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK130: 5/5 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK131: 1/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK131: 2/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK131: 3/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK131: 4/4 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK132: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK133: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK134: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK135: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK136: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK137: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK138: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 1/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 2/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 3/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 4/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 5/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 6/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 7/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 8/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 9/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 10/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 11/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 12/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 13/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 14/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 15/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 16/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK139: 17/17 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK140: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK141: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK142: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK143: 1/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK143: 2/2 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK144: 1/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK144: 2/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK144: 3/3 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK145: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK146: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK147: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK148: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK149: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK150: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK150: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 1/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 2/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 3/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 4/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 5/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 6/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 7/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 8/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 9/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 10/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 11/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 12/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 13/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 14/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 15/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 16/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 17/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 18/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK151: 19/19 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK152: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK153: 1/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK153: 2/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK153: 3/3 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK154: 1/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK154: 2/2 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 1/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 2/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 3/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 4/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 5/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 6/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 7/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK155: 8/8 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK156: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 1/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 2/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 3/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 4/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 5/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 6/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 7/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 8/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 9/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 10/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 11/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 12/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 13/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 14/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 15/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 16/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 17/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 18/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 19/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 20/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 21/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 22/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 23/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 24/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 25/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 26/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 27/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 28/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 29/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 30/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 31/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 32/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK157: 33/33 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK158: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK159: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK160: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK161: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK162: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK163: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK164: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK165: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK166: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK167: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK168: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK169: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK170: 1/1 S ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; === BLOCK171: 1/1 SM ===
+
+        ; Square
+        C => A,B
+        0 => C
+        ${(A*B) % D} => C       :ARITH_384_MOD
+
+        ; Multiply
+        _base => A
+        C => B
+        0 => C
+        ${(A*B) % D} => A       :ARITH_384_MOD
+
+
+        ; Check the result is equal to -1
+        %BLS12_381_P_MINUS_ONE  :ASSERT, RETURN
+
+; Sage code
+; ----------------------------------------
+; def int2bin(k):
+;     decomp = []
+;     while (k > 1):
+;         if (k & 1):
+;             decomp.append(1)
+;         else:
+;             decomp.append(0)
+
+;         k >>= 1
+
+;     return decomp
+
+; a = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd555
+; binA = int2bin(a)
+; assert(sum(bit * (2 ** index) for index, bit in enumerate(binA)) + 2**len(binA) == a)
+; binA.reverse()
+; print(binA)
+
+; print("\n%BLS12_381_P => D\n")
+
+; numOnes = 0
+; numZeros = 0
+; blocks = []
+; nBlocks = 1
+; for i in range(len(binA)):
+;     if (binA[i] == 1):
+;         if numZeros > 0:
+;             blocks.append("{} x 0".format(numZeros))
+;             for j in range(numZeros):
+;                 print("; === BLOCK{0}: {1}/{2} S ===\n".format(nBlocks,j+1,numZeros))
+;                 print("; Square")
+;                 print("C => A,B")
+;                 print("0 => C")
+;                 print("${(A*B) % D} => C       :ARITH_384_MOD\n")
+;             nBlocks += 1
+
+;         numOnes += 1
+;         numZeros = 0
+;     else:
+;         if numOnes > 0:
+;             blocks.append("{} x 1".format(numOnes))
+;             for j in range(numOnes):
+;                 print("; === BLOCK{0}: {1}/{2} SM ===\n".format(nBlocks,j+1,numOnes))
+;                 print("; Square")
+;                 print("C => A,B")
+;                 print("0 => C")
+;                 print("${(A*B) % D} => C       :ARITH_384_MOD\n")
+
+;                 print("; Multiply")
+;                 print("_base => A")
+;                 print("C => B")
+;                 print("0 => C")
+;                 print("${(A*B) % D} => C       :ARITH_384_MOD\n")
+;             nBlocks += 1
+
+;         numZeros += 1
+;         numOnes = 0
+
+; assert(numZeros == 0)
+; for j in range(numOnes):
+;     blocks.append("{} x 1".format(numOnes))
+;     print("; === BLOCK{0}: {1}/{2} SM ===\n".format(nBlocks,j+1,numOnes))
+;     print("; Square")
+;     print("C => A,B")
+;     print("0 => C")
+;     print("${(A*B) % D} => C       :ARITH_384_MOD\n")
+
+;     print("; Multiply")
+;     print("_base => A")
+;     print("C => B")
+;     print("0 => C")
+;     print("${(A*B) % D} => A       :ARITH_384_MOD\n")
+
+; print(', '.join(blocks))
+; ----------------------------------------

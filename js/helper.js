@@ -19,6 +19,58 @@ module.exports = class myHelper {
         }
     }
 
+// 
+// function sqrt_p(x: bigint): bigint {
+//     if (Fp.eq(x, 0n)) {
+//         return 0n;
+//     }
+
+//     if (Fp.exp(x, (p - 1n) / 2n) !== 1n) {
+//         throw new Error(`${x} is not a square in Fp`);
+//     }
+
+//     let y = Fp.exp(x, (p + 1n) / 4n); // x^((p+1)/4)
+
+//     return y;
+// }
+
+    /**
+     *
+     * @param ctx - Context.
+     * @param tag - Tag.
+     * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
+     */
+    eval_fpBLS12_381_sqrt(ctx, tag) {
+        const field = this.FpBLS12_381;
+
+        const a = field.e(this.evalCommand(ctx, tag.params[0]));
+        const sign = Number(this.evalCommand(ctx, tag.params[1])); // Also knows as "parity"
+
+        if (field.eq(a, 0n)) {
+            return 0n;
+        }
+
+        if (field.exp(a, (field.p - 1n) / 2n) !== 1n) {
+            console.log(`${a} is not a square in Fp`);
+
+            // return 2^384-1, the maximum allowed value that can be represented
+            return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+        }
+
+        // You don't need to apply the standard Tonelli-Shanks algorithm because p = 3 mod 4
+        const sqrt = field.exp(a, (field.p + 1n) / 4n); // a^((p+1)/4)
+
+        if (sign_p(sqrt) === sign) {
+            return sqrt;
+        } else {
+            return field.neg(sqrt);
+        }
+
+        function sign_p(a) {
+            return a > (field.p - 1n) / 2n ? 1 : 0;
+        }
+    }
+
     /**
      *
      * @param ctx - Context.
