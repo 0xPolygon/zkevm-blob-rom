@@ -1,0 +1,44 @@
+;;;;;;;;;;;;;;;;;;
+;; D.0 - type 3: Prepare batchHashData & finalAccBatchHashData
+;;;;;;;;;;;;;;;;;;
+startBlobType3:
+        0 => HASHPOS ; HASHPOS of blobData
+
+        $ => E                          :MLOAD(nextHashPId)
+        E + 1                           :MSTORE(nextHashPId)
+
+        ; blobData[0] --> compression type
+        1 => D                          :CALL(getFromBlobHashP) ; in:[D: length bytes, HASHPOS: of blobData], out:[A: bytes]
+
+        ; A = first byte
+        A                               :JMPNZ(invalidTypeCompression)
+        ; blobData[1]-blobData[4] --> totalBodyLen
+        4 => D                          :CALL(getFromBlobHashP) ; in:[D: length bytes, HASHPOS: of blobData], out:[A: bytes]
+        ; A = totalBodyLen
+        ; blobDataLen = totalBody + compression type (1 byte) + totalBodyLen (4 bytes)
+        A                               :MSTORE(totalBodyLen)
+        $ - A - 5                       :F_MLOAD(blobDataLen),JMPNZ(invalidTotalBodyLen)
+
+nextBatchType3:
+        ; check if HASHPOS == blobDataLen --> finalizeBlob
+        $ - HASHPOS                     :F_MLOAD(blobDataLen),JMPZ(finalizeBlob)
+        ; 4 bytes --> batch length
+        4 => D                          :CALL(getFromBlobHashP) ; in:[D: length bytes, HASHPOS: of blobData], out:[A: bytes]
+        A                               :MSTORE(batchLen),JMPZ(nextBatchType3) ; if batchLen == 0 --> no finalAccBatchHashData
+        0 => C  ; position of batchData
+
+; loop bytes from blolbData to batchData
+addDataType3:
+        A                               :JMPZ(nextBatch)
+        A - 32                          :JMPN(endDataType3),MSTORE(batchHashToRead)
+        ;add blobL2Hashdata
+        32 => D                         :CALL(getFromBlobHashP) ; in:[D: length bytes, HASHPOS: of blobData], out:[A: bytes]
+        ;add batchHashData
+                                        :CALL(addBatchInputHash) ; in: [A: value to add, C: hashpos of batch, D: length bytes, E: id hash], out: [C: new hashpos of batch]
+        $ => A                          :MLOAD(batchHashToRead),JMP(addDataType3)
+
+; last bytes
+endDataType3:
+        A => D                          :CALL(getFromBlobHashP) ; in:[D: length bytes, HASHPOS: of blobData], out:[A: bytes]
+                                        :CALL(addBatchInputHash) ; in: [A: value to add, C: hashpos of batch, D: length bytes, E: id hash], out: [C: new hashpos of batch]
+                                        :JMP(nextBatch)

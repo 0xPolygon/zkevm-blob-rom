@@ -32,7 +32,6 @@ VAR GLOBAL blobDataLen ; blobData.length
 VAR GLOBAL totalBodyLen ; blobData.length - 1 compression byte - 4 totalBodyLen bytes
 VAR GLOBAL blobHashPos ; position of blobData
 VAR GLOBAL numBatches
-VAR GLOBAL isEIP4844
 VAR GLOBAL nextHashPId
 VAR GLOBAL blobDataProcessed
 
