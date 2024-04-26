@@ -14,6 +14,7 @@
 ; CONSTL %BLS12381_X = -0xd201000000010000n
 CONSTL %BLS12_381_P = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn ; 9·p < 2³⁴⁸ < 10·p
 CONSTL %BLS12_381_P_MINUS_ONE = %BLS12_381_P - 1n
+CONSTL %BLS12_381_P_SIGN_LIMIT = (%BLS12_381_P - 1n) / 2n + 1n
 CONSTL %BLS12_381_P_MINUS_THREE = %BLS12_381_P - 3n
 CONSTL %BLS12_381_R = 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n ; It is satisfied that 2·r < 2²⁵⁶ < 3·r
 CONSTL %BLS12_381_R_4096_inv = 0x73e66878b46ae3705eb6a46a89213de7d3686828bfce5c19400fffff00100001n
@@ -43,6 +44,13 @@ CONSTL %BLS12_381_G2X1 = 0x24aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b
 CONSTL %BLS12_381_G2X2 = 0x13e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7en
 CONSTL %BLS12_381_G2Y1 = 0xce5d527727d6e118cc9cdc6da2e351aadfd9baa8cbdd3a76d429a695160d12c923ac9cc3baca289e193548608b82801n
 CONSTL %BLS12_381_G2Y2 = 0x606c4a02ea734cc32acd2b02bc28b99cb3e287e85a763af267492ab572e99ab3f370d275cec1da1aaa9075ff05f79ben
+
+; Coordinates of [x]₂ = x·G2, the first non-trivial element of the trusted setup
+; where t is (unknown) scalar that was generated during the trusted setup ceremony via a MPC
+CONSTL %BLS12_381_X_X1 = 0x185cbfee53492714734429b7b38608e23926c911cceceac9a36851477ba4c60b087041de621000edc98edada20c1def2n
+CONSTL %BLS12_381_X_X2 = 0x15bfd7dd8cdeb128843bc287230af38926187075cbfbefa81009a2ce615ac53d2914e5870cb452d2afaaab24f3499f72n
+CONSTL %BLS12_381_X_Y1 = 0x14353bdb96b626dd7d5ee8599d1fca2131569490e28de18e82451a496a9c9794ce26d105941f383ee689bfbbb832a99n
+CONSTL %BLS12_381_X_Y2 = 0x1666c54b0a32529503432fcae0181b4bef79de09fc63671fda5ed1ba9bfa07899495346f3d7ac9cd23048ef30d0a154fn
 
 ; Precomputed frobenius operator constants. These are used to compute f^p and f^p2 efficiently, where f ∈ Fp12
 ; See: https://hackmd.io/4gg0L936QsGdvSwZOjonlQ?view#Frobenius-Operator

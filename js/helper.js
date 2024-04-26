@@ -19,21 +19,6 @@ module.exports = class myHelper {
         }
     }
 
-// 
-// function sqrt_p(x: bigint): bigint {
-//     if (Fp.eq(x, 0n)) {
-//         return 0n;
-//     }
-
-//     if (Fp.exp(x, (p - 1n) / 2n) !== 1n) {
-//         throw new Error(`${x} is not a square in Fp`);
-//     }
-
-//     let y = Fp.exp(x, (p + 1n) / 4n); // x^((p+1)/4)
-
-//     return y;
-// }
-
     /**
      *
      * @param ctx - Context.

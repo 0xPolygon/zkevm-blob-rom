@@ -1,0 +1,191 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P1,P2 ∈ E(Fp)\{𝒪} with P1 != P2,-P2 and their coordinates are in the range [0,BLS12_381_P)
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to Fp arithmetic
+;;
+;; deserializationFpBLS12381:
+;;             in: A ∈ [0, 2³⁸⁴-1]
+;;             out:
+;; 		   · A ∈ [0, BLS12381_P - 1], representing the x-coordinate of the deserialized point
+;; 		   · B ∈ [0, BLS12381_P - 1], representing the y-coordinate of the deserialized point
+;; 		   · C ∈ {0,1} Error code (check list below)
+;;
+;; Note: Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity with A = B = 0
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+; ERROR CODES (C)
+; 0 - No error
+; 1 - Invalid point encoding
+; 2 - Has not square root
+
+VAR GLOBAL _in
+VAR GLOBAL _in_high
+VAR GLOBAL _in_low
+
+VAR GLOBAL _I_bit
+VAR GLOBAL _S_bit
+
+VAR GLOBAL _in_x
+VAR GLOBAL _in_y
+
+VAR GLOBAL _RR
+
+deserializationFpBLS12381:
+	RR => _RR
+
+	A => _in
+
+	; TODO: Handle the case where A = 2³⁸⁴-1
+
+	; We compute in = in₀ + 2³⁷⁶·in₁ (mod 2³⁸⁴-1) to isolate the most significant byte
+	${(A >> 376) & 0xFF} => A,_in_high
+	0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n => B
+	${mem._in & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} => C,_in_low
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => D
+	${(A*B + C) % D} => E 									:ARITH_384_MOD
+
+	; Check the previous decomposition has been done correctly
+	_in => B
+        E - B => C              :JMPNZ(failAssert) ; chunk 0
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 2
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 3
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 4
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 5
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 6
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 7
+
+	; B = in, _in_high = in₁, _in_low = in₀
+	; ${dumphex(B,mem._in_high,mem._in_low)}
+
+PRAGMA MODE_256_BITS
+
+	; We compute an AND against 0xE0 = 0b11100000, therefore isolating the 3 most significant bits of in
+	_in_high => A
+	0xE0 => B
+	$ => C 			:AND
+
+	; The encodings: 0x20 = 0b100000, 0x60 = 0b1100000, 0xE0 = 0b11100000 are not valid by design
+	C 			:JMP_EQ(0x20, _invalid_encoding)
+	C 			:JMP_EQ(0x60, _invalid_encoding)
+	C 			:JMP_EQ(0xE0, _invalid_encoding)
+
+	; Save the third most significant bit
+	0x20 => B
+	$ 		:AND, JMPZ(_S_bit_zero) ; 1 if P is the point at infinity, otherwise 0
+
+	1 => _S_bit	:JMP(_I_bit)
+
+_S_bit_zero:
+	0 => _S_bit
+
+_I_bit:
+	; Save the second most significant bit
+	0x40 => B
+	$ 		:AND, JMPZ(_I_bit_zero) ; 1 if P is the point at infinity, otherwise 0
+
+	1 => _I_bit	:JMP(_most_sig_bit)
+
+_I_bit_zero:
+	0 => _I_bit
+
+_most_sig_bit:
+
+	; Save the most significant bit
+	0x80 => B
+	$ 		:AND, JMPZ(_not_implemented_yet) ; 1 if point compression has been used, otherwise 0
+
+	; Path: Compression has been used
+
+	; We compute an AND against 0x1F = 0b00011111, therefore removing the 3 most significant bits of in
+	_in_high => A
+	0x1F => B
+	$ => A 		:AND
+
+PRAGMA MODE_384_BITS
+
+	; TODO: Handle the case where A = 2³⁸⁴-1
+	; Recompose the result
+	0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n => B
+	_in_low => C
+	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => D
+	${(A*B + C) % D} => E,_in_x										:ARITH_384_MOD
+
+	; If P represents the point at infinity, return it only if it is correctly encoded.
+	_I_bit			:JMPNZ(_point_at_infinity)
+
+	; Path: P is not the point at infinity
+
+	; Compute x³ + 4
+	_in_x => A         	:CALL(squareFpBLS12381) ; in: [A]   out: [B]
+	_in_x => A            	:CALL(mulFpBLS12381)    ; in: [A,B] out: [C]
+	4 => A                	:CALL(addFpBLS12381)    ; in: [A,C] out: [C]
+	C => _in_y
+
+	; Compute y = sqrt(x³ + 4)
+	_S_bit => A 		:CALL(sqrtFpBLS12381)   ; in: [C,A] out: [C,B]
+
+	; If it has root C = 0, else C = 1
+	C           		:JMPZ(_has_sqrt)
+
+        ; If it hasn't root, check it
+
+	_in_y => C      	:CALL(assertNQRFpBLS12381) ; in: [C]
+
+                    		:JMP(_has_not_sqrt)
+
+_has_sqrt:
+	; Check the correctness of the sign
+	; For this, we only need to check whether it is strictly greater than (p-1)/2
+        ; A·0 + C = op (mod (p-1)/2 + 1)
+	B => A,C ; B = sqrt(x³ + 4)
+        0 => B
+        %BLS12_381_P_SIGN_LIMIT => D
+        ${C % D} => C           :ARITH_384_MOD
+
+        A - C => C              :JMPNZ(_positive_sign) ; chunk 0
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 1
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 2
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 3
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 4
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 5
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 6
+        ROTL_C => C             :JMPNZ(_positive_sign) ; chunk 7
+
+	0			:MLOAD(_S_bit), JMP(_assing_result)
+
+_positive_sign:
+	1			:MLOAD(_S_bit)
+
+_assing_result:
+	A => B ; A = sqrt(x³ + 4)
+	_in_x => A
+	0 => C              	:JMP(_end)
+
+_point_at_infinity:
+	; Check the input is 0
+        E => C              	:JMPNZ(_invalid_encoding) ; chunk 0
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 1
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 2
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 3
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 4
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 5
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 6
+        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 7
+
+	0 => A,B,C             	:JMP(_end)
+
+; ERRORS
+; =================
+_invalid_encoding:
+    	1 => C                                		:JMP(_end)
+
+_has_not_sqrt:
+    	2 => C                                		:JMP(_end)
+; =================
+
+_not_implemented_yet:
+
+_end:
+        _RR => RR         				:RETURN
