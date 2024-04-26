@@ -4,13 +4,17 @@
 ;;       The resulting evaluation y is in the range [0,BLS12_381_R)
 ;;
 ;; polEvalFrBLS12381:
-;;          input: A polynomial f(X) = ∑ᵢ f(ωⁱ)·Lᵢ(X) in Fr[X], represented in the Lagrange basis,
-;;                 with i ∈ [4096] and an evaluation point z ∈ Fr
+;;          input:
+;;                 · A polynomial f(X) = ∑ᵢ fᵢ·Lᵢ(X) in Fr[X] represented in the Lagrange basis, where
+;;                   each Lᵢ is defined by Lᵢ(x) = 1 if x = ωⁱ and Lᵢ(x) = 0 if x = ωʲ for j ≠ i;
+;;                   for each i ∈ [4096]
+;;                 · An evaluation point z ∈ Fr
 ;;          output: The evaluation:
-;;                          f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ) ∈ Fr
+;;                          · f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ) if z is not a 4096-th root of unity
+;;                          · f(z) = fᵢ                              if z = ωⁱ for some i ∈ [4096]
 ;;
-;; NOTE: Lᵢ are the Lagrange polynomials on the multiplicative subgroup of Fr of order 4096
-;;       and ω is the 4096-th primitive root of unity in Fr
+;; NOTE: Lᵢ are the Lagrange polynomials over the multiplicative subgroup of Fr of order 4096
+;;       and ω refers to the 4096-th primitive root of unity in Fr
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 INCLUDE "./rootsOfUnity4096FrBLS12381.zkasm"
@@ -40,6 +44,8 @@ VAR GLOBAL polEvalFrBLS12381_RR
 ;                                      [steps: 213.112-229.496, bin: 12.294-20.486, arith: 20.495] <--- w.c.
 ; -------------------------------------------
 
+; TODO: Include the arithemtic inside here
+
 polEvalFrBLS12381:
         RR              :MSTORE(polEvalFrBLS12381_RR)
 
@@ -47,41 +53,53 @@ polEvalFrBLS12381:
         $ => A          :MLOAD(polEvalFrBLS12381_z)
         %BLS12_381_R => B
         $               :LT, JMPC(polEvalFrBLS12381_check_index)
-                        :CALL(reduceFrBLS12381) ; [steps: 5, bin: 0, arith: 1]
+        ; A·1 + 0 = op (mod BLS12_381_R)
+        1 => B
+        0 => C
+        %BLS12_381_R => D
+        ${A % D}        :ARITH_MOD, MSTORE(polEvalFrBLS12381_z)
         ; [steps: 10, bin: 1, arith: 1]
-        A               :MSTORE(polEvalFrBLS12381_z)
 
 polEvalFrBLS12381_check_index:
-        $ => RCX          :MLOAD(polEvalFrBLS12381_index), JMPZ(polEvalFrBLS12381_compute)
+        ; Reduce pol_eval_i to the range [0,BLS12_381_R) if necessary
+        $ => E          :MLOAD(polEvalFrBLS12381_index), JMPZ(polEvalFrBLS12381_compute)
         ; Index is in range [1,4096]
 
-        ; Reduce pol_eval_i to the range [0,BLS12_381_R) if necessary
-        RCX - 1 => RCX,E
-        $ => A          :MLOAD(polEvalFrBLS12381_pol_eval + E), CALL(reduceFrBLS12381) ; [steps: 5, bin: 0, arith: 1]
-        RCX => E
-        A               :MSTORE(polEvalFrBLS12381_pol_eval + E)
+        ; TODO: We can optimize with ROTL_C and JMPN
+
+        E - 1 => E
+        ; A·1 + 0 = op (mod BLS12_381_R)
+        $ => A          :MLOAD(polEvalFrBLS12381_pol_eval + E)
+        1 => B
+        0 => C
+        %BLS12_381_R => D
+        ${A % D}        :ARITH_MOD, MSTORE(polEvalFrBLS12381_pol_eval + E)
         ; [steps: 20, bin: 1, arith: 2]
 
 polEvalFrBLS12381_reduce_evals:
         ; w.c. loop -> 4095*[steps: 13, bin: 1, arith: 1] + 2*steps = [steps: 53.237, bin: 4.095, arith: 4.095]
 
-        RCX + 1 => RCX,E
-        4096 - RCX      :JMPZ(polEvalFrBLS12381_compute)
+        E + 1 => E      :JMP_EQ(4096, polEvalFrBLS12381_compute)
         $ => A          :MLOAD(polEvalFrBLS12381_pol_eval + E)
         %BLS12_381_R => B
         $               :LT, JMPC(polEvalFrBLS12381_reduce_evals)
-                        :CALL(reduceFrBLS12381) ; [steps: 5, bin: 0, arith: 1]
-        RCX => E
-        A               :MSTORE(polEvalFrBLS12381_pol_eval + E), JMP(polEvalFrBLS12381_reduce_evals)
+        ; A·1 + 0 = op (mod BLS12_381_R)
+        1 => B
+        0 => C
+        %BLS12_381_R => D
+        ${A % D}        :ARITH_MOD, MSTORE(polEvalFrBLS12381_pol_eval + E), JMP(polEvalFrBLS12381_reduce_evals)
 
 polEvalFrBLS12381_compute:
-        ; Objective: f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
+        ; Objective: f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ) = y
+        ; f(z) = f(ωⁱ) = fᵢ = y
 
-        ; 1] Compute (z⁴⁰⁹⁶-1)/4096
-        $ => A          :MLOAD(polEvalFrBLS12381_z), CALL(expBy4096FrBLS12381) ; [steps: 80, bin: 2, arith: 12] <-- w.c.
+        ; 0] Compute z⁴⁰⁹⁶
+        $ => B          :MLOAD(polEvalFrBLS12381_z), CALL(expBy4096FrBLS12381) ; in: B, out: A; [steps: 80, bin: 2, arith: 12] <-- w.c.
+        ; Note: I can avoid the exponentiation entirely in the "z_is_root" path, but it turns
+        ;       the "z_is_not_root" path more expensive (which happens with probability 1 - 1/2²⁴³)
 
         ; Check whether z is a 4096-th root of unity by checking if z⁴⁰⁹⁶ = 1
-        $0{check4096Root(mem.polEvalFrBLS12381_z)}      :JMPZ(polEvalFrBLS12381_z_is_not_root_of_unity)
+        $0{A == 1}      :JMPZ(polEvalFrBLS12381_z_is_not_root_of_unity)
         ; [steps: 83, bin: 2, arith: 12]
 
 polEvalFrBLS12381_z_is_root_of_unity:
@@ -91,12 +109,11 @@ polEvalFrBLS12381_z_is_root_of_unity:
         $0{get4096RootIndex(mem.polEvalFrBLS12381_z)} => E      :JMPN(failAssert) ; if E < 0 ERROR
 
         ; Check that the received index is in the range [0,4095]
-        4095 - E      :JMPN(failAssert) ; if E > 4095 ERROR
+        4095 - E        :JMPN(failAssert) ; if E > 4095 ERROR
 
         ; Check that the received index and the root in z are correctly related
                         :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
-        $ => A          :MLOAD(polEvalFrBLS12381_z)
-        C               :ASSERT
+        C               :MLOAD(polEvalFrBLS12381_z)
 
         ; Return the corresponding evaluation
         $ => A          :MLOAD(polEvalFrBLS12381_pol_eval + E)
@@ -112,6 +129,7 @@ polEvalFrBLS12381_z_is_not_root_of_unity:
         1n => B
         0               :EQ
 
+        ; 1] Compute (z⁴⁰⁹⁶-1)/4096
         1n => C         :CALL(subFrBLS12381) ; [steps: 7, bin: 3, arith: 0] <-- w.c.
         C => A
         %BLS12_381_R_4096_inv => B      :CALL(mulFrBLS12381) ; [steps: 4, bin: 0, arith: 1]
@@ -119,12 +137,11 @@ polEvalFrBLS12381_z_is_not_root_of_unity:
 
         ; 2] Compute ∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
         0               :MSTORE(polEvalFrBLS12381_accum) ; Initialize the accumulator
-        4095 => RCX
+        4095 => E
         ; [steps: 102, bin: 6, arith: 13]
 polEvalFrBLS12381_loop:
         ; block costs: [steps: 39-43, bin: 2-4, arith: 4]
 
-        RCX => E
         ; 2.1] Compute 1/(z-ωⁱ)
         $ => A          :MLOAD(polEvalFrBLS12381_z)
                         :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
@@ -133,7 +150,6 @@ polEvalFrBLS12381_loop:
         A               :MSTORE(polEvalFrBLS12381_inv_i)
 
         ; 2.2] Compute fᵢ·ωⁱ and multiply by 1/(z-ωⁱ)
-        RCX => E
         $ => A          :MLOAD(polEvalFrBLS12381_pol_eval + E)
                         :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
         C => B          :CALL(mulFrBLS12381) ; [steps: 4, bin: 0, arith: 1]
@@ -144,7 +160,7 @@ polEvalFrBLS12381_loop:
         $ => A          :MLOAD(polEvalFrBLS12381_accum), CALL(addFrBLS12381) ; [steps: 4, bin: 0, arith: 1]
         C               :MSTORE(polEvalFrBLS12381_accum)
 
-        RCX - 1 => RCX  :JMPN(polEvalFrBLS12381_last_mul, polEvalFrBLS12381_loop)
+        E - 1 => E      :JMPN(polEvalFrBLS12381_last_mul, polEvalFrBLS12381_loop)
 
 polEvalFrBLS12381_last_mul:
         ; till the end costs -> [steps: 9, bin: 0, arith: 1]
@@ -155,5 +171,4 @@ polEvalFrBLS12381_last_mul:
         C               :MSTORE(polEvalFrBLS12381_y)
 
 polEvalFrBLS12381_end:
-        $ => RR         :MLOAD(polEvalFrBLS12381_RR)
-                        :RETURN
+        $ => RR         :MLOAD(polEvalFrBLS12381_RR), RETURN

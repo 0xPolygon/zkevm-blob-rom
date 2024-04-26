@@ -16,5 +16,4 @@ mulFrBLS12381:
         ; A·B + 0 = op (mod BLS12_381_R)
         0 => C
         %BLS12_381_R => D
-        ${(A*B) % D} => E       :ARITH_MOD
-        E => C                  :RETURN
+        ${(A*B) % D} => C       :ARITH_MOD, RETURN
