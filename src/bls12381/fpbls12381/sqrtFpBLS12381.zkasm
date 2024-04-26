@@ -1,14 +1,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PRE: A = [0,1] and C is not alias-free
-;; POST: The result is in the range [0,BLS12_381_P)
+;; POST: The result is in the range [0,BLS12_381_P). The non-square root path is not verified.
 ;;
 ;; sqrtFpBLS12381:
 ;;             in:
 ;;              · C, the number to get the square root of
 ;;              · A, the sign of the expected root
 ;;             out:
-;;              · C = 0 or 1, depending on whether C has square root or not
-;;              · B = √C or -√C (mod p), only if C = 0
+;;              · C = 0 or 1, indicating whether C possesses a square root or not, respectively
+;;              · B = sign·√C (mod p), only if C = 0
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -19,23 +19,55 @@ VAR GLOBAL _input
 sqrtFpBLS12381:
         C => _input
 
+        ; Start by checking whether C is alias-free, if not, reduce
+        ; A·0 + C = op (mod BLS12381_P)
+        0 => B
+        %BLS12_381_P => D
+        ${C % D} => C           :ARITH_384_MOD
+
+        _input - C => C         :JMPNZ(_reduce) ; chunk 0
+        ROTL_C => C             :JMPNZ(_reduce) ; chunk 1
+        ROTL_C => C             :JMPNZ(_reduce) ; chunk 2
+        ROTL_C => C             :JMPNZ(_reduce) ; chunk 3
+        ROTL_C => C             :JMPNZ(_reduce) ; chunk 4
+        ROTL_C => C             :JMPNZ(_reduce) ; chunk 5
+        ROTL_C => C             :JMPNZ(_reduce) ; chunk 6
+        ROTL_C => C             :JMPZ(_reduced) ; chunk 7
+
+_reduce:
+        ; A·0 + input = op (mod BLS12_381_P)
+        _input => C
+        ${C % D} => _input      :ARITH_384_MOD
+
+_reduced:
         ; start by getting the square root of C, chosen based on the sign A
-        ${fpBLS12_381_sqrt(C,A)} => A
+        ${fpBLS12_381_sqrt(mem._input,A)} => A,C
 
         ; In this point we check whether A is LT than BLS12_381_P since, otherwise, either:
-        ;    a) A doesn't have square root. 1 is returned in C.
-        ;    b) A contains an alias, it's a MAP. 1 is returned in C. In this case, the proof cannot
+        ;    a) A doesn't have square root. 1 should be returned in C.
+        ;    b) A contains an alias, it's a MAP. 1 should returned in C. In this case, the proof cannot
         ;    be generated because we check in assertNQRFpBLS12381 if the root actually exists.
-        %BLS12_381_P => B
-        $                               :LT, JMPNC(sqrtFpBLS12381_NoRoot)
-        ; From here, A,C < SECP256K1_P, which means that the root exists and it's alias-free
+        ; A·0 + C = op (mod BLS12381_P)
+        0 => B
+        %BLS12_381_P => D
+        ${C % D} => C           :ARITH_384_MOD
+
+        A - C => C              :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 0
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 1
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 2
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 3
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 4
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 5
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 6
+        ROTL_C => C             :JMPNZ(sqrtFpBLS12381_NoRoot) ; chunk 7
+        ; From here, A < BLS12381_P, which means that the root exists and it's alias-free
 
         ; Let's check it's, actually, the root of the input
         ; √C·√C + 0 = C (mod BLS12_381_P)
         A => B
         0 => C
         %BLS12_381_P => D
-        ${(A*B) % D}                    :ARITH_MOD, MLOAD(_input), RETURN
+        ${(A*B) % D}            :ARITH_384_MOD, MLOAD(_input), RETURN
 
 sqrtFpBLS12381_NoRoot:
-        1 => C                          :RETURN
+        1 => C                  :RETURN

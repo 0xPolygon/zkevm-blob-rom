@@ -442,6 +442,101 @@ PRAGMA MODE_384_BITS
 	B => A
 	0xECCE785DEFE265EEA2EFB54D47DE1951C867157194E7225EA9B0D5264B62CB2AAD602368D113CC00A43CAD9410ACB96n	:ASSERT
 
+	/**
+         * sqrtFpBLS12381(C,A) -> (C,B)
+         **/
+	; Test with ZERO
+	%ZERO => C
+	0 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B 			:ASSERT
+
+	%ZERO => C
+	1 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B 			:ASSERT
+
+	; Test with BLS12_381_P
+	%BLS12_381_P => C
+	0 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B 			:ASSERT
+
+	%BLS12_381_P => C
+	1 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B 			:ASSERT
+
+	; Test with TWO_384
+	%TWO_384 => C
+	0 => A
+	:CALL(sqrtFpBLS12381)
+	1 => A
+	C 			:ASSERT
+
+	%TWO_384 => C
+	1 => A
+	:CALL(sqrtFpBLS12381)
+	1 => A
+	C 			:ASSERT
+
+	; Random tests
+	; #1 without alias
+	0xea5a648f9a6b7437ca319d30b2adf305499fc2f84832c720725690cbfd011ae5eee9d29aa07871cce8d99f6df8c7316n => C
+	0 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B => A
+	0xc305dbdc85981dfe12e2939106d81cb5c8456dfae21f43dc08808bd45421cbf7d66c173181e34e88c596354c45faacbn	:ASSERT
+
+	0xea5a648f9a6b7437ca319d30b2adf305499fc2f84832c720725690cbfd011ae5eee9d29aa07871cce8d99f6df8c7316n => C
+	1 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B => A
+	0xdd0b42c712664ba69ed7e7d32de2b0c07f2f4a545631e81a6a8c9e3b16ed964a1453e8b9935cb172da59cab3b9fffe0n	:ASSERT
+
+	; #1 with alias
+	0x28a6b83333269dddc7bec1894e768c07b91147b478083f316e563badb68107d27d9a9d285b5b871c888c99f6df8c1dc1n => C
+	0 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B => A
+	0xc305dbdc85981dfe12e2939106d81cb5c8456dfae21f43dc08808bd45421cbf7d66c173181e34e88c596354c45faacbn	:ASSERT
+
+	0x28a6b83333269dddc7bec1894e768c07b91147b478083f316e563badb68107d27d9a9d285b5b871c888c99f6df8c1dc1n => C
+	1 => A
+	:CALL(sqrtFpBLS12381)
+	0 => A
+	C 			:ASSERT
+	B => A
+	0xdd0b42c712664ba69ed7e7d32de2b0c07f2f4a545631e81a6a8c9e3b16ed964a1453e8b9935cb172da59cab3b9fffe0n	:ASSERT
+
+	/**
+         * assertNQRFpBLS12381(C)
+         **/
+	%TWO_384 => C
+	:CALL(assertNQRFpBLS12381)
+
+	; #1
+	0x12074188cfc3615703d5cced1ef84b7150b43b03975985557251114a1acfded632cd279557987f9b34a8cc49d8fef763n => C
+	:CALL(assertNQRFpBLS12381)
+
+	; #1 with alias
+	0x2c085373094347f14ef174a36243f848b52b86888ade9814d981e3eb1180d4fa5179279408ec7f9aeea7cc49d8fea20en => C
+	:CALL(assertNQRFpBLS12381)
+
 
 
 
@@ -480,9 +575,11 @@ checkAndSaveFrom:
                          :JMP(opINVALID)
 
 INCLUDE "../src/bls12381/fpbls12381/addFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/assertNQRFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/fpbls12381/dblFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/fpbls12381/invFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/fpbls12381/mulFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/fpbls12381/negFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/sqrtFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/fpbls12381/squareFpBLS12381.zkasm"
 INCLUDE "../src/bls12381/fpbls12381/subFpBLS12381.zkasm"

@@ -38,7 +38,7 @@ module.exports = class myHelper {
      *
      * @param ctx - Context.
      * @param tag - Tag.
-     * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
+     * @returns The square root of the input scalar in the BLS12-381 base field or 2^384-1 if the input scalar is not a square.
      */
     eval_fpBLS12_381_sqrt(ctx, tag) {
         const field = this.FpBLS12_381;
@@ -51,10 +51,10 @@ module.exports = class myHelper {
         }
 
         if (field.exp(a, (field.p - 1n) / 2n) !== 1n) {
-            console.log(`${a} is not a square in Fp`);
+            // console.warn(`${a.toString(16)} is not a square in Fp`);
 
             // return 2^384-1, the maximum allowed value that can be represented
-            return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+            return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
         }
 
         // You don't need to apply the standard Tonelli-Shanks algorithm because p = 3 mod 4
