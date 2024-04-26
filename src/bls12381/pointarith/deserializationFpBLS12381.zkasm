@@ -1,5 +1,4 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P1,P2 ∈ E(Fp)\{𝒪} with P1 != P2,-P2 and their coordinates are in the range [0,BLS12_381_P)
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to Fp arithmetic
 ;;
 ;; deserializationFpBLS12381:

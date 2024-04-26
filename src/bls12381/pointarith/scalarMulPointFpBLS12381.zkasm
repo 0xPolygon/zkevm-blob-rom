@@ -1,0 +1,80 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: s ∈ Fr, P ∈ E(Fp)\{𝒪} with coordinates in the range [0,BLS12_381_P)
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFpBLS12381
+;;
+;;
+;; scalarMulPointFpBLS12381:
+;;             in: P = (P.x, P.y) ∈ E(Fp)
+;;             out: [(x²-1)/3]·P = (Q.x, Q.y) ∈ E(Fp), where (x²-1)/3 = 0x396c8c005555e1560000000055555555
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity as (0, 0).
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL scalarMulPointFpBLS12381_s
+VAR GLOBAL scalarMulPointFpBLS12381_P_x
+VAR GLOBAL scalarMulPointFpBLS12381_P_y
+VAR GLOBAL scalarMulPointFpBLS12381_Q_x
+VAR GLOBAL scalarMulPointFpBLS12381_Q_y
+
+VAR GLOBAL _len_s
+
+VAR GLOBAL _RR
+
+scalarMulPointFpBLS12381:
+        RR => _RR
+
+        $0{lenBinDecomp(mem.scalarMulPointFpBLS12381_s) - 1} => RCX ; receive the length of the binary representation of s
+        ${dump(mem.scalarMulPointFpBLS12381_s,RCX)}
+        ; TODO: Check its correctness
+
+        ; Set Q = P
+        scalarMulPointFpBLS12381_P_x => A
+        scalarMulPointFpBLS12381_P_y => B
+        A => scalarMulPointFpBLS12381_Q_x
+        B => scalarMulPointFpBLS12381_Q_y
+
+_loop:
+
+        RCX - 1 => RCX                                          :JMPN(_end)
+
+        ; We always double
+        scalarMulPointFpBLS12381_Q_x => A
+        scalarMulPointFpBLS12381_Q_y => B
+        A => doublePointFpBLS12381_P_x
+        B => doublePointFpBLS12381_P_y                          :CALL(doublePointFpBLS12381)
+        ; Q = Q + Q
+
+        doublePointFpBLS12381_Q_x => A
+        doublePointFpBLS12381_Q_y => B
+        A => scalarMulPointFpBLS12381_Q_x
+        B => scalarMulPointFpBLS12381_Q_y
+
+        ; TODO: Update and check the acumulator
+
+        ; Receive the next bit of s. If bit = 1, then add, otherwise, repeat
+        $0{(mem.scalarMulPointFpBLS12381_s >> RCX) & 0x1}        :JMPNZ(_add, _loop)
+
+_add:
+        ; We add
+        scalarMulPointFpBLS12381_Q_x => A
+        scalarMulPointFpBLS12381_Q_y => B
+        A => addPointFpBLS12381_P1_x
+        B => addPointFpBLS12381_P1_y
+        scalarMulPointFpBLS12381_P_x => A
+        scalarMulPointFpBLS12381_P_y => B
+        A => addPointFpBLS12381_P2_x
+        B => addPointFpBLS12381_P2_y                    :CALL(addPointFpBLS12381)
+        ; Q = Q + P
+
+        addPointFpBLS12381_P3_x => A
+        addPointFpBLS12381_P3_y => B
+        A => scalarMulPointFpBLS12381_Q_x
+        B => scalarMulPointFpBLS12381_Q_y               :JMP(_loop)
+
+_end:
+        ; TODO: Check the accumulator
+
+        _RR => RR                                       :RETURN

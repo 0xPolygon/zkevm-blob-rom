@@ -105,7 +105,7 @@ expCycloFp12BLS12381:
         0 => mulFp12BLS12381_c23_x
         0 => mulFp12BLS12381_c23_y
 
-        $0{receiveLenCyclo(mem.expCycloFp12BLS12381_e)} => _len_e ; receive the length of the binary representation of e
+        $0{lenBinDecomp(mem.expCycloFp12BLS12381_e)} => _len_e ; receive the length of the binary representation of e
         ; TODO: Check its correctness
 
         ; ; start the acummulator with the MSB of k
@@ -116,7 +116,7 @@ expCycloFp12BLS12381:
 _loop:
         _len_e - RCX                                            :JMPZ(_last)
 
-        ; Receive the next bit of e. Of bit = 0, then avoid the multiplication and just square
+        ; Receive the next bit of e. If bit = 0, then avoid the multiplication and just square
         $0{(mem.expCycloFp12BLS12381_e) >> RCX & 0x1}         :JMPZ(_square)
 
         ; else, multiply by the last result

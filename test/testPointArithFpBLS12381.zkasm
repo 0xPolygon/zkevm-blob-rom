@@ -1,0 +1,278 @@
+; constants needed by executor C++
+CONST %N = 2**19
+CONST %MAX_CNT_STEPS_LIMIT = %N
+CONST %MAX_CNT_ARITH_LIMIT = %N
+CONST %MAX_CNT_BINARY_LIMIT = %N
+CONST %MAX_CNT_MEM_ALIGN_LIMIT = %N
+CONST %MAX_CNT_KECCAK_F_LIMIT = %N
+CONST %MAX_CNT_PADDING_PG_LIMIT = %N
+CONST %MAX_CNT_POSEIDON_G_LIMIT = %N
+
+CONSTL %BLS12_381_P = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaabn
+CONSTL %BLS12_381_P_MINUS_ONE = %BLS12_381_P - 1n
+CONSTL %BLS12_381_G1X = 0x17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bbn
+CONSTL %BLS12_381_G1Y = 0x8b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1n
+
+VAR GLOBAL lastHashKId
+VAR GLOBAL lastHashPId
+
+VAR GLOBAL initial_A
+VAR GLOBAL initial_B
+VAR GLOBAL initial_C
+VAR GLOBAL initial_D
+VAR GLOBAL initial_E
+VAR GLOBAL initial_CTX
+VAR GLOBAL initial_SP
+VAR GLOBAL initial_PC
+VAR GLOBAL initial_GAS
+VAR GLOBAL initial_SR
+VAR GLOBAL initial_RR
+VAR GLOBAL initial_HASHPOS
+VAR GLOBAL initial_RCX
+
+start:
+
+        STEP => A
+        0 :ASSERT
+
+
+        A           :MSTORE(initial_A)
+        B           :MSTORE(initial_B)
+        C           :MSTORE(initial_C)
+        D           :MSTORE(initial_D)
+        E           :MSTORE(initial_E)
+        CTX         :MSTORE(initial_CTX)
+        SP          :MSTORE(initial_SP)
+        PC          :MSTORE(initial_PC)
+        GAS         :MSTORE(initial_GAS)
+        SR          :MSTORE(initial_SR)
+        RR          :MSTORE(initial_RR)
+        HASHPOS     :MSTORE(initial_HASHPOS)
+        RCX         :MSTORE(initial_RCX)
+        0 => A,B,C,D,E,CTX, SP, PC, GAS, SR, RR, HASHPOS, RCX
+
+        -1          :MSTORE(lastHashKId)
+        -1          :MSTORE(lastHashPId)
+
+PRAGMA MODE_384_BITS
+
+
+        ; ; 1] Point addition
+        ; ; 0 + 0 = 0
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_x1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_x2)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_y1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_y2)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_x1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_x2)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_y1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_y2)
+        ;                                                                                         :CALL(addPointBLS12381)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_x1)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_x2)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_y1)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_y2)
+
+        ; ; 0 + P2 = P2
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_x1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_x2)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_y1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P1_y2)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(addPointBLS12381_P2_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(addPointBLS12381_P2_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(addPointBLS12381_P2_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(addPointBLS12381_P2_y2)
+        ;                                                                                         :CALL(addPointBLS12381)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MLOAD(addPointBLS12381_P3_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MLOAD(addPointBLS12381_P3_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MLOAD(addPointBLS12381_P3_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MLOAD(addPointBLS12381_P3_y2)
+
+        ; ; P1 + 0 = P1
+        ; 18029695676650738226693292988307914797657423701064905010927197838374790804409n          :MSTORE(addPointBLS12381_P1_x1)
+        ; 14583779054894525174450323658765874724019480979794335525732096752006891875705n          :MSTORE(addPointBLS12381_P1_x2)
+        ; 2140229616977736810657479771656733941598412651537078903776637920509952744750n           :MSTORE(addPointBLS12381_P1_y1)
+        ; 11474861747383700316476719153975578001603231366361248090558603872215261634898n          :MSTORE(addPointBLS12381_P1_y2)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_x1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_x2)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_y1)
+        ; 0n                                                                                      :MSTORE(addPointBLS12381_P2_y2)
+        ;                                                                                         :CALL(addPointBLS12381)
+        ; 18029695676650738226693292988307914797657423701064905010927197838374790804409n          :MLOAD(addPointBLS12381_P3_x1)
+        ; 14583779054894525174450323658765874724019480979794335525732096752006891875705n          :MLOAD(addPointBLS12381_P3_x2)
+        ; 2140229616977736810657479771656733941598412651537078903776637920509952744750n           :MLOAD(addPointBLS12381_P3_y1)
+        ; 11474861747383700316476719153975578001603231366361248090558603872215261634898n          :MLOAD(addPointBLS12381_P3_y2)
+
+        ; ; P1 + (-P1) = 0
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(addPointBLS12381_P1_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(addPointBLS12381_P1_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(addPointBLS12381_P1_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(addPointBLS12381_P1_y2)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(addPointBLS12381_P2_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(addPointBLS12381_P2_x2)
+        ; 13392588948715843804641432497768002650278120570034223513918757245338268106653n          :MSTORE(addPointBLS12381_P2_y1)
+        ; 17805874995975841540914202342111839520379459829704422454583296818431106115052n          :MSTORE(addPointBLS12381_P2_y2)
+        ;                                                                                         :CALL(addPointBLS12381)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_x1)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_x2)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_y1)
+        ; 0n                                                                                      :MLOAD(addPointBLS12381_P3_y2)
+
+        ; ; P1 + P1 = 2·P1
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(addPointBLS12381_P1_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(addPointBLS12381_P1_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(addPointBLS12381_P1_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(addPointBLS12381_P1_y2)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(addPointBLS12381_P2_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(addPointBLS12381_P2_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(addPointBLS12381_P2_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(addPointBLS12381_P2_y2)
+        ;                                                                                         :CALL(addPointBLS12381)
+        ; 18029695676650738226693292988307914797657423701064905010927197838374790804409n          :MLOAD(addPointBLS12381_P3_x1)
+        ; 14583779054894525174450323658765874724019480979794335525732096752006891875705n          :MLOAD(addPointBLS12381_P3_x2)
+        ; 2140229616977736810657479771656733941598412651537078903776637920509952744750n           :MLOAD(addPointBLS12381_P3_y1)
+        ; 11474861747383700316476719153975578001603231366361248090558603872215261634898n          :MLOAD(addPointBLS12381_P3_y2)
+
+        ; ; P1 + P2 = P3
+        ; 18029695676650738226693292988307914797657423701064905010927197838374790804409n          :MSTORE(addPointBLS12381_P1_x1)
+        ; 14583779054894525174450323658765874724019480979794335525732096752006891875705n          :MSTORE(addPointBLS12381_P1_x2)
+        ; 2140229616977736810657479771656733941598412651537078903776637920509952744750n           :MSTORE(addPointBLS12381_P1_y1)
+        ; 11474861747383700316476719153975578001603231366361248090558603872215261634898n          :MSTORE(addPointBLS12381_P1_y2)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(addPointBLS12381_P2_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(addPointBLS12381_P2_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(addPointBLS12381_P2_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(addPointBLS12381_P2_y2)
+        ;                                                                                         :CALL(addPointBLS12381)
+        ; 2725019753478801796453339367788033689375851816420509565303521482350756874229n           :MLOAD(addPointBLS12381_P3_x1)
+        ; 7273165102799931111715871471550377909735733521218303035754523677688038059653n           :MLOAD(addPointBLS12381_P3_x2)
+        ; 2512659008974376214222774206987427162027254181373325676825515531566330959255n           :MLOAD(addPointBLS12381_P3_y1)
+        ; 957874124722006818841961785324909313781880061366718538693995380805373202866n            :MLOAD(addPointBLS12381_P3_y2)
+
+        ; ; 2] Escalar multiplication
+        ; 0n                                                                                      :MSTORE(scalarMulPointFpBLS12381_k)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(scalarMulPointFpBLS12381_P_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(scalarMulPointFpBLS12381_P_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(scalarMulPointFpBLS12381_P_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(scalarMulPointFpBLS12381_P_y2)
+        ;                                                                                         :CALL(scalarMulPointFpBLS12381)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_x1)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_x2)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_y1)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_y2)
+
+        ; %BLS12381_SIX_TIMES_X_SQ                                                                   :MSTORE(scalarMulPointFpBLS12381_k)
+        ; 0n                                                                                      :MSTORE(scalarMulPointFpBLS12381_P_x1)
+        ; 0n                                                                                      :MSTORE(scalarMulPointFpBLS12381_P_x2)
+        ; 0n                                                                                      :MSTORE(scalarMulPointFpBLS12381_P_y1)
+        ; 0n                                                                                      :MSTORE(scalarMulPointFpBLS12381_P_y2)
+        ;                                                                                         :CALL(scalarMulPointFpBLS12381)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_x1)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_x2)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_y1)
+        ; 0n                                                                                      :MLOAD(scalarMulPointFpBLS12381_Q_y2)
+
+        ; %BLS12381_SIX_TIMES_X_SQ                                                                   :MSTORE(scalarMulPointFpBLS12381_k)
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(scalarMulPointFpBLS12381_P_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(scalarMulPointFpBLS12381_P_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(scalarMulPointFpBLS12381_P_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(scalarMulPointFpBLS12381_P_y2)
+        ;                                                                                         :CALL(scalarMulPointFpBLS12381)
+        ; 13824868563399673693405984206252027284526901521624614945388441201916943098448n          :MLOAD(scalarMulPointFpBLS12381_Q_x1)
+        ; 6070174842523651825461006324987645339257276059765462992338211551285097849152n           :MLOAD(scalarMulPointFpBLS12381_Q_x2)
+        ; 4224873494559498571787136390356590572898009346319218613936276445484292886657n           :MLOAD(scalarMulPointFpBLS12381_Q_y1)
+        ; 14979195929948718632567968180703131754953567972706796447883440492471033097811n          :MLOAD(scalarMulPointFpBLS12381_Q_y2)
+
+        10 => scalarMulPointFpBLS12381_s
+        %BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
+        %BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y
+        :CALL(scalarMulPointFpBLS12381)
+        0xf81da25ecf1c84b577fefbedd61077a81dc43b00304015b2b596ab67f00e41c86bb00ebd0f90d4b125eb0539891aeedn      :MLOAD(scalarMulPointFpBLS12381_Q_x)
+        0x11af629591ec86916d6ce37877b743fe209a3af61147996c1df7fd1c47b03181cd806fd31c3071b739e4deb234bd9e19n     :MLOAD(scalarMulPointFpBLS12381_Q_y)
+
+        0x19287a3cf0c1c4249dfdecf8560bb89b50c460f64ccf3e47c4e75df3917ded49n => scalarMulPointFpBLS12381_s
+        %BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
+        %BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y
+        :CALL(scalarMulPointFpBLS12381)
+        0xc61283d6ea11d1b01f13577d174cb636ef9026e3c71744b1e43328a129fc5e70ad55b6e3ed4694d4b0ecde0e0fd7c3cn      :MLOAD(scalarMulPointFpBLS12381_Q_x)
+        0xb854bccc21467ca55e319776d05ecaf24c19d62d68182ac1ecfd3134f012039e8a037b1f8594761a3397ea72039266dn      :MLOAD(scalarMulPointFpBLS12381_Q_y)
+
+        ; ; 3] Tangent line to a point
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(lineSamePointsBLS12381_P_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(lineSamePointsBLS12381_P_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(lineSamePointsBLS12381_P_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(lineSamePointsBLS12381_P_y2)
+        ; 1n                                                                                      :MSTORE(lineSamePointsBLS12381_Q_x)
+        ; 2n                                                                                      :MSTORE(lineSamePointsBLS12381_Q_y)
+        ;                                                                                         :CALL(lineSamePointsBLS12381)
+        ; 5866721355212621053956121605984270769408822799517647453365718615957338215267n           :MLOAD(lineSamePointsBLS12381_l11_x)
+        ; 10805765471263851218954508755716868212208493914051915959293621483915454724277n          :MLOAD(lineSamePointsBLS12381_l11_y)
+        ; 441787448737107494458538247410558220237964585327985295018200621859384744906n            :MLOAD(lineSamePointsBLS12381_l13_x)
+        ; 16376088161625424614405301418083801678984212103591999741784373000936238959085n          :MLOAD(lineSamePointsBLS12381_l13_y)
+        ; 12094372820654450448173487244699814664976451191756576932392084702582606199137n          :MLOAD(lineSamePointsBLS12381_l22_x)
+        ; 16329471503453734725328813612581742273267405310373604832422964304856480374124n          :MLOAD(lineSamePointsBLS12381_l22_y)
+
+        ; ; 4] Line passing through two different points
+        ; 10857046999023057135944570762232829481370756359578518086990519993285655852781n          :MSTORE(lineDiffPointsBLS12381_P1_x1)
+        ; 11559732032986387107991004021392285783925812861821192530917403151452391805634n          :MSTORE(lineDiffPointsBLS12381_P1_x2)
+        ; 8495653923123431417604973247489272438418190587263600148770280649306958101930n           :MSTORE(lineDiffPointsBLS12381_P1_y1)
+        ; 4082367875863433681332203403145435568316851327593401208105741076214120093531n           :MSTORE(lineDiffPointsBLS12381_P1_y2)
+        ; 18029695676650738226693292988307914797657423701064905010927197838374790804409n          :MSTORE(lineDiffPointsBLS12381_P2_x1)
+        ; 14583779054894525174450323658765874724019480979794335525732096752006891875705n          :MSTORE(lineDiffPointsBLS12381_P2_x2)
+        ; 2140229616977736810657479771656733941598412651537078903776637920509952744750n           :MSTORE(lineDiffPointsBLS12381_P2_y1)
+        ; 11474861747383700316476719153975578001603231366361248090558603872215261634898n          :MSTORE(lineDiffPointsBLS12381_P2_y2)
+        ; 1n                                                                                      :MSTORE(lineDiffPointsBLS12381_Q_x)
+        ; 2n                                                                                      :MSTORE(lineDiffPointsBLS12381_Q_y)
+        ;                                                                                         :CALL(lineDiffPointsBLS12381)
+        ; 14345297355255362181497444452150170632573334682972773847873355690178269903256n          :MLOAD(lineDiffPointsBLS12381_l12_x)
+        ; 6048094043816276132918639274747177880187336235946285989629387201109000140142n           :MLOAD(lineDiffPointsBLS12381_l12_y)
+        ; 6355424306145694606947493475832538496819777935726521244993642728797005357180n           :MLOAD(lineDiffPointsBLS12381_l22_x)
+        ; 14495749000319008587101889994427132655409931118529976780236175098644084667216n          :MLOAD(lineDiffPointsBLS12381_l22_y)
+        ; 4617834131706974237889373560251879390068389218389281828469153443366136187126n           :MLOAD(lineDiffPointsBLS12381_l23_x)
+        ; 18535807517613687025007129469892030737201813557688282181535107728189048279364n          :MLOAD(lineDiffPointsBLS12381_l23_y)
+
+
+                                                                                        :JMP(end)
+
+PRAGMA MODE_256_BITS
+
+failAssert:
+    1 => A
+    2               :ASSERT
+
+end:
+
+        $ => A           :MLOAD(initial_A)
+        $ => B           :MLOAD(initial_B)
+        $ => C           :MLOAD(initial_C)
+        $ => D           :MLOAD(initial_D)
+        $ => E           :MLOAD(initial_E)
+        $ => CTX         :MLOAD(initial_CTX)
+        $ => SP          :MLOAD(initial_SP)
+        $ => PC          :MLOAD(initial_PC)
+        $ => GAS         :MLOAD(initial_GAS)
+        $ => SR          :MLOAD(initial_SR)
+        $ => RR          :MLOAD(initial_RR)
+        $ => HASHPOS     :MLOAD(initial_HASHPOS)
+        $ => RCX         :MLOAD(initial_RCX)
+
+; label finalizeExecution needed by executor C++
+finalizeExecution:
+        ${beforeLast()}  : JMPN(finalizeExecution)
+
+                         : JMP(start)
+opINVALID:
+; label checkAndSaveFrom needed by executor C++
+checkAndSaveFrom:
+                         :JMP(opINVALID)
+
+
+INCLUDE "../src/bls12381/pointarith/scalarMulPointFpBLS12381.zkasm"
+
+INCLUDE "../src/bls12381/pointarith/addPointFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/doublePointFpBLS12381.zkasm"
+
+INCLUDE "../src/bls12381/fpbls12381/subFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/invFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/mulFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/squareFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/dblFpBLS12381.zkasm"

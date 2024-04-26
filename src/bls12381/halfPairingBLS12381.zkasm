@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 ; ERROR CODES (B)
 ; 0 - no error
 ; 1 - P_x is too big
@@ -68,7 +70,7 @@ halfPairingBLS12381:
 
     halfPairingBLS12381_P_x => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C                               :ARITH_MOD
+    ${C % D} => C                               :ARITH_384_MOD
     B - C => C                                  :JMPNZ(_Px_too_big)
     ROTL_C => C                                 :JMPNZ(_Px_too_big)
     ROTL_C => C                                 :JMPNZ(_Px_too_big)
@@ -80,7 +82,7 @@ halfPairingBLS12381:
 
     halfPairingBLS12381_P_y => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C                               :ARITH_MOD
+    ${C % D} => C                               :ARITH_384_MOD
     B - C => C                                  :JMPNZ(_Py_too_big)
     ROTL_C => C                                 :JMPNZ(_Py_too_big)
     ROTL_C => C                                 :JMPNZ(_Py_too_big)
@@ -93,7 +95,7 @@ halfPairingBLS12381:
     ; Let's check whether some Q coordinate are too big
     halfPairingBLS12381_Q_x1 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C                               :ARITH_MOD
+    ${C % D} => C                               :ARITH_384_MOD
     B - C => C                                  :JMPNZ(_Qx1_too_big)
     ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
     ROTL_C => C                                 :JMPNZ(_Qx1_too_big)
@@ -106,7 +108,7 @@ halfPairingBLS12381:
 
     halfPairingBLS12381_Q_x2 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C                               :ARITH_MOD
+    ${C % D} => C                               :ARITH_384_MOD
     B - C => C                                  :JMPNZ(_Qx2_too_big)
     ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
     ROTL_C => C                                 :JMPNZ(_Qx2_too_big)
@@ -118,7 +120,7 @@ halfPairingBLS12381:
 
     halfPairingBLS12381_Q_y1 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C                               :ARITH_MOD
+    ${C % D} => C                               :ARITH_384_MOD
     B - C => C                                  :JMPNZ(_Qy1_too_big)
     ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
     ROTL_C => C                                 :JMPNZ(_Qy1_too_big)
@@ -130,7 +132,7 @@ halfPairingBLS12381:
 
     halfPairingBLS12381_Q_y2 => B,C
     ; 0·B + C = op (mod BLS12381_P)
-    ${C % D} => C                               :ARITH_MOD
+    ${C % D} => C                               :ARITH_384_MOD
     B - C => C                                  :JMPNZ(_Qy2_too_big)
     ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
     ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
@@ -146,7 +148,7 @@ halfPairingBLS12381:
     0 => _P_and_Q_are_zero
 
     ; Is P = 𝒪?
-    halfPairingBLS12381_P_x => C                    :JMPNZ(_continue_to_Q)
+    halfPairingBLS12381_P_x => C                :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)

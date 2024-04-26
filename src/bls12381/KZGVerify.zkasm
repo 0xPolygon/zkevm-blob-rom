@@ -13,6 +13,8 @@
 ;; Note2: We check e(commit - [y]₁, [1]₂)·e(-proof, [x]₂ - [z]₂) = 1 instead to avoid two final exponentiations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL KZGVerify_commit ; This is given as the serialization of a point in E
 VAR GLOBAL KZGVerify_z      ; This is the challenging opening
 VAR GLOBAL KZGVerify_y      ; This is, presumably, the evaluation at z of the polynomial hiden by the commitment
@@ -35,15 +37,35 @@ VAR GLOBAL _RR
 KZGVerify:
 	RR => _RR
 
-        ; 1] Decompress commit and proof
+        ; 1] Deserialize commit and proof
+	KZGVerify_commit => A				:CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+	A => _commit_x
+	B => _commit_y
+
+	KZGVerify_proof => A				:CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+	A => _proof_x
+	B => _proof_y
 
         ; 2] Compute commit - [y]₁
+	;    2.1] [y]₁
+	KZGVerify_y => A
+	A => scalarMulPointFpBLS12381_s
+	%BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
+	%BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y	:CALL(scalarMulPointFpBLS12381)
 
-        ; 3] Compute [x]₂ - [z]₂
+	;    2.2] commit - [y]₁
+	_commit_x => A
+	_commit_y => B
+	A => addPointFpBLS12381_P1_x
+	B => addPointFpBLS12381_P1_y
+	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
+	scalarMulPointFpBLS12381_Q_x => A
+	A => addPointFpBLS12381_P2_x
+	B => addPointFpBLS12381_P2_y			:CALL(addPointFpBLS12381)
 
-        ; 4] Compute Miller_loop(commit - [y]₁, [1]₂)
-        _P_x => A
-        _P_y => B
+	; 3] compute Miller_loop(commit - [y]₁, [1]₂)
+        addPointFpBLS12381_P3_x => A
+	addPointFpBLS12381_P3_y => B
         A => halfPairingBLS12381_P_x
         B => halfPairingBLS12381_P_y
 	%BLS12_381_G2X1 => halfPairingBLS12381_Q_x1
@@ -54,6 +76,7 @@ KZGVerify:
 	; Check if error
 	B  						:JMPNZ(_input_error)
 
+	; input it to multiplication
 	halfPairingBLS12381_out11_x => A
 	halfPairingBLS12381_out11_y => B
 	A => mulFp12BLS12381_a11_x
@@ -79,16 +102,48 @@ KZGVerify:
 	A => mulFp12BLS12381_a23_x
 	B => mulFp12BLS12381_a23_y
 
+        ; 4] Compute [x]₂ - [z]₂
+	;    2.1] [z]₂
+	KZGVerify_z => A
+	A => scalarMulPointFp2BLS12381_s
+	%BLS12_381_G2X1 => scalarMulPointFp2BLS12381_P_x1
+	%BLS12_381_G2X2 => scalarMulPointFp2BLS12381_P_x2
+	%BLS12_381_G2Y1 => scalarMulPointFp2BLS12381_P_y1
+	%BLS12_381_G2Y2 => scalarMulPointFp2BLS12381_P_y2	:CALL(scalarMulPointFp2BLS12381)
+
+	;    2.2] [x]₂ - [z]₂
+	%BLS12_381_X_X1 => A
+	%BLS12_381_X_X2 => B
+	A => addPointFp2BLS12381_P1_x1
+	B => addPointFp2BLS12381_P1_x2
+	%BLS12_381_X_Y1 => A
+	%BLS12_381_X_Y2 => B
+	A => addPointFp2BLS12381_P1_y1
+	B => addPointFp2BLS12381_P1_y2
+	scalarMulPointFp2BLS12381_Q_x1 => A
+	scalarMulPointFp2BLS12381_Q_x2 => B
+	A => addPointFp2BLS12381_P2_x1
+	B => addPointFp2BLS12381_P2_x2
+	scalarMulPointFp2BLS12381_Q_y1 => C
+	scalarMulPointFp2BLS12381_Q_y2 => D		:CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
+	E => addPointFp2BLS12381_P2_y1
+	C => addPointFp2BLS12381_P2_y2			:CALL(addPointFp2BLS12381)
+
 	; 5] Compute Miller_loop(-proof, [x]₂ - [z]₂)
         _proof_y => A 					:CALL(negFpBLS12381) ; in: [A] out: [B]
         _proof_x => A
         A => halfPairingBLS12381_P_x
         B => halfPairingBLS12381_P_y
-	_Q_x1 => halfPairingBLS12381_Q_x1
-	_Q_x2 => halfPairingBLS12381_Q_x2
-	_Q_y1 => halfPairingBLS12381_Q_y1
-	_Q_y2 => halfPairingBLS12381_Q_y2		:CALL(halfPairingBLS12381)
+	addPointFp2BLS12381_P3_x1 => A
+	addPointFp2BLS12381_P3_x2 => B
+	A => halfPairingBLS12381_Q_x1
+	B => halfPairingBLS12381_Q_x2
+	addPointFp2BLS12381_P3_y1 => A
+	addPointFp2BLS12381_P3_y2 => B
+	A => halfPairingBLS12381_Q_y1
+	B => halfPairingBLS12381_Q_y2			:CALL(halfPairingBLS12381)
 
+	; input it to multiplication
 	halfPairingBLS12381_out11_x => A
 	halfPairingBLS12381_out11_y => B
 	A => mulFp12BLS12381_b11_x

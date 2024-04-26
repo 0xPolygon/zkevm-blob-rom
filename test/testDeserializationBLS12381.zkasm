@@ -53,11 +53,14 @@ start:
 
 PRAGMA MODE_384_BITS
 
+        ; Using mainnet serialized trusted setup
+        ; #1
         0xa0413c0dcafec6dbc9f47d66785cf1e8c981044f7d13cfe3e4fcbb71b5408dfde6312493cb3c1d30516cb3ca88c03654n => A        :CALL(deserializationFpBLS12381)
         0x413c0dcafec6dbc9f47d66785cf1e8c981044f7d13cfe3e4fcbb71b5408dfde6312493cb3c1d30516cb3ca88c03654n :ASSERT
         B => A
         0x1690c1ade165e7c0b1fbdd0dc7ce71a8cfccbb16708de5164b32f31166b7a6bed225d39038457e05214cfda6f567b61cn :ASSERT
 
+        ; #2
         0x8b997fb25730d661918371bb41f2a6e899cac23f04fc5365800b75433c0a953250e15e7a98fb5ca5cc56a8cd34c20c57n => A        :CALL(deserializationFpBLS12381)
         0xb997fb25730d661918371bb41f2a6e899cac23f04fc5365800b75433c0a953250e15e7a98fb5ca5cc56a8cd34c20c57n :ASSERT
         B => A
