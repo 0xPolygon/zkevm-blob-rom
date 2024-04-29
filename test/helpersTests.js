@@ -2,6 +2,7 @@ const assert = require("chai").assert;
 
 const myHelper = require("../js/helper.js");
 const rootsOfUnity4096 = require("../js/rootsOfUnity4096.json");
+const { getKzg } = require("@0xpolygonhermez/zkevm-commonjs").blobInner;
 const nTests = 100;
 
 describe("Test blob helpers", async function () {
@@ -16,6 +17,32 @@ describe("Test blob helpers", async function () {
         helper = new myHelper();
         helper.setup({evalCommand})
         F = helper.FrBLS12_381;
+    });
+
+
+    it("It should test the KZG library", async () => {
+        /**
+         * loadTrustedSetup
+         * freeTrustedSetup
+         * blobToKzgCommitment - KZG commitment corresponding to the input blob formatted as a 48 byte Uint8Array
+         * verifyKzgProof - (commitment: Uint8Array, z: Uint8Array, y: Uint8Array, proof: Uint8Array): boolean
+         */
+
+        const kzg = await getKzg();
+
+        const commitment1 = "0xa1aa6c0a85beb947df00587918144c8227d54c976157cb64d0a7087329a115f6ccf8d94a5f3a1af6b6c744ffc2b1eca9";
+        const pointZ1 = "0x4124347a6f69eed4bf5eae100bf955d5f54d1ea6a0d12c4993cdf46d71e3f6e1";
+        const pointY1 = "0x1c6627da2f0d65e53ee1abd701ca7651be8fa5c89f6130af9bdf06fee6f0133b";
+        const proof1 = "0xb07fece886f5ed974445971028e184c7e0905b77094efe5a5ee7bbbe6a306a0fab2796adedbeed5a80e94be7edc85391";
+
+        const commitment2 = "0xa621f969ffcf63b944d27acc57aaee96787bfcb37bf03d23741eaa351c8dd79d30fd2084ba5b50f31c8d9d7ea5b132cf";
+        const pointZ2 = "0x13594569a0b1bd6467f11a346d8c7c5a175d3bc7d2bf2dc7789653f170c71f8f";
+        const pointY2 = "0x61588b03541afc34b0eb0d370b69251dd4b92b3d46160ea7bf849f7fd76aab75";
+        const proof2 = "0x930d5e1b4f053e7a633d8346a46d624b086b73e626eff578ee686c30d58cf5c990b014869a57053fb3cd77354b411e55";
+
+        // verify proof
+        assert.isTrue(kzg.verifyKzgProof(commitment1,pointZ1,pointY1,proof1));
+        assert.isTrue(kzg.verifyKzgProof(commitment2,pointZ2,pointY2,proof2));
     });
 
     it("It should check the correctness of the eval_frBLS12_381inv()", async () => {
@@ -47,44 +74,12 @@ describe("Test blob helpers", async function () {
         for (let i = 0; i < inputs.length; i++) {
             tag.params = [inputs[i]];
             let expected = inverses[i];
-            let result = helper.eval_frBLS12_381inv(ctx, tag);
-            assert.strictEqual(result, expected, `The result of the eval_frBLS12_381inv function is not correct. Diff: ${expected-result}`);
+            let result = helper.eval_frBLS12_381_inv(ctx, tag);
+            assert.strictEqual(result, expected, `The result of the eval_frBLS12_381_inv function is not correct. Diff: ${expected-result}`);
         }
     });
 
-    describe("It should check the correctness of the eval_check4096Root()", async () => {
-        it('It should verify the correspondence against the json file containing all the 4096-th roots of unity and the output', async () => {
-            for (let i = 0; i < rootsOfUnity4096.length; i++) {
-                tag.params = [BigInt(rootsOfUnity4096[i])];
-                let result = helper.eval_check4096Root(ctx, tag);
-                assert.equal(result, 1);
-            }
-        });
-
-        it('It should fail if an input is not a 4096-th root of unity', async () => {
-            let element = F.random();
-            while (F.pow(element, 4096n) === 1n) {
-                element = F.random();
-            }
-
-            tag.params = [element];
-            let result = helper.eval_check4096Root(ctx, tag);
-            assert.equal(result, 0);
-        });
-    });
-
     describe("It should check the correctness of the eval_get4096RootIndex()", async () => {
-        it('It should directly return the index if z is found in the context', async () => {
-            for (let i = 0; i < nTests; i++) {
-                const index = Math.floor(Math.random() * rootsOfUnity4096.length);
-                const z = BigInt(rootsOfUnity4096[index]);
-                ctx["BLS12_381Root"] = {z, index};
-                tag.params = [z];
-                let result = helper.eval_get4096RootIndex(ctx, tag);
-                assert.equal(result, index);
-            }
-        });
-
         it('If z is not found in the context, then it should look at the table of 4096-th roots of unity and return its index', async () => {
             for (let i = 0; i < nTests; i++) {
                 const index = Math.floor(Math.random() * rootsOfUnity4096.length);

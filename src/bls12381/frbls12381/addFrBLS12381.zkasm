@@ -16,5 +16,4 @@ addFrBLS12381:
         ; A·1 + C = op (mod BLS12_381_R)
         1 => B
         %BLS12_381_R => D
-        ${(A + C) % D} => E     :ARITH_MOD
-        E => C                  :RETURN
+        ${(A + C) % D} => C     :ARITH_MOD, RETURN

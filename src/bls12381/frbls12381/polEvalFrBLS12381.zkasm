@@ -81,7 +81,7 @@ polEvalFrBLS12381_compute:
         $ => A          :MLOAD(polEvalFrBLS12381_z), CALL(expBy4096FrBLS12381) ; [steps: 80, bin: 2, arith: 12] <-- w.c.
 
         ; Check whether z is a 4096-th root of unity by checking if z⁴⁰⁹⁶ = 1
-        $0{check4096Root(mem.polEvalFrBLS12381_z)}      :JMPZ(polEvalFrBLS12381_z_is_not_root_of_unity)
+        $0{A == 1}      :JMPZ(polEvalFrBLS12381_z_is_not_root_of_unity)
         ; [steps: 83, bin: 2, arith: 12]
 
 polEvalFrBLS12381_z_is_root_of_unity:

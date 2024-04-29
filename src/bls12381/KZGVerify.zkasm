@@ -10,15 +10,15 @@
 ;;
 ;; Note1: [a]₁ is a standarized shortand used to indicate a·G₁, where G₁ is the generator of the group G1
 ;;        [a]₂ is a standarized shortand used to indicate a·G₂, where G₂ is the generator of the group G2
-;; Note2: We check e(commit - [y]₁, [1]₂)·e(-proof, [x]₂ - [z]₂) = 1 instead to avoid two final exponentiations
+;; Note2: We check e(commit - [y]₁, [1]₂)·e(-proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRAGMA MODE_384_BITS
 
-VAR GLOBAL KZGVerify_commit ; This is given as the serialization of a point in E
-VAR GLOBAL KZGVerify_z      ; This is the challenging opening
-VAR GLOBAL KZGVerify_y      ; This is, presumably, the evaluation at z of the polynomial hiden by the commitment
-VAR GLOBAL KZGVerify_proof  ; This is given as the serialization of a point in E
+VAR GLOBAL KZGVerify_commit ; This is given as the serialization of a point in E (48 bytes)
+VAR GLOBAL KZGVerify_z      ; This is the challenging opening (32 bytes)
+VAR GLOBAL KZGVerify_y      ; This is, presumably, the evaluation at z of the polynomial hidden under the commitment (32 bytes)
+VAR GLOBAL KZGVerify_proof  ; This is given as the serialization of a point in E (48 bytes)
 
 VAR GLOBAL _commit_x
 VAR GLOBAL _commit_y
@@ -51,7 +51,7 @@ KZGVerify:
 	KZGVerify_y => A
 	A => scalarMulPointFpBLS12381_s
 	%BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
-	%BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y	:CALL(scalarMulPointFpBLS12381)
+	%BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y	:CALL(scalarMulPointFpBLS12381) ; in: [s,P_x,P_y] out: [Q_x,Q_y]
 
 	;    2.2] commit - [y]₁
 	_commit_x => A
@@ -61,7 +61,7 @@ KZGVerify:
 	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
 	scalarMulPointFpBLS12381_Q_x => A
 	A => addPointFpBLS12381_P2_x
-	B => addPointFpBLS12381_P2_y			:CALL(addPointFpBLS12381)
+	B => addPointFpBLS12381_P2_y			:CALL(addPointFpBLS12381) ; in: [P1_x,P1_y,P2_x,P2_y] out: [P3_x,P3_y]
 
 	; 3] compute Miller_loop(commit - [y]₁, [1]₂)
         addPointFpBLS12381_P3_x => A
@@ -71,7 +71,8 @@ KZGVerify:
 	%BLS12_381_G2X1 => halfPairingBLS12381_Q_x1
 	%BLS12_381_G2X2 => halfPairingBLS12381_Q_x2
 	%BLS12_381_G2Y1 => halfPairingBLS12381_Q_y1
-	%BLS12_381_G2Y2 => halfPairingBLS12381_Q_y2	:CALL(halfPairingBLS12381)
+	%BLS12_381_G2Y2 => halfPairingBLS12381_Q_y2	:CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
+									           ;out: [out11_x,out11_y,out12_x,out12_y,out13_x,out13_y,out21_x,out21_y,out22_x,out22_y,out23_x,out23_y]
 
 	; Check if error
 	B  						:JMPNZ(_input_error)
@@ -103,7 +104,7 @@ KZGVerify:
 	B => mulFp12BLS12381_a23_y
 
         ; 4] Compute [x]₂ - [z]₂
-	;    2.1] [z]₂
+	;    4.1] [z]₂
 	KZGVerify_z => A
 	A => scalarMulPointFp2BLS12381_s
 	%BLS12_381_G2X1 => scalarMulPointFp2BLS12381_P_x1
@@ -111,7 +112,7 @@ KZGVerify:
 	%BLS12_381_G2Y1 => scalarMulPointFp2BLS12381_P_y1
 	%BLS12_381_G2Y2 => scalarMulPointFp2BLS12381_P_y2	:CALL(scalarMulPointFp2BLS12381)
 
-	;    2.2] [x]₂ - [z]₂
+	;    4.2] [x]₂ - [z]₂
 	%BLS12_381_X_X1 => A
 	%BLS12_381_X_X2 => B
 	A => addPointFp2BLS12381_P1_x1
@@ -142,6 +143,9 @@ KZGVerify:
 	addPointFp2BLS12381_P3_y2 => B
 	A => halfPairingBLS12381_Q_y1
 	B => halfPairingBLS12381_Q_y2			:CALL(halfPairingBLS12381)
+
+	; Check if error
+	B  						:JMPNZ(_input_error)
 
 	; input it to multiplication
 	halfPairingBLS12381_out11_x => A

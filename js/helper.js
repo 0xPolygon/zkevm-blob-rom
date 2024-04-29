@@ -1,9 +1,6 @@
-const { loadKZG } = require('kzg-wasm');
 const { Scalar, F1Field } = require("ffjavascript");
 const rootsOfUnity4096 = require("./rootsOfUnity4096.json");
-const {
-    scalar2fea
-} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const { scalar2fea } =  require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 module.exports = class myHelper {
     blobSize = 4096;
@@ -74,23 +71,6 @@ module.exports = class myHelper {
         return len;
     }
 
-    async eval_computeKZGProof() {
-        /**
-         * loadTrustedSetup
-         * freeTrustedSetup
-         * blobToKzgCommitment - KZG commitment corresponding to the input blob formatted as a 48 byte Uint8Array
-         * verifyKzgProof - (commitment: Uint8Array, z: Uint8Array, y: Uint8Array, proof: Uint8Array): boolean
-         */
-
-        const kzg = await loadKZG();
-
-        const ts = kzg.loadTrustedSetup();
-
-        console.log(kzg.loadTrustedSetup());
-        EXIT
-        return kzg;
-    }
-
     /**
      * Computes the inverse of the given element of the BLS12-381 scalar field.
      * @param ctx - Context.
@@ -144,36 +124,12 @@ module.exports = class myHelper {
     }
 
     /**
-     * Checks if the given element of the BLS12-381 scalar field is a 4096-th root of unity.
-     * @param ctx - Context.
-     * @param tag - Tag.
-    */
-    eval_check4096Root(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        const z = this.evalCommand(ctxFullFe, tag.params[0]);
-
-        for (let i = 0; i < this.blobSize; i++) {
-            const rooti = BigInt(rootsOfUnity4096[i]);
-            if (z === rooti) {
-                ctx["BLS12_381Root"] = {z, index: i};
-                return 1n;
-            }
-        }
-        return 0n;
-    }
-
-    /**
      * Returns the index of the given element of the BLS12-381 scalar field if it is a 4096-th root of unity.
      * @param ctx - Context.
      * @param tag - Tag.
     */
     eval_get4096RootIndex(ctx, tag) {
-        const ctxFullFe = { ...ctx, fullFe: true };
-        const z = this.evalCommand(ctxFullFe, tag.params[0]);
-
-        if (ctx["BLS12_381Root"]?.z === z) {
-            return ctx["BLS12_381Root"].index;
-        }
+        const z = this.evalCommand(ctx, tag.params[0]);
 
         for (let i = 0; i < this.blobSize; i++) {
             const rooti = BigInt(rootsOfUnity4096[i]);

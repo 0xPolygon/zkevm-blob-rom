@@ -27,7 +27,6 @@ scalarMulPointFpBLS12381:
         RR => _RR
 
         $0{lenBinDecomp(mem.scalarMulPointFpBLS12381_s) - 1} => RCX ; receive the length of the binary representation of s
-        ${dump(mem.scalarMulPointFpBLS12381_s,RCX)}
         ; TODO: Check its correctness
 
         ; Set Q = P

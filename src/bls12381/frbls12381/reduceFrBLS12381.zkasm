@@ -17,5 +17,4 @@ reduceFrBLS12381:
         1 => B
         0 => C
         %BLS12_381_R => D
-        ${A % D} => E           :ARITH_MOD
-        E => A                  :RETURN
+        ${A % D} => A           :ARITH_MOD, RETURN

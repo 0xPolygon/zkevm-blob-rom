@@ -276,8 +276,6 @@ INCLUDE "../src/bls12381/fp2bls12381/squareFp2BLS12381.zkasm"
 INCLUDE "../src/bls12381/fp2bls12381/scalarMulFp2BLS12381.zkasm"
 INCLUDE "../src/bls12381/fp2bls12381/invFp2BLS12381.zkasm"
 
-INCLUDE "../src/bls12381/fp4bls12381/squareFp4BLS12381.zkasm"
-
 INCLUDE "../src/bls12381/fp6bls12381/addFp6BLS12381.zkasm"
 INCLUDE "../src/bls12381/fp6bls12381/subFp6BLS12381.zkasm"
 INCLUDE "../src/bls12381/fp6bls12381/sparseMulBFp6BLS12381.zkasm"
