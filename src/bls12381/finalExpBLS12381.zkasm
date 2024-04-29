@@ -124,16 +124,16 @@ finalExpBLS12381:
         A => mulFp12BLS12381_a13_x
         B => mulFp12BLS12381_a13_y
 
-        millerLoopBLS12381_f21_x => C
-        millerLoopBLS12381_f21_y => D                   :CALL(negFp2BLS12381)
+        finalExpBLS12381_f21_x => C
+        finalExpBLS12381_f21_y => D                     :CALL(negFp2BLS12381)
         E => mulFp12BLS12381_a21_x
         C => mulFp12BLS12381_a21_y
-        millerLoopBLS12381_f22_x => C
-        millerLoopBLS12381_f22_y => D                   :CALL(negFp2BLS12381)
+        finalExpBLS12381_f22_x => C
+        finalExpBLS12381_f22_y => D                     :CALL(negFp2BLS12381)
         E => mulFp12BLS12381_a22_x
         C => mulFp12BLS12381_a22_y
-        millerLoopBLS12381_f23_x => C
-        millerLoopBLS12381_f23_y => D                   :CALL(negFp2BLS12381)
+        finalExpBLS12381_f23_x => C
+        finalExpBLS12381_f23_y => D                     :CALL(negFp2BLS12381)
         E => mulFp12BLS12381_a23_x
         C => mulFp12BLS12381_a23_y                      :CALL(mulFp12BLS12381)
 
