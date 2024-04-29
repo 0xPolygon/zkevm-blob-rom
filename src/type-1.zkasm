@@ -15,10 +15,10 @@ startBlobType1:
         $                               :HASHS16(E),MSTORE(kzgCommitment_high)
         $                               :HASHS32(E),MSTORE(kzgCommitment_low)
 
-        1 + %MEM_ALIGN_LEN*31 => C
+        %MEM_ALIGN_OFFSET * 1 + %MEM_ALIGN_LEN * 31 => C
         $ => B                          :MEM_ALIGN_RD
         %VERSIONED_HASH_VERSION_KZG => A
-        31 + %MEM_ALIGN_LEN*1 + %MEM_ALIGN_LEFT_ALIGNMENT => C
+        %MEM_ALIGN_OFFSET * 31 + %MEM_ALIGN_LEN * 1 + %MEM_ALIGN_LEFT_ALIGNMENT => C
         $ => A                          :MEM_ALIGN_RD
         A + B => A
         $ => B                          :MLOAD(versionedHash)
@@ -45,7 +45,7 @@ invalidBlobData:
         RR + 1                          :MSTORE(polEvalFrBLS12381_index)
         ; offset = 1 byte + len = 1 byte + left_alignment
         ; store in 31th byte, 0th byte of A
-        31 + %MEM_ALIGN_LEN * 1 + %MEM_ALIGN_LEFT_ALIGNMENT => C ; constantes mem_align %MEM_ALIGN_LEFT_ALIGNMENT, %MEM_ALIGN_LEN
+        %MEM_ALIGN_OFFSET * 31 + %MEM_ALIGN_LEN * 1 + %MEM_ALIGN_LEFT_ALIGNMENT => C ; constantes mem_align %MEM_ALIGN_LEFT_ALIGNMENT, %MEM_ALIGN_LEN
         ; A --> invalid byte
         $ => A                          :MEM_ALIGN_RD
         ; A --> invalid byte shift left
@@ -69,11 +69,11 @@ callAndAssert:
         31 - 1 - 4 => RCX
         ; reading type
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
-        1 + %MEM_ALIGN_LEN * 1 => C
+        %MEM_ALIGN_OFFSET * 1 + %MEM_ALIGN_LEN * 1 => C
         $                               :MEM_ALIGN_RD,JMPNZ(invalidTypeCompression)
 
         ; getting totalBodyLen
-        2 + %MEM_ALIGN_LEN * 4 => C
+        %MEM_ALIGN_OFFSET * 2 + %MEM_ALIGN_LEN * 4 => C
         $ => B                          :MEM_ALIGN_RD,MSTORE(totalBodyLen)
         ; BYTES_ETH_BLOB_DATA >= 5 + totalBodyLen
         %BYTES_ETH_BLOB_DATA - 5 - B    :JMPN(invalidParsing)
@@ -95,6 +95,7 @@ readBatchDataLen:
         0 => HASHPOS, B
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         ; if RCX (remaining bytes on A) === 0 --> readBytesBatchDataLenOnTop
+        ; %MEM_ALIGN_OFFSET * ( 32 - RCX ) + %MEM_ALIGN_LEN * 4
         32 - RCX + %MEM_ALIGN_LEN * 4  => C     :JMP_EQ(32+128*4,readBytesBatchDataLenOnTop)
 
         ; read 4 bytes, if there are not enought bytes it's filled with zero of m1(B)
@@ -106,7 +107,7 @@ readBytesBatchDataLenOnTop:
         RR + 1 => RR
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         ; offset = 1, len = 4 bytes
-        1 + %MEM_ALIGN_LEN * 4 => C
+        %MEM_ALIGN_OFFSET * 1 + %MEM_ALIGN_LEN * 4 => C
         $ => D                          :MEM_ALIGN_RD
         31 - 4 => RCX                   :JMP(readBatchData)
     
@@ -115,7 +116,8 @@ readRemainingBatchDataLen:
         RR + 1 => RR
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         RCX + 31 => RCX                 :JMP_EQ(31, readBatchData)
-        1 - %MEM_ALIGN_LEN * RCX + 31 * %MEM_ALIGN_LEN => C
+        ; %MEM_ALIGN_OFFSET * 1 + %MEM_ALIGN_LEN ( 31 - RCX )
+        %MEM_ALIGN_OFFSET * 1 - %MEM_ALIGN_LEN * RCX + %MEM_ALIGN_LEN * 31 => C
         $ => C                          :MEM_ALIGN_RD
         D + C => D
         
@@ -134,12 +136,14 @@ readBatchData:
 
 allRemainingBytesBelongsBatchData:
         RCX => D
+        ; %MEM_ALIGN_OFFSET * ( 32 - RCX ) + %MEM_ALIGN_LEN * D
         32 - RCX + %MEM_ALIGN_LEN * D => C
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)
         batchLen - RCX => D             :JMP_GE(31, loopHash31BytesOfBatchData, hashLastBytesOfBatchData)
         
 allBatchDataInRemainingBytes:
+        ; %MEM_ALIGN_OFFSET * ( 32 - RCX ) + %MEM_ALIGN_LEN * D
         32 - RCX + %MEM_ALIGN_LEN * D => C
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)
@@ -156,7 +160,7 @@ loopHash31BytesOfBatchData:
 hashLastBytesOfBatchData:
         31 - D => RCX
         RR + 1 => RR
-        1 + %MEM_ALIGN_LEN * D  => C    :JMP_EQ(1, hashBatchDataEnd)
+        %MEM_ALIGN_OFFSET  * 1 + %MEM_ALIGN_LEN * D  => C    :JMP_EQ(1, hashBatchDataEnd)
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)
