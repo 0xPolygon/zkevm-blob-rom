@@ -6,7 +6,7 @@
 ;;             out:
 ;; 		   · A ∈ [0, BLS12381_P - 1], representing the x-coordinate of the deserialized point
 ;; 		   · B ∈ [0, BLS12381_P - 1], representing the y-coordinate of the deserialized point
-;; 		   · C ∈ {0,1} Error code (check list below)
+;; 		   · C ∈ {0,1,2} Error code (check list below)
 ;;
 ;; Note: Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity with A = B = 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

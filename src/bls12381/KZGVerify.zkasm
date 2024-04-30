@@ -10,7 +10,7 @@
 ;;
 ;; Note1: [a]₁ is a standarized shortand used to indicate a·G₁, where G₁ is the generator of the group G1
 ;;        [a]₂ is a standarized shortand used to indicate a·G₂, where G₂ is the generator of the group G2
-;; Note2: We check e(commit - [y]₁, [1]₂)·e(-proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
+;; Note2: We check e(commit - [y]₁, -[1]₂)·e(proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRAGMA MODE_384_BITS
@@ -22,46 +22,27 @@ VAR GLOBAL KZGVerify_y          ; This is, presumably, the evaluation at z of th
 VAR GLOBAL KZGVerify_proof_low  ; This is given as the serialization of a point in E (32 bytes in low + 16 bytes in high = 48 bytes)
 VAR GLOBAL KZGVerify_proof_high
 
-VAR GLOBAL _commit_x
-VAR GLOBAL _commit_y
-VAR GLOBAL _proof_x
-VAR GLOBAL _proof_y
-
-VAR GLOBAL _P_x
-VAR GLOBAL _P_y
-VAR GLOBAL _Q_x1
-VAR GLOBAL _Q_x2
-VAR GLOBAL _Q_y1
-VAR GLOBAL _Q_y2
-
 VAR GLOBAL _RR
 
 KZGVerify:
 	RR => _RR
 
-	; 1] Reconstruct and deserialize commit and proof
-        KZGVerify_commit_low => A     			:MODE_256_BITS
-        KZGVerify_commit_high => B     			:MODE_256_BITS
-        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
-	A => _commit_x
-	B => _commit_y
-
-        KZGVerify_proof_low => A     			:MODE_256_BITS
-        KZGVerify_proof_high => B     			:MODE_256_BITS
-        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
-	A => _proof_x
-	B => _proof_y
-
-        ; 2] Compute commit - [y]₁
-	;    2.1] [y]₁
+        ; 1] Compute commit - [y]₁
+	;    1.1] [y]₁
 	KZGVerify_y => A
 	A => scalarMulPointFpBLS12381_s
 	%BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
 	%BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y	:CALL(scalarMulPointFpBLS12381) ; in: [s,P_x,P_y] out: [Q_x,Q_y]
 
-	;    2.2] commit - [y]₁
-	_commit_x => A
-	_commit_y => B
+	;    1.2] Reconstruct and deserialize commit
+        KZGVerify_commit_low => A     			:MODE_256_BITS
+        KZGVerify_commit_high => B     			:MODE_256_BITS
+        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+
+	; Check if error
+	C  						:JMPNZ(_error)
+
+	;    1.3] Compute commit - [y]₁
 	A => addPointFpBLS12381_P1_x
 	B => addPointFpBLS12381_P1_y
 	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
@@ -69,19 +50,19 @@ KZGVerify:
 	A => addPointFpBLS12381_P2_x
 	B => addPointFpBLS12381_P2_y			:CALL(addPointFpBLS12381) ; in: [P1_x,P1_y,P2_x,P2_y] out: [P3_x,P3_y]
 
-	; 3] compute Miller_loop(commit - [y]₁, [1]₂)
+	; 2] compute Miller_loop(commit - [y]₁, -[1]₂)
         addPointFpBLS12381_P3_x => A
 	addPointFpBLS12381_P3_y => B
         A => halfPairingBLS12381_P_x
         B => halfPairingBLS12381_P_y
 	%BLS12_381_G2X1 => halfPairingBLS12381_Q_x1
 	%BLS12_381_G2X2 => halfPairingBLS12381_Q_x2
-	%BLS12_381_G2Y1 => halfPairingBLS12381_Q_y1
-	%BLS12_381_G2Y2 => halfPairingBLS12381_Q_y2	:CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
+	%BLS12_381_G2Y1_neg => halfPairingBLS12381_Q_y1
+	%BLS12_381_G2Y2_neg => halfPairingBLS12381_Q_y2	:CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
 									           ;out: [out11_x,out11_y,out12_x,out12_y,out13_x,out13_y,out21_x,out21_y,out22_x,out22_y,out23_x,out23_y]
 
 	; Check if error
-	B  						:JMPNZ(_input_error)
+	B  						:JMPNZ(_error)
 
 	; input it to multiplication
 	halfPairingBLS12381_out11_x => A
@@ -109,8 +90,8 @@ KZGVerify:
 	A => mulFp12BLS12381_a23_x
 	B => mulFp12BLS12381_a23_y
 
-        ; 4] Compute [x]₂ - [z]₂
-	;    4.1] [z]₂
+        ; 3] Compute [x]₂ - [z]₂
+	;    3.1] [z]₂
 	KZGVerify_z => A
 	A => scalarMulPointFp2BLS12381_s
 	%BLS12_381_G2X1 => scalarMulPointFp2BLS12381_P_x1
@@ -118,7 +99,7 @@ KZGVerify:
 	%BLS12_381_G2Y1 => scalarMulPointFp2BLS12381_P_y1
 	%BLS12_381_G2Y2 => scalarMulPointFp2BLS12381_P_y2	:CALL(scalarMulPointFp2BLS12381)
 
-	;    4.2] [x]₂ - [z]₂
+	;    3.2] [x]₂ - [z]₂
 	%BLS12_381_X_X1 => A
 	%BLS12_381_X_X2 => B
 	A => addPointFp2BLS12381_P1_x1
@@ -136,9 +117,17 @@ KZGVerify:
 	E => addPointFp2BLS12381_P2_y1
 	C => addPointFp2BLS12381_P2_y2			:CALL(addPointFp2BLS12381)
 
-	; 5] Compute Miller_loop(-proof, [x]₂ - [z]₂)
-        _proof_y => A 					:CALL(negFpBLS12381) ; in: [A] out: [B]
-        _proof_x => A
+	; 4] Compute Miller_loop(proof, [x]₂ - [z]₂)
+
+	;    4.1] Reconstruct and deserialize proof
+        KZGVerify_proof_low => A     			:MODE_256_BITS
+        KZGVerify_proof_high => B     			:MODE_256_BITS
+        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+
+	; Check if error
+	C  						:JMPNZ(_error)
+
+	;    4.2] Miller_loop(proof, [x]₂ - [z]₂)
         A => halfPairingBLS12381_P_x
         B => halfPairingBLS12381_P_y
 	addPointFp2BLS12381_P3_x1 => A
@@ -151,7 +140,7 @@ KZGVerify:
 	B => halfPairingBLS12381_Q_y2			:CALL(halfPairingBLS12381)
 
 	; Check if error
-	B  						:JMPNZ(_input_error)
+	B  						:JMPNZ(_error)
 
 	; input it to multiplication
 	halfPairingBLS12381_out11_x => A
@@ -179,7 +168,7 @@ KZGVerify:
 	A => mulFp12BLS12381_b23_x
 	B => mulFp12BLS12381_b23_y			:CALL(mulFp12BLS12381)
 
-	; 6] Finish the pairing by computing the final exponentiation
+	; 5] Compute final_exp(Miller_loop(commit - [y]₁, -[1]₂)·Miller_loop(proof, [x]₂ - [z]₂))
         mulFp12BLS12381_c11_x => A
         mulFp12BLS12381_c11_y => B
         A => finalExpBLS12381_f11_x
@@ -205,7 +194,7 @@ KZGVerify:
         A => finalExpBLS12381_f23_x
         B => finalExpBLS12381_f23_y			:CALL(finalExpBLS12381)
 
-        ; Check whether the result is equal 1 or not
+        ; 6] Check whether the result is equal 1 or not
     	finalExpBLS12381_f11_x - 1 => C             	:JMPNZ(_equation_is_not_satisfied)
     	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
     	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
@@ -316,21 +305,16 @@ KZGVerify:
 
 _equation_is_not_satisfied:
         ; the pairing equation is not satisfied, then output 0
-        0 => A 						:JMP(_no_input_error)
+        0 => A,B 					:JMP(_end)
 
 _equation_is_satisfied:
         ; the pairing equation is satisfied, then output 1
-        1 => A 						:JMP(_no_input_error)
-
-; ERRORS
-_input_error:
-        1 => B          				:JMP(_error)
-
-_no_input_error:
-        0 => B          				:JMP(_end)
+        1 => A
+	0 => B						:JMP(_end)
 
 _error:
-        0 => A
+	0 => A
+        1 => B						:JMP(_end)
 
 _end:
         _RR => RR         				:RETURN
