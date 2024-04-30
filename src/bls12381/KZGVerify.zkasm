@@ -15,10 +15,12 @@
 
 PRAGMA MODE_384_BITS
 
-VAR GLOBAL KZGVerify_commit ; This is given as the serialization of a point in E (48 bytes)
-VAR GLOBAL KZGVerify_z      ; This is the challenging opening (32 bytes)
-VAR GLOBAL KZGVerify_y      ; This is, presumably, the evaluation at z of the polynomial hidden under the commitment (32 bytes)
-VAR GLOBAL KZGVerify_proof  ; This is given as the serialization of a point in E (48 bytes)
+VAR GLOBAL KZGVerify_commit_low ; This is given as the serialization of a point in E (32 bytes in low + 16 bytes in high = 48 bytes)
+VAR GLOBAL KZGVerify_commit_high
+VAR GLOBAL KZGVerify_z          ; This is the challenging opening (32 bytes)
+VAR GLOBAL KZGVerify_y          ; This is, presumably, the evaluation at z of the polynomial hidden under the commitment (32 bytes)
+VAR GLOBAL KZGVerify_proof_low  ; This is given as the serialization of a point in E (32 bytes in low + 16 bytes in high = 48 bytes)
+VAR GLOBAL KZGVerify_proof_high
 
 VAR GLOBAL _commit_x
 VAR GLOBAL _commit_y
@@ -37,12 +39,16 @@ VAR GLOBAL _RR
 KZGVerify:
 	RR => _RR
 
-        ; 1] Deserialize commit and proof
-	KZGVerify_commit => A				:CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+	; 1] Reconstruct and deserialize commit and proof
+        KZGVerify_commit_low => A     			:MODE_256_BITS
+        KZGVerify_commit_high => B     			:MODE_256_BITS
+        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
 	A => _commit_x
 	B => _commit_y
 
-	KZGVerify_proof => A				:CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+        KZGVerify_proof_low => A     			:MODE_256_BITS
+        KZGVerify_proof_high => B     			:MODE_256_BITS
+        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
 	A => _proof_x
 	B => _proof_y
 
