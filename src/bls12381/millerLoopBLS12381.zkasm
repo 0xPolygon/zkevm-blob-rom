@@ -50,18 +50,6 @@ VAR GLOBAL _fsquare23_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -------------------------------------------
-;  [steps: 22, bin: 0, arith: 0]                          // setup
-;   + 65 * [steps: 1937, bin: 4, arith: 149]              // doubles
-;   + 17 * [steps: 930, bin: 4, arith: 68]                // additions
-;   + 8 * [steps: 934, bin: 8, arith: 68]                 // subtractions
-;   + [steps: 1777, bin: 8, arith: 130]                   // last iteration + last two lines
-; total (w.c.): [steps: 150986 bin: 400, arith: 11515]    // [22 + 65*1937 + 17*930 + 8*934 + 1777,
-;                                                                  65*4    + 17*4   + 8*8   + 8,
-;                                                                  65*149  + 17*68  + 8*68  + 130]
-; -------------------------------------------
-
 millerLoopBLS12381:
     RR => _RR
 
