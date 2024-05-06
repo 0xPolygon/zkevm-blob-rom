@@ -9,28 +9,8 @@
 
 PRAGMA MODE_384_BITS
 
-VAR GLOBAL _A_saved
-
-; RESOURCES:
-; -----------------------------
-; PATH A >= C:  [steps: 3, bin: 1, arith: 0]
-; PATH A < C:   [steps: 7, bin: 3, arith: 0] <-- w.c.
-; -----------------------------
-
 subFpBLS12381:
-        A => _A_saved
-
-        ; 1] Negate C
-        ; A·B + 0 = op (mod BLS12381_P)
-        C => A
+        ; A·(-1) + C = op (mod BLS12_381_P)
         %BLS12_381_P_MINUS_ONE => B
-        0 => C
         %BLS12_381_P => D
-        ${(A*B) % D} => C       :ARITH_384_MOD
-
-        ; 2] Compute A - C
-        ; A·1 + (-C) = op (mod BLS12_381_P)
-        _A_saved => A
-        1 => B
-        %BLS12_381_P => D
-        ${(A + C) % D} => C     :ARITH_384_MOD, RETURN
+        ${(A*B + C) % D} => C     :ARITH_384_MOD, RETURN

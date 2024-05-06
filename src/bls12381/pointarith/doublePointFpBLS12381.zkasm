@@ -47,26 +47,24 @@ doublePointFpBLS12381:
         C => A,_lambda                  :CALL(squareFpBLS12381) ; in: [A] out: [B]
         ; B = lambda²
 
-        B => A
-        doublePointFpBLS12381_P_x => C  :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        B => C
+        doublePointFpBLS12381_P_x => A  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda² - P.x
 
-        C => A
-        doublePointFpBLS12381_P_x => C  :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        doublePointFpBLS12381_P_x => A  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda² - P.x - P.x
 
-        C => doublePointFpBLS12381_Q_x
+        C => A,doublePointFpBLS12381_Q_x
         ; Q.x = lambda² - P.x - P.x
 
-        doublePointFpBLS12381_P_x => A  :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        doublePointFpBLS12381_P_x => C  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = P.x - Q.x
 
         _lambda => A
         C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
         ; C = lambda·(P.x - Q.x)
 
-        C => A
-        doublePointFpBLS12381_P_y => C    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        doublePointFpBLS12381_P_y => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda·(P.x - Q.x) - P.y
 
         C => doublePointFpBLS12381_Q_y

@@ -24,16 +24,16 @@ VAR GLOBAL _RR
 addPointFpBLS12381:
         RR => _RR
 
-        addPointFpBLS12381_P2_x => A
-        addPointFpBLS12381_P1_x => C    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        addPointFpBLS12381_P2_x => C
+        addPointFpBLS12381_P1_x => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = P2.x - P1.x
 
         C => A                          :CALL(invFpBLS12381) ; in: [A] out: [B]
         ; B = 1 / (P2.x - P1.x)
         B => _lambda
 
-        addPointFpBLS12381_P2_y => A
-        addPointFpBLS12381_P1_y => C    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        addPointFpBLS12381_P2_y => C
+        addPointFpBLS12381_P1_y => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = P2.y - P1.y
 
         _lambda => A
@@ -42,26 +42,24 @@ addPointFpBLS12381:
         C => A,_lambda                  :CALL(squareFpBLS12381) ; in: [A] out: [B]
         ; B = lambda²
 
-        B => A
-        addPointFpBLS12381_P1_x => C    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        B => C
+        addPointFpBLS12381_P1_x => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda² - P1.x
 
-        C => A
-        addPointFpBLS12381_P2_x => C    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        addPointFpBLS12381_P2_x => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda² - P1.x - P2.x
 
-        C => addPointFpBLS12381_P3_x
+        C => A,addPointFpBLS12381_P3_x
         ; P3.x = lambda² - P1.x - P2.x
 
-        addPointFpBLS12381_P1_x => A    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        addPointFpBLS12381_P1_x => C    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = P1.x - P3.x
 
         _lambda => A
         C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
         ; C = lambda·(P1.x - P3.x)
 
-        C => A
-        addPointFpBLS12381_P1_y => C    :CALL(subFpBLS12381) ; in: [A,C] out: [C]
+        addPointFpBLS12381_P1_y => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda·(P1.x - P3.x) - P1.y
 
         C => addPointFpBLS12381_P3_y

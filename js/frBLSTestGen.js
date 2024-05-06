@@ -75,6 +75,15 @@ function genRandomInOut(opname) {
                   });
             }
 
+            // f(z) = fᵢ, z = ωⁱ
+            // if pointZ is any of the rootUnity, return the blobData on index i
+            for (let i = 0; i < blobSize; i++) {
+                const rooti = FrBLS12_381.e(rootsOfUnity4096[i]);
+                if (FrBLS12_381.eq(x, rooti)) {
+                    throw new Error(`Point ${x} is a root of unity`);
+                }
+            }
+
             // Compute f(x) = (x⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(x-ωⁱ)
             let a = FrBLS12_381.exp(x, blobSize);
             a = FrBLS12_381.sub(a, 1n);
@@ -82,16 +91,16 @@ function genRandomInOut(opname) {
 
             let accum = FrBLS12_381.zero;
             for (let i = 0; i < blobSize; i++) {
-                const rooti = BigInt(rootsOfUnity4096[i]);
-                const termi = FrBLS12_381.mul(
-                    rooti,
-                    FrBLS12_381.inv(FrBLS12_381.sub(x, rooti))
-                );
-                accum = FrBLS12_381.add(accum, FrBLS12_381.mul(pol[i], termi));
+                const rooti = FrBLS12_381.e(rootsOfUnity4096[i])
+                const num = FrBLS12_381.mul(pol[i], rooti);
+                const den = FrBLS12_381.sub(x, rooti);
+                let termi = FrBLS12_381.inv(den);
+                termi = FrBLS12_381.mul(num, termi);
+                accum = FrBLS12_381.add(accum, termi);
             }
             const result = FrBLS12_381.mul(a, accum);
 
-            console.log(`\t:CALL(${opname}FrBLS12381)\n\t${result}n\t:MLOAD(${opname}FrBLS12381_result)\n`);
+            console.log(`\t:CALL(${opname}FrBLS12381)\n\t${result}n\t:MLOAD(${opname}FrBLS12381_y)\n`);
             break;
         default:
             throw new Error("Invalid opname");
