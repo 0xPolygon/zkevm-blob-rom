@@ -1,33 +1,31 @@
-PRAGMA MODE_384_BITS
-
-        0x27d54c976157cb64d0a7087329a115f6ccf8d94a5f3a1af6b6c744ffc2b1eca9n => KZGVerify_commit_low     :MODE_256_BITS
-        0xa1aa6c0a85beb947df00587918144c82n => KZGVerify_commit_high                                    :MODE_256_BITS
+        0x27d54c976157cb64d0a7087329a115f6ccf8d94a5f3a1af6b6c744ffc2b1eca9n => KZGVerify_commit_low
+        0xa1aa6c0a85beb947df00587918144c82n => KZGVerify_commit_high
         0x4124347a6f69eed4bf5eae100bf955d5f54d1ea6a0d12c4993cdf46d71e3f6e1n => KZGVerify_z
         0x1c6627da2f0d65e53ee1abd701ca7651be8fa5c89f6130af9bdf06fee6f0133bn => KZGVerify_y
-        0xe0905b77094efe5a5ee7bbbe6a306a0fab2796adedbeed5a80e94be7edc85391n => KZGVerify_proof_low      :MODE_256_BITS
-        0xb07fece886f5ed974445971028e184c7n => KZGVerify_proof_high                                     :MODE_256_BITS
+        0xe0905b77094efe5a5ee7bbbe6a306a0fab2796adedbeed5a80e94be7edc85391n => KZGVerify_proof_low
+        0xb07fece886f5ed974445971028e184c7n => KZGVerify_proof_high
         :CALL(KZGVerify)
         1       :ASSERT
         B => A
         0       :ASSERT
 
-        0x787bfcb37bf03d23741eaa351c8dd79d30fd2084ba5b50f31c8d9d7ea5b132cfn => KZGVerify_commit_low     :MODE_256_BITS
-        0xa621f969ffcf63b944d27acc57aaee96n => KZGVerify_commit_high                                    :MODE_256_BITS
+        0x787bfcb37bf03d23741eaa351c8dd79d30fd2084ba5b50f31c8d9d7ea5b132cfn => KZGVerify_commit_low
+        0xa621f969ffcf63b944d27acc57aaee96n => KZGVerify_commit_high
         0x13594569a0b1bd6467f11a346d8c7c5a175d3bc7d2bf2dc7789653f170c71f8fn => KZGVerify_z
         0x61588b03541afc34b0eb0d370b69251dd4b92b3d46160ea7bf849f7fd76aab75n => KZGVerify_y
-        0x86b73e626eff578ee686c30d58cf5c990b014869a57053fb3cd77354b411e55n => KZGVerify_proof_low       :MODE_256_BITS
-        0x930d5e1b4f053e7a633d8346a46d624bn => KZGVerify_proof_high                                     :MODE_256_BITS
+        0x86b73e626eff578ee686c30d58cf5c990b014869a57053fb3cd77354b411e55n => KZGVerify_proof_low
+        0x930d5e1b4f053e7a633d8346a46d624bn => KZGVerify_proof_high
         :CALL(KZGVerify)
         1       :ASSERT
         B => A
         0       :ASSERT
 
-        0x9681f5651de744fb1821f8549c78985dfe8e857456e8077fb212e7dbf4659919n => KZGVerify_commit_low     :MODE_256_BITS
-        0x91929026d7362c49c0728370697906f5n => KZGVerify_commit_high                                    :MODE_256_BITS
+        0x9681f5651de744fb1821f8549c78985dfe8e857456e8077fb212e7dbf4659919n => KZGVerify_commit_low
+        0x91929026d7362c49c0728370697906f5n => KZGVerify_commit_high
         0x2bc11ee1fd56fb16c9613ea547eddf16c98c2ebc585d20e9c41b41a7af88cf85n => KZGVerify_z
         0x3b54289a2f14cfca051407c6c8c665f1fabed0b60dac273230d18d73bf42aa97n => KZGVerify_y
-        0x3ec0baeb5881545920addafa02f0952eb50cdce2937658480d5c3cde0f967325n => KZGVerify_proof_low      :MODE_256_BITS
-        0x89eed617c24d8a8006b2e58884a93debn => KZGVerify_proof_high                                     :MODE_256_BITS
+        0x3ec0baeb5881545920addafa02f0952eb50cdce2937658480d5c3cde0f967325n => KZGVerify_proof_low
+        0x89eed617c24d8a8006b2e58884a93debn => KZGVerify_proof_high
         :CALL(KZGVerify)
         1       :ASSERT
         B => A

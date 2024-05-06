@@ -30,7 +30,8 @@ KZGVerify:
         ; 1] Compute commit - [y]₁
 	;    1.1] [y]₁
 	KZGVerify_y => A
-	A => scalarMulPointFpBLS12381_s
+        0 => B
+        $ => scalarMulPointFpBLS12381_s     		:ARITH_256TO384
 	%BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
 	%BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y	:CALL(scalarMulPointFpBLS12381) ; in: [s,P_x,P_y] out: [Q_x,Q_y]
 
@@ -93,7 +94,8 @@ KZGVerify:
         ; 3] Compute [x]₂ - [z]₂
 	;    3.1] [z]₂
 	KZGVerify_z => A
-	A => scalarMulPointFp2BLS12381_s
+        0 => B
+        $ => scalarMulPointFp2BLS12381_s     		:ARITH_256TO384
 	%BLS12_381_G2X1 => scalarMulPointFp2BLS12381_P_x1
 	%BLS12_381_G2X2 => scalarMulPointFp2BLS12381_P_x2
 	%BLS12_381_G2Y1 => scalarMulPointFp2BLS12381_P_y1
