@@ -12,9 +12,10 @@ VAR GLOBAL newNumBlob ; New blob number. newNumBlob = oldNumBlob + 1
 VAR GLOBAL finalAccBatchHashData ; Final accumulated batch data hash. finalAccBatchHashData = LinearPoseidon(oldBatchAccInputHash, batchHashData, sequencerAddress, forcedHashData)
 VAR GLOBAL localExitRootFromBlob
 VAR GLOBAL isInvalid ; Flag to determine if the blob is invalid
+VAR GLOBAL expectedNewStateRoot ; Expected state root from the batch batch execution
 
 ; Outputs exposed from blobAccInputHash
-VAR GLOBAL timestampLimit 
+VAR GLOBAL timestampLimit
 VAR GLOBAL lastL1InfoTreeRoot
 VAR GLOBAL lastL1InfoTreeIndex
 

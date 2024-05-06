@@ -63,33 +63,48 @@ callAndAssert:
         ; call polEvalFrBLS12381
                                         :CALL(polEvalFrBLS12381) ; ouputs
         $                               :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
-        
+
         ; add batchData to batchHashData = LinearPoseidon(batchData)
         0 => RR
-        31 - 1 - 4 => RCX
+        31 - 2 - 4 => RCX
+        ; read polEvalFrBLS12381_pol_eval[0]
         ; reading type
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         1 + %MEM_ALIGN_LEN * 1 => C
         $                               :MEM_ALIGN_RD,JMPNZ(invalidTypeCompression)
 
-        ; getting totalBodyLen
-        2 + %MEM_ALIGN_LEN * 4 => C
+        ; reading expectedNewStateRoot
+        ; read polEvalFrBLS12381_pol_eval[1]
+        1 => RR
+        $ => B                                :MLOAD(polEvalFrBLS12381_pol_eval[RR])
+
+        ; [polEvalFrBLS12381_pol_eval[0](2:31) || polEvalFrBLS12381_pol_eval[1](1:2)]
+        2 + %MEM_ALIGN_LEN * 30 + 8192 * 1 => C ; offset: 2, length: 30 from A register
+        $ => D                               :MEM_ALIGN_RD
+
+        33 + %MEM_ALIGN_LEN * 2 => C ; offset: 33 (1 in B register), length: 2
+        $ => E                               :MEM_ALIGN_RD
+
+        D + E                                :MSTORE(expectedNewStateRoot)
+
+        ; getting totalBodyLen (4 bytes): polEvalFrBLS12381_pol_eval[1](3:6)
+        35 + %MEM_ALIGN_LEN * 4 => C
         $ => B                          :MEM_ALIGN_RD,MSTORE(totalBodyLen)
-        ; BYTES_ETH_BLOB_DATA >= 5 + totalBodyLen
-        %BYTES_ETH_BLOB_DATA - 5 - B    :JMPN(invalidParsing)
+        ; BYTES_ETH_BLOB_DATA >= 37 + totalBodyLen
+        %BYTES_ETH_BLOB_DATA - B - 37    :JMPN(invalidParsing)
 
         ; update batch hash id (E) & nextHashPId
         $ => E                          :MLOAD(nextHashPId)
         E + 1                           :MSTORE(nextHashPId)
 
-        ; A = current 31 bits value
-        ; RR = current index array 31 bits value
+        ; A = current 31 bytes value
+        ; RR = current index array 31 bytes value
         ; RCX = remaining bytes on A
-        ; D = batch data len
+        ; D = batch data len (out)
 nextBatchBlobData:
 readBatchDataLen:
         ; check blobDataProcessed == totalBodyLen > final
-        $ => B                          :MLOAD(blobDataProcessed)      
+        $ => B                          :MLOAD(blobDataProcessed)
         B - $                           :F_MLOAD(totalBodyLen),JMPZ(finalizeBlob)
 
         0 => HASHPOS, B
@@ -109,7 +124,7 @@ readBytesBatchDataLenOnTop:
         1 + %MEM_ALIGN_LEN * 4 => C
         $ => D                          :MEM_ALIGN_RD
         31 - 4 => RCX                   :JMP(readBatchData)
-    
+
 ; read rest of bytes of batchDataLen
 readRemainingBatchDataLen:
         RR + 1 => RR
@@ -118,7 +133,7 @@ readRemainingBatchDataLen:
         1 - %MEM_ALIGN_LEN * RCX + 31 * %MEM_ALIGN_LEN => C
         $ => C                          :MEM_ALIGN_RD
         D + C => D
-        
+
 ; check if A has pending bytes, this bytes belongs to current BatchData
 ; three posibilities:
 ;   batchDataLen (D) === 0
@@ -128,7 +143,7 @@ readRemainingBatchDataLen:
 readBatchData:
         D                               :MSTORE(batchLen),JMP_EQ(0,hashBatchDataEnd)
         4095 * 31 - RR * 31 + RCX - D   :JMPN(invalidParsing)
-        
+
         RCX                             :JMP_EQ(0, loopHash31BytesOfBatchData)
         D - RCX - 1                     :JMPN(allBatchDataInRemainingBytes)
 
@@ -138,7 +153,7 @@ allRemainingBytesBelongsBatchData:
         $ => C                          :MEM_ALIGN_RD
         C                               :HASHP(E)
         batchLen - RCX => D             :JMP_GE(31, loopHash31BytesOfBatchData, hashLastBytesOfBatchData)
-        
+
 allBatchDataInRemainingBytes:
         32 - RCX + %MEM_ALIGN_LEN * D => C
         $ => C                          :MEM_ALIGN_RD
