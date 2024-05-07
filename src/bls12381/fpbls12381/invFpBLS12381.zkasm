@@ -1,9 +1,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: A is assumed to be distinct from 0 modulo BLS12_381_P
+;;  PRE: A is alias-free
 ;; POST: The result is in the range [0,BLS12_381_P)
 ;;
 ;; invFpBLS12381:
-;;             in: A ∈ Fp
+;;             in: A ∈ [0, 2³⁸⁴ - 1]
 ;;             out: B = A⁻¹ (mod BLS12381_P) ∈ Fp
 ;;
 ;; NOTE: On input 0, it returns 0
@@ -11,15 +11,9 @@
 
 PRAGMA MODE_384_BITS
 
-; RESOURCES:
-; -------------------------------------------
-; PATH 1 input_is_0:     [steps: 2,  bin: 0]
-; PATH 2 input_is_not_0: [steps: 11, bin: 2, arith: 1] <-- w.c.
-; -------------------------------------------
-
 invFpBLS12381:
         ; Check if A = 0, and if so, return 0
-        ${A == 0} :JMP_EQ(1, _input_is_zero)
+        ${A == 0}               :JMP_EQ(1, _input_is_zero)
 
 _zero_check:
         ; We must ensure that A != 0

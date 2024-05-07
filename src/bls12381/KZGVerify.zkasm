@@ -192,7 +192,6 @@ _compute_rhs:
 	KZGVerify_z => A                                :MODE_256_BITS
         %BLS12_381_R => B                               :MODE_256_BITS
         $                                               :LT, JMPC(_check_z_zero, _z_too_large), MODE_256_BITS
-                                                        :CALL(reduceFrBLS12381) ; in: [A] out: [A]
 _check_z_zero:
         0 => B                                          :MODE_256_BITS
         $ => A,C     		                        :ARITH_256TO384, JMPNZ(_compute_commit_z)

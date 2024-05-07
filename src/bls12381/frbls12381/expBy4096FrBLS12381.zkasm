@@ -5,85 +5,67 @@
 ;;             in: A ∈ [0, 2²⁵⁶-1]
 ;;             out: A = A⁴⁰⁹⁶ (mod BLS12_381_R) ∈ Fr
 ;;
-;; Note: 4096 in binary is 10000 0000 0000
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; label to avoid the extra checks for zero and one
-VAR GLOBAL expBy4096FrBLS12381_input_is_not_zero_nor_one
-
-VAR GLOBAL expBy4096FrBLS12381_RR
-
-; RESOURCES:
-; -------------------------------------------
-; PATH 1 input_is_0:           [steps: 7,  bin: 1]
-; PATH 2 input_is_1:           [steps: 9,  bin: 2]
-; PATH 3 input_is_not_0_nor_1: [steps: 80, bin: 2, arith: 12] <-- w.c.
-; -------------------------------------------
-
 expBy4096FrBLS12381:
-        RR              :MSTORE(expBy4096FrBLS12381_RR)
-
-        $               :MLOAD(expBy4096FrBLS12381_input_is_not_zero_nor_one), JMPNZ(expBy4096FrBLS12381_compute)
-
         ; Is A = 0?
-        0n => B
-        $       :EQ, JMPC(expBy4096FrBLS12381_input_is_zero)
+        0 => B
+        $                       :EQ, JMPC(_input_is_zero)
 
         ; Is A = 1?
-        1n => B
-        $       :EQ, JMPC(expBy4096FrBLS12381_input_is_one, expBy4096FrBLS12381_compute)
+        1 => B
+        $                       :EQ, JMPC(_input_is_one, _compute)
 
 ; Begin of branching
-expBy4096FrBLS12381_input_is_zero:
+_input_is_zero:
         ; 0⁴⁰⁹⁶ = 0
-        0n => A         :JMP(expBy4096FrBLS12381_end)
+        0 => A                  :RETURN
 
-expBy4096FrBLS12381_input_is_one:
+_input_is_one:
         ; 1⁴⁰⁹⁶ = 1
-        1n => A         :JMP(expBy4096FrBLS12381_end)
+        1 => A                  :RETURN
 ; End of branching
 
-expBy4096FrBLS12381_compute:
+_compute:
 
         ; Note that 4096 = 2^12, so computing A⁴⁰⁹⁶ consists of 12 squarings
+        A => B
+        0 => C
+        %BLS12_381_R => D
 
-        ; 1/12
-        :CALL(squareFrBLS12381) ; [steps: 5, bin: 0, arith: 1]
+        ; Square 1/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 2/12
-        :CALL(squareFrBLS12381)
+        ; Square 2/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 3/12
-        :CALL(squareFrBLS12381)
+        ; Square 3/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 4/12
-        :CALL(squareFrBLS12381)
+        ; Square 4/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 5/12
-        :CALL(squareFrBLS12381)
+        ; Square 5/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 6/12
-        :CALL(squareFrBLS12381)
+        ; Square 6/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 7/12
-        :CALL(squareFrBLS12381)
+        ; Square 7/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 8/12
-        :CALL(squareFrBLS12381)
+        ; Square 8/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 9/12
-        :CALL(squareFrBLS12381)
+        ; Square 9/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 10/12
-        :CALL(squareFrBLS12381)
+        ; Square 10/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 11/12
-        :CALL(squareFrBLS12381)
+        ; Square 11/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
 
-        ; 12/12
-        :CALL(squareFrBLS12381)
-
-expBy4096FrBLS12381_end:
-        $ => RR         :MLOAD(expBy4096FrBLS12381_RR)
-                        :RETURN
+        ; Square 12/12
+        ${(A*B) % D} => A       :ARITH_MOD, RETURN
 

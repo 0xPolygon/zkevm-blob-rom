@@ -4,8 +4,8 @@
 ;;
 ;; sqrtFpBLS12381:
 ;;             in:
-;;              · C, the number to get the square root of
-;;              · A, the sign of the expected root
+;;              · C ∈ [0, 2³⁸⁴ - 1], the number to get the square root of
+;;              · A ∈ {0,1}, the sign of the expected root
 ;;             out:
 ;;              · C = 0 or 1, indicating whether C possesses a square root or not, respectively
 ;;              · B = sign·√C (mod p), only if C = 0
@@ -15,6 +15,8 @@
 PRAGMA MODE_384_BITS
 
 VAR GLOBAL _input
+
+VAR GLOBAL _RR
 
 sqrtFpBLS12381:
         C => _input
@@ -70,4 +72,7 @@ _reduced:
         ${(A*B) % D}            :ARITH_384_MOD, MLOAD(_input), RETURN
 
 sqrtFpBLS12381_NoRoot:
-        1 => C                  :RETURN
+        RR => _RR
+        _input => C      	:CALL(assertNQRFpBLS12381) ; in: [C]
+        1 => C
+        _RR => RR               :RETURN

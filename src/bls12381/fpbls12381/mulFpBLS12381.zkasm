@@ -2,7 +2,7 @@
 ;; POST: The result is in the range [0,BLS12_381_P)
 ;;
 ;; mulFpBLS12381:
-;;             in: A,B ∈ Fp
+;;             in: A,B ∈ [0, 2³⁸⁴ - 1]
 ;;             out: C = A·B (mod BLS12_381_P) ∈ Fp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

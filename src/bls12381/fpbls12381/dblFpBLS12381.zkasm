@@ -2,7 +2,7 @@
 ;; POST: The result is in the range [0,BLS12_381_P)
 ;;
 ;; dblFpBLS12381:
-;;             in: A ∈ Fp
+;;             in: A ∈ [0, 2³⁸⁴ - 1]
 ;;             out: B = A + A (mod BLS12381_P) ∈ Fp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

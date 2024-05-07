@@ -18,7 +18,7 @@ invFrBLS12381:
         ${frBLS12_381_inv(A)} => B
         0 => C
         %BLS12_381_R => D
-        1n                      :ARITH_MOD
+        1                       :ARITH_MOD
 
         ; Check that the resulting inverse is alias-free
         B => A

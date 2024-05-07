@@ -1,14 +1,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: C is not alias free
 ;;
 ;; assertNQRFpBLS12381:
-;;             in: C
+;;             in: C ∈ [0, 2³⁸⁴ - 1]
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRAGMA MODE_384_BITS
 
-; This function is using Euler's criterion pow(C, (p-1)/2) == -1 to determine that a given number is not a quadratic residue modulo p
+; This function is using Euler's criterion pow(C, (p-1)/2) == -1 to check that a given number is not a quadratic residue modulo p
 
 ; Efficiency of the exponentiation:
 ; (p-1)/2 = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd555

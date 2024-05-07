@@ -117,13 +117,7 @@ _most_sig_bit:
 	_S_bit => A 		:CALL(sqrtFpBLS12381)   ; in: [C,A] out: [C,B]
 
 	; If it has root C = 0, else C = 1
-	C           		:JMPZ(_has_sqrt)
-
-        ; If it hasn't root, check it
-
-	_in_y => C      	:CALL(assertNQRFpBLS12381) ; in: [C]
-
-                    		:JMP(_has_not_sqrt)
+	C           		:JMPNZ(_has_not_sqrt)
 
 _has_sqrt:
 	; Check the correctness of the sign

@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: A,C are assumed to be in the range [0,BLS12_381_R)
+;;  PRE: A,C are assumed to be alias-free
 ;; POST: The result is in the range [0,BLS12_381_R)
 ;;
 ;; subFrBLS12381:
@@ -16,17 +16,18 @@
 
 subFrBLS12381:
         C => B
-        $ => C  :SUB, JMPC(subFrBLS12381_add_alias)
-                :RETURN
-subFrBLS12381_add_alias:
-        ; if A < C, then we must compute A + BLS12_381_R - C
+        $ => C                  :SUB, JMPC(_add_alias)
+                                :RETURN
+
+_add_alias:
+        ; if A < C, then we must compute BLS12_381_R + A - C
 
         ; NOTE: 2·BLS12_381_R < 2²⁵⁶ < 3·BLS12_381_R
 
         B => C ; save for later use
 
         %BLS12_381_R => B
-        $ => A  :ADD ; It cannot overflow under the PRE condition and the previous NOTE
+        $ => A                  :ADD ; It cannot overflow under the PRE condition and the previous NOTE
 
         C => B
-        $ => C  :SUB, RETURN
+        $ => C                  :SUB, RETURN
