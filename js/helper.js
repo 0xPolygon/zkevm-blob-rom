@@ -264,6 +264,11 @@ module.exports = class myHelper {
         return [ctx.Fr.e(ctx.input.blobType), ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero, ctx.Fr.zero];
     }
 
+    eval_getY(ctx, tag) {
+        if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
+        return scalar2fea(ctx.Fr, Scalar.e(ctx.input.y));
+    }
+
     eval_getZ(ctx, tag) {
         if (tag.params.length != 0) throw new Error(`Invalid number of parameters (0 != ${tag.params.length}) function ${tag.funcName} ${ctx.sourceRef}`);
         return scalar2fea(ctx.Fr, Scalar.e(ctx.input.z));

@@ -207,7 +207,8 @@ finalizeBlob:
         $                               :LT,JMPC(invalidZkGasLimit)
 
 finishBlob:
-                                        :CALL(kzgVerify)
+        1 => A
+        $ - 1                           :F_MLOAD(type),CALL_Z(KZGVerify)
         ; A === 1 --> valid, A === 0 --> invalid
         A                               :JMPZ(failAssertKzgVerify)
 
@@ -246,17 +247,4 @@ INCLUDE "utils-blob.zkasm"
 INCLUDE "errors-blob.zkasm"
 INCLUDE "type-0-2.zkasm"
 INCLUDE "type-1.zkasm"
-INCLUDE "mock-kzg-verify.zkasm"
 INCLUDE "end-blob.zkasm"
-INCLUDE "./bls12381/frbls12381/addFrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/expBy4096FrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/invFrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/mulFrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/polEvalFrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/reduceFrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/squareFrBLS12381.zkasm"
-INCLUDE "./bls12381/frbls12381/subFrBLS12381.zkasm"
-
-
-
-
