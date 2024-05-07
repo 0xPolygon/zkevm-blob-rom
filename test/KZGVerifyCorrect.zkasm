@@ -30,3 +30,14 @@
         1       :ASSERT
         B => A
         0       :ASSERT
+
+        ; 0x9721db309128012543902d0ac358a62ae28f75bb8f1c7c42c39a8c5529bf0f4en => KZGVerify_commit_low     :MODE_256_BITS
+        ; 0xa572cbea904d67468808c8eb50a9450cn => KZGVerify_commit_high                                    :MODE_256_BITS
+        ; 0x564c0a11a0f704f4fc3e8acfe0f8245f0ad1347b378fbf96e206da11a5d36306n => KZGVerify_z
+        ; 0x0000000000000000000000000000000000000000000000000000000000000002n => KZGVerify_y
+        ; 0x0000000000000000000000000000000000000000000000000000000000000000n => KZGVerify_proof_low      :MODE_256_BITS
+        ; 0xc0000000000000000000000000000000n => KZGVerify_proof_high                                     :MODE_256_BITS
+        ; :CALL(KZGVerify)
+        ; 1       :ASSERT
+        ; B => A
+        ; 0       :ASSERT

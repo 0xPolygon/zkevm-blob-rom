@@ -1,4 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: The input is a 384-bit integer (i.e., point deserialization only works for E elements)
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to Fp arithmetic
 ;;
 ;; deserializationFpBLS12381:
@@ -7,6 +8,7 @@
 ;; 		   · A ∈ [0, BLS12381_P - 1], representing the x-coordinate of the deserialized point
 ;; 		   · B ∈ [0, BLS12381_P - 1], representing the y-coordinate of the deserialized point
 ;; 		   · C ∈ {0,1,2} Error code (check list below)
+;;                 · D = 1 if the deserialized point is the point at infinity, 0 otherwise
 ;;
 ;; Note: Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity with A = B = 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -15,8 +17,10 @@ PRAGMA MODE_384_BITS
 
 ; ERROR CODES (C)
 ; 0 - No error
-; 1 - Invalid point encoding
-; 2 - Has not square root
+; 1 - Invalid most significant byte
+; 2 - Compression has not been used
+; 3 - Invalid point at infinity encoding
+; 4 - Has not square root
 
 VAR GLOBAL _in
 VAR GLOBAL _in_high
@@ -56,53 +60,40 @@ deserializationFpBLS12381:
         ROTL_C => C             :JMPNZ(failAssert) ; chunk 7
 
 	; B = in, _in_high = in₁, _in_low = in₀
-	; ${dumphex(B,mem._in_high,mem._in_low)}
-
-PRAGMA MODE_256_BITS
 
 	; We compute an AND against 0xE0 = 0b11100000, therefore isolating the 3 most significant bits of in
-	_in_high => A
-	0xE0 => B
-	$ => C 			:AND
+	_in_high => A           :MODE_256_BITS
+	0xE0 => B               :MODE_256_BITS
+	$ => C 			:AND, MODE_256_BITS
 
 	; The encodings: 0x20 = 0b100000, 0x60 = 0b1100000, 0xE0 = 0b11100000 are not valid by design
-	C 			:JMP_EQ(0x20, _invalid_encoding)
-	C 			:JMP_EQ(0x60, _invalid_encoding)
-	C 			:JMP_EQ(0xE0, _invalid_encoding)
+	C 			:JMP_EQ(0x20, _invalid_msb)
+	C 			:JMP_EQ(0x60, _invalid_msb)
+	C 			:JMP_EQ(0xE0, _invalid_msb)
 
 	; Save the third most significant bit
-	0x20 => B
-	$ 		:AND, JMPZ(_S_bit_zero) ; 1 if P is the point at infinity, otherwise 0
-
-	1 => _S_bit	:JMP(_I_bit)
-
-_S_bit_zero:
-	0 => _S_bit
+	0x20 => B               :MODE_256_BITS
+	$ 		        :AND, MODE_256_BITS, JMPNC(@next + 1) ; 0 if P is the point at infinity or if point compression is not used, otherwise 1
+        1 => _S_bit             :JMP(_I_bit)
+        0 => _S_bit
 
 _I_bit:
 	; Save the second most significant bit
-	0x40 => B
-	$ 		:AND, JMPZ(_I_bit_zero) ; 1 if P is the point at infinity, otherwise 0
-
-	1 => _I_bit	:JMP(_most_sig_bit)
-
-_I_bit_zero:
-	0 => _I_bit
+	0x40 => B               :MODE_256_BITS
+	$ 		        :AND, MODE_256_BITS, JMPNC(@next + 1) ; 1 if P is the point at infinity, otherwise 0
+        1 => _I_bit             :JMP(_most_sig_bit)
+        0 => _I_bit
 
 _most_sig_bit:
-
 	; Save the most significant bit
-	0x80 => B
-	$ 		:AND, JMPZ(_not_implemented_yet) ; 1 if point compression has been used, otherwise 0
-
-	; Path: Compression has been used
+	0x80 => B               :MODE_256_BITS
+	$ 		        :AND, MODE_256_BITS, JMPNC(_no_compression) ; 1 if point compression has been used, otherwise 0
+                                                                            ; by assumption, the only possible value is 1
 
 	; We compute an AND against 0x1F = 0b00011111, therefore removing the 3 most significant bits of in
-	_in_high => A
-	0x1F => B
-	$ => A 		:AND
-
-PRAGMA MODE_384_BITS
+	_in_high => A           :MODE_256_BITS
+	0x1F => B               :MODE_256_BITS
+	$ => A 		        :AND, MODE_256_BITS
 
 	; TODO: Handle the case where A = 2³⁸⁴-1
 	; Recompose the result
@@ -160,31 +151,37 @@ _positive_sign:
 _assing_result:
 	A => B ; A = sqrt(x³ + 4)
 	_in_x => A
-	0 => C              	:JMP(_end)
+	0 => C ; no error
+        0 => D                  :JMP(_end) ; no point at infinity
 
 _point_at_infinity:
 	; Check the input is 0
-        E => C              	:JMPNZ(_invalid_encoding) ; chunk 0
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 1
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 2
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 3
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 4
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 5
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 6
-        ROTL_C => C             :JMPNZ(_invalid_encoding) ; chunk 7
+        E => C              	:JMPNZ(_point_at_infinity_invalid) ; chunk 0
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 1
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 2
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 3
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 4
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 5
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 6
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 7
 
-	0 => A,B,C             	:JMP(_end)
+	0 => C ; no error
+        1 => D                  :JMP(_end) ; point at infinity
 
 ; ERRORS
 ; =================
-_invalid_encoding:
-    	1 => C                                		:JMP(_end)
+_invalid_msb:
+        1 => C                                		:JMP(_end)
+
+_no_compression:
+        2 => C                                		:JMP(_end)
+
+_point_at_infinity_invalid:
+    	3 => C                                		:JMP(_end)
 
 _has_not_sqrt:
-    	2 => C                                		:JMP(_end)
+    	4 => C                                		:JMP(_end)
 ; =================
-
-_not_implemented_yet:
 
 _end:
         _RR => RR         				:RETURN

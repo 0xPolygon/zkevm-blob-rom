@@ -34,6 +34,8 @@ VAR GLOBAL halfPairingBLS12381_Q_x2
 VAR GLOBAL halfPairingBLS12381_Q_y1
 VAR GLOBAL halfPairingBLS12381_Q_y2
 
+VAR GLOBAL halfPairingBLS12381_P_and_Q_not_zero
+
 VAR GLOBAL halfPairingBLS12381_out11_x
 VAR GLOBAL halfPairingBLS12381_out11_y
 VAR GLOBAL halfPairingBLS12381_out12_x
@@ -49,7 +51,6 @@ VAR GLOBAL halfPairingBLS12381_out23_y
 
 VAR GLOBAL _P_is_zero
 VAR GLOBAL _Q_is_zero
-VAR GLOBAL _P_and_Q_are_zero
 
 VAR GLOBAL _RR
 
@@ -142,10 +143,11 @@ halfPairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
     ROTL_C => C                                 :JMPNZ(_Qy2_too_big)
 
+    halfPairingBLS12381_P_and_Q_not_zero        :JMPNZ(_P_subgroup_check)
+
     ; Reset the zero variables
     0 => _P_is_zero
     0 => _Q_is_zero
-    0 => _P_and_Q_are_zero
 
     ; Is P = 𝒪?
     halfPairingBLS12381_P_x => C                :JMPNZ(_continue_to_Q)
@@ -156,7 +158,7 @@ halfPairingBLS12381:
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
-    halfPairingBLS12381_P_y => C                    :JMPNZ(_continue_to_Q)
+    halfPairingBLS12381_P_y => C                :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
     ROTL_C => C                                 :JMPNZ(_continue_to_Q)
@@ -171,7 +173,7 @@ halfPairingBLS12381:
 _continue_to_Q:
 
     ; Is Q = 𝒪?
-    halfPairingBLS12381_Q_x1 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_x1 => C               :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -179,7 +181,7 @@ _continue_to_Q:
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
-    halfPairingBLS12381_Q_x2 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_x2 => C               :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -187,7 +189,7 @@ _continue_to_Q:
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
-    halfPairingBLS12381_Q_y1 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_y1 => C               :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
@@ -195,7 +197,7 @@ _continue_to_Q:
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
-    halfPairingBLS12381_Q_y2 => C                   :JMPNZ(_continue_to_checks)
+    halfPairingBLS12381_Q_y2 => C               :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)
     ROTL_C => C                                 :JMPNZ(_continue_to_checks)

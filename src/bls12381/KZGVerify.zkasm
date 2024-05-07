@@ -5,15 +5,27 @@
 ;; KZGVerify:
 ;;         input: commit ∈ G1, z ∈ Fr, y ∈ Fr, proof ∈ G1
 ;;         output:
-;;              · A = 1, if e(commit - [y]₁, [1]₂) = e(proof, [x]₂ - [z]₂), where [x]₂ is given in the SRS
-;;              · A = 0, otherwise -> B = 1 if there is an input error, B = 0 otherwise
+;;              · A = 1, if e(commit - [y]₁, [1]₂) = e(proof, [x]₂ - [z]₂), A = 0 otherwise
+;;              · An error code in B, different from 0, otherwise (check list below)
 ;;
 ;; Note1: [a]₁ is a standarized shortand used to indicate a·G₁, where G₁ is the generator of the group G1
 ;;        [a]₂ is a standarized shortand used to indicate a·G₂, where G₂ is the generator of the group G2
-;; Note2: We check e(commit - [y]₁, -[1]₂)·e(proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
+;; Note2: [x]₂ is given as part of the SRS, where x is the "toxic waste" value
+;; Not32: We check e(commit - [y]₁, -[1]₂)·e(proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRAGMA MODE_384_BITS
+
+; ERROR CODES (B)
+; 0 - no error
+; 1 - Commit bigger than 2³⁸⁴ - 1
+; 2 - Commit serialization is invalid
+; 3 - LHS is invalid (either not a point or not in G1)
+; 4 - Proof is bigger than 2³⁸⁴ - 1
+; 5 - Proof serialization is invalid
+; 6 - RHS is invalid (either not a point or not in G1/G2)
+; 7 - y is bigger than r - 1
+; 8 - z is bigger than r - 1
 
 VAR GLOBAL KZGVerify_commit_low ; This is given as the serialization of a point in E (32 bytes in low + 16 bytes in high = 48 bytes)
 VAR GLOBAL KZGVerify_commit_high
@@ -22,50 +34,132 @@ VAR GLOBAL KZGVerify_y          ; This is, presumably, the evaluation at z of th
 VAR GLOBAL KZGVerify_proof_low  ; This is given as the serialization of a point in E (32 bytes in low + 16 bytes in high = 48 bytes)
 VAR GLOBAL KZGVerify_proof_high
 
+VAR GLOBAL _commit_x
+VAR GLOBAL _commit_y
+
+VAR GLOBAL _commit_y_is_zero ; Flag to indicate whether [y]₁ is zero
+VAR GLOBAL _commit_z_is_zero ; Flag to indicate whether [z]₂ is zero
+VAR GLOBAL _lhs_is_one       ; Flag to indicate whether e(commit - [y]₁, -[1]₂) is one
+VAR GLOBAL _rhs_is_one       ; Flag to indicate whether e(proof, [x]₂ - [z]₂) is one
+
 VAR GLOBAL _RR
 
 KZGVerify:
 	RR => _RR
 
+        ; initialize flags
+        0 => _commit_y_is_zero
+        0 => _commit_z_is_zero
+        0 => _lhs_is_one
+        0 => _rhs_is_one
+
         ; 1] Compute commit - [y]₁
 	;    1.1] [y]₁
-	KZGVerify_y => A
-        0 => B
-        $ => scalarMulPointFpBLS12381_s     		:ARITH_256TO384
+        ; if y > r, error
+	KZGVerify_y => A                                :MODE_256_BITS
+        %BLS12_381_R => B                               :MODE_256_BITS
+        $                                               :LT, JMPC(_check_y_zero, _y_too_large), MODE_256_BITS
+_check_y_zero:
+        0 => B                                          :MODE_256_BITS
+        $ => A,C     		                        :ARITH_256TO384, JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_y)
+
+        1 => _commit_y_is_zero                          :JMP(_deserialize_commit)
+
+_compute_commit_y:
+	A => scalarMulPointFpBLS12381_s
 	%BLS12_381_G1X => scalarMulPointFpBLS12381_P_x
 	%BLS12_381_G1Y => scalarMulPointFpBLS12381_P_y	:CALL(scalarMulPointFpBLS12381) ; in: [s,P_x,P_y] out: [Q_x,Q_y]
 
+_deserialize_commit:
 	;    1.2] Reconstruct and deserialize commit
-        KZGVerify_commit_low => A     			:MODE_256_BITS
         KZGVerify_commit_high => B     			:MODE_256_BITS
-        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+
+        ; if B >= 2¹²⁸, error
+        0x100000000000000000000000000000000n => A 	:MODE_256_BITS
+        $                                               :LT, JMPC(_commit_too_large), MODE_256_BITS
+
+        KZGVerify_commit_low => A     			:MODE_256_BITS
+        $ => A     				        :ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C,D]
+        A => _commit_x
+        B => _commit_y
 
 	; Check if error
-	C  						:JMPNZ(_error)
+	C  						:JMPNZ(_invalid_commit_serialization)
 
+        ; 4 possible paths: commit is zero, y is zero, commit is zero and y is zero, none is zero
+        D                                               :JMPNZ(_commit_is_zero)
+        _commit_y_is_zero                               :JMPNZ(_compute_Miller_lhs, _check_inv_lhs)
+
+_commit_is_zero:
+        _commit_y_is_zero                               :JMPNZ(_commit_and_commit_y_are_zero)
+	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
+	scalarMulPointFpBLS12381_Q_x => A               :JMP(_compute_Miller_lhs)
+
+_commit_and_commit_y_are_zero:
+        ; output Miller_loop(𝒪, -[1]₂) = 1
+        1 => _lhs_is_one                                :JMP(_compute_rhs)
+
+_check_inv_lhs:
+        ; here, neither commit nor [y]₁ are zero. Let's checker whether they are inverse of each other
+        ; Is commit.x == [y]₁.x?
+        scalarMulPointFpBLS12381_Q_x - A => C           :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+
+        ; Is commit.y == [y]₁.y?
+        scalarMulPointFpBLS12381_Q_y - B => C           :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
+        ROTL_C => C                                     :JMPZ(_commit_and_commit_y_are_zero) ; same as both being zero
+
+_compute_sub_lhs:
 	;    1.3] Compute commit - [y]₁
+        _commit_x => A
+        _commit_y => B
 	A => addPointFpBLS12381_P1_x
 	B => addPointFpBLS12381_P1_y
+
+        ; Before adding, let's check whether one is the inverse of the other or if some is the point at infinity
 	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
 	scalarMulPointFpBLS12381_Q_x => A
 	A => addPointFpBLS12381_P2_x
-	B => addPointFpBLS12381_P2_y			:CALL(addPointFpBLS12381) ; in: [P1_x,P1_y,P2_x,P2_y] out: [P3_x,P3_y]
-
-	; 2] compute Miller_loop(commit - [y]₁, -[1]₂)
+	B => addPointFpBLS12381_P2_y                    :CALL(addPointFpBLS12381) ; in: [P1_x,P1_y,P2_x,P2_y] out: [P3_x,P3_y]
         addPointFpBLS12381_P3_x => A
 	addPointFpBLS12381_P3_y => B
+
+_compute_Miller_lhs:
+	; 2] compute Miller_loop(commit - [y]₁, -[1]₂)
         A => halfPairingBLS12381_P_x
         B => halfPairingBLS12381_P_y
 	%BLS12_381_G2X1 => halfPairingBLS12381_Q_x1
 	%BLS12_381_G2X2 => halfPairingBLS12381_Q_x2
 	%BLS12_381_G2Y1_neg => halfPairingBLS12381_Q_y1
-	%BLS12_381_G2Y2_neg => halfPairingBLS12381_Q_y2	:CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
+	%BLS12_381_G2Y2_neg => halfPairingBLS12381_Q_y2
+        1 => halfPairingBLS12381_P_and_Q_not_zero       :CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
 									           ;out: [out11_x,out11_y,out12_x,out12_y,out13_x,out13_y,out21_x,out21_y,out22_x,out22_y,out23_x,out23_y]
 
 	; Check if error
-	B  						:JMPNZ(_error)
+	B  						:JMPNZ(_invalid_lhs)
 
-	; input it to multiplication
+	; input it to multiplication unless lhs = 1
+        _lhs_is_one                                     :JMPNZ(_compute_rhs)
+
 	halfPairingBLS12381_out11_x => A
 	halfPairingBLS12381_out11_y => B
 	A => mulFp12BLS12381_a11_x
@@ -91,16 +185,84 @@ KZGVerify:
 	A => mulFp12BLS12381_a23_x
 	B => mulFp12BLS12381_a23_y
 
+_compute_rhs:
         ; 3] Compute [x]₂ - [z]₂
-	;    3.1] [z]₂
-	KZGVerify_z => A
-        0 => B
-        $ => scalarMulPointFp2BLS12381_s     		:ARITH_256TO384
+        ;    3.1] [z]₂
+        ; if z > r, error
+	KZGVerify_z => A                                :MODE_256_BITS
+        %BLS12_381_R => B                               :MODE_256_BITS
+        $                                               :LT, JMPC(_check_z_zero, _z_too_large), MODE_256_BITS
+                                                        :CALL(reduceFrBLS12381) ; in: [A] out: [A]
+_check_z_zero:
+        0 => B                                          :MODE_256_BITS
+        $ => A,C     		                        :ARITH_256TO384, JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+        ROTL_C => C                                     :JMPNZ(_compute_commit_z)
+
+        ; if [z]₂ is zero, then directly assign [x]₂ to [x]₂ - [z]₂
+	%BLS12_381_X_X1 => addPointFp2BLS12381_P3_x1
+        %BLS12_381_X_X2 => addPointFp2BLS12381_P3_x2
+        %BLS12_381_X_Y1 => addPointFp2BLS12381_P3_y1
+        %BLS12_381_X_Y2 => addPointFp2BLS12381_P3_y2    :JMP(_compute_Miller_rhs)
+
+_compute_commit_z:
+        A => scalarMulPointFp2BLS12381_s
 	%BLS12_381_G2X1 => scalarMulPointFp2BLS12381_P_x1
 	%BLS12_381_G2X2 => scalarMulPointFp2BLS12381_P_x2
 	%BLS12_381_G2Y1 => scalarMulPointFp2BLS12381_P_y1
 	%BLS12_381_G2Y2 => scalarMulPointFp2BLS12381_P_y2	:CALL(scalarMulPointFp2BLS12381)
 
+_check_inv_rhs:
+        ; here, [z]₂ is not zero. Let's checker whether [x]₂ and [z]₂ are inverse of each other
+        ; Is [x]₂.x1 == [z]₂.x1?
+        %BLS12_381_X_X1 - scalarMulPointFp2BLS12381_Q_x1 => C   :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+
+        ; Is [x]₂.x2 == [z]₂.x2?
+        %BLS12_381_X_X2 - scalarMulPointFp2BLS12381_Q_x2 => C   :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+
+        ; Is [x]₂.y1 == [z]₂.y1?
+        %BLS12_381_X_Y1 - scalarMulPointFp2BLS12381_Q_y1 => C   :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+
+        ; Is [x]₂.y2 == [z]₂.y2?
+        %BLS12_381_X_Y2 - scalarMulPointFp2BLS12381_Q_y2 => C   :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs) ; same as both being zero
+
+        ; output Miller_loop(proof, 𝒪) = 1
+        1 => _rhs_is_one                                        :JMP(_input_mul_lhs_rhs)
+
+_compute_sub_rhs:
 	;    3.2] [x]₂ - [z]₂
 	%BLS12_381_X_X1 => A
 	%BLS12_381_X_X2 => B
@@ -115,19 +277,31 @@ KZGVerify:
 	A => addPointFp2BLS12381_P2_x1
 	B => addPointFp2BLS12381_P2_x2
 	scalarMulPointFp2BLS12381_Q_y1 => C
-	scalarMulPointFp2BLS12381_Q_y2 => D		:CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
+	scalarMulPointFp2BLS12381_Q_y2 => D		        :CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
 	E => addPointFp2BLS12381_P2_y1
-	C => addPointFp2BLS12381_P2_y2			:CALL(addPointFp2BLS12381)
+	C => addPointFp2BLS12381_P2_y2			        :CALL(addPointFp2BLS12381)
+
+_compute_Miller_rhs:
+        ; here we can assume that [x]₂ - [z]₂ != 𝒪 (*)
 
 	; 4] Compute Miller_loop(proof, [x]₂ - [z]₂)
 
 	;    4.1] Reconstruct and deserialize proof
-        KZGVerify_proof_low => A     			:MODE_256_BITS
-        KZGVerify_proof_high => B     			:MODE_256_BITS
-        $ => A     					:ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C]
+        KZGVerify_proof_high => B     			        :MODE_256_BITS
+
+        ; if B >= 2¹²⁸, error
+        0x100000000000000000000000000000000n => A 	        :MODE_256_BITS
+        $                                                       :LT, JMPC(_proof_too_large), MODE_256_BITS
+
+        KZGVerify_proof_low => A     			        :MODE_256_BITS
+        $ => A     					        :ARITH_256TO384, CALL(deserializationFpBLS12381) ; in: [A] out: [A,B,C,D]
 
 	; Check if error
-	C  						:JMPNZ(_error)
+	C  						        :JMPNZ(_invalid_proof_serialization)
+
+        ; from (*) -> 2 possible paths: proof is zero or not
+        D                                                       :JMPZ(@next + 1) ; this is Miller_loop(𝒪, [x]₂ - [z]₂) = 1
+        1 => _rhs_is_one                                        :JMP(_input_mul_lhs_rhs)
 
 	;    4.2] Miller_loop(proof, [x]₂ - [z]₂)
         A => halfPairingBLS12381_P_x
@@ -139,12 +313,21 @@ KZGVerify:
 	addPointFp2BLS12381_P3_y1 => A
 	addPointFp2BLS12381_P3_y2 => B
 	A => halfPairingBLS12381_Q_y1
-	B => halfPairingBLS12381_Q_y2			:CALL(halfPairingBLS12381)
+	B => halfPairingBLS12381_Q_y2
+        1 => halfPairingBLS12381_P_and_Q_not_zero               :CALL(halfPairingBLS12381)
 
 	; Check if error
-	B  						:JMPNZ(_error)
+	B  						        :JMPNZ(_invalid_rhs)
+
+_input_mul_lhs_rhs:
 
 	; input it to multiplication
+
+        ; 4 possible paths: lhs = 1, rhs = 1, both are 1, none is 1
+        _lhs_is_one                                             :JMPNZ(_lhs_mul_is_one)
+        _rhs_is_one                                             :JMPNZ(_result_mul_is_lhs)
+
+_compute_mul_lhs_rhs:
 	halfPairingBLS12381_out11_x => A
 	halfPairingBLS12381_out11_y => B
 	A => mulFp12BLS12381_b11_x
@@ -168,8 +351,60 @@ KZGVerify:
 	halfPairingBLS12381_out23_x => A
 	halfPairingBLS12381_out23_y => B
 	A => mulFp12BLS12381_b23_x
-	B => mulFp12BLS12381_b23_y			:CALL(mulFp12BLS12381)
+	B => mulFp12BLS12381_b23_y			        :CALL(mulFp12BLS12381)
+                                                                :JMP(_compute_final_exp)
 
+_result_mul_is_lhs:
+	mulFp12BLS12381_a11_x => A
+	mulFp12BLS12381_a11_y => B
+	A => mulFp12BLS12381_c11_x
+	B => mulFp12BLS12381_c11_y
+        mulFp12BLS12381_a12_x => A
+        mulFp12BLS12381_a12_y => B
+        A => mulFp12BLS12381_c12_x
+        B => mulFp12BLS12381_c12_y
+        mulFp12BLS12381_a13_x => A
+        mulFp12BLS12381_a13_y => B
+        A => mulFp12BLS12381_c13_x
+        B => mulFp12BLS12381_c13_y
+        mulFp12BLS12381_a21_x => A
+        mulFp12BLS12381_a21_y => B
+        A => mulFp12BLS12381_c21_x
+        B => mulFp12BLS12381_c21_y
+        mulFp12BLS12381_a22_x => A
+        mulFp12BLS12381_a22_y => B
+        A => mulFp12BLS12381_c22_x
+        B => mulFp12BLS12381_c22_y                              :JMP(_compute_final_exp)
+
+_lhs_mul_is_one:
+        _rhs_is_one                                             :JMPNZ(_equation_is_satisfied)
+
+	halfPairingBLS12381_out11_x => A
+	halfPairingBLS12381_out11_y => B
+	A => mulFp12BLS12381_c11_x
+	B => mulFp12BLS12381_c11_y
+	halfPairingBLS12381_out12_x => A
+	halfPairingBLS12381_out12_y => B
+	A => mulFp12BLS12381_c12_x
+	B => mulFp12BLS12381_c12_y
+	halfPairingBLS12381_out13_x => A
+	halfPairingBLS12381_out13_y => B
+	A => mulFp12BLS12381_c13_x
+	B => mulFp12BLS12381_c13_y
+	halfPairingBLS12381_out21_x => A
+	halfPairingBLS12381_out21_y => B
+	A => mulFp12BLS12381_c21_x
+	B => mulFp12BLS12381_c21_y
+	halfPairingBLS12381_out22_x => A
+	halfPairingBLS12381_out22_y => B
+	A => mulFp12BLS12381_c22_x
+	B => mulFp12BLS12381_c22_y
+	halfPairingBLS12381_out23_x => A
+	halfPairingBLS12381_out23_y => B
+	A => mulFp12BLS12381_c23_x
+	B => mulFp12BLS12381_c23_y                              :JMP(_compute_final_exp)
+
+_compute_final_exp:
 	; 5] Compute final_exp(Miller_loop(commit - [y]₁, -[1]₂)·Miller_loop(proof, [x]₂ - [z]₂))
         mulFp12BLS12381_c11_x => A
         mulFp12BLS12381_c11_y => B
@@ -194,129 +429,156 @@ KZGVerify:
         mulFp12BLS12381_c23_x => A
         mulFp12BLS12381_c23_y => B
         A => finalExpBLS12381_f23_x
-        B => finalExpBLS12381_f23_y			:CALL(finalExpBLS12381)
+        B => finalExpBLS12381_f23_y			        :CALL(finalExpBLS12381)
 
         ; 6] Check whether the result is equal 1 or not
-    	finalExpBLS12381_f11_x - 1 => C             	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f11_x - 1 => C             	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f11_y => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f11_y => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f12_x => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f12_x => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f12_y => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f12_y => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f13_x => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f13_x => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f13_y => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f13_y => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f21_x => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f21_x => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f21_y => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f21_y => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f22_x => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f22_x => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f22_y => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f22_y => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f23_x => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
+    	finalExpBLS12381_f23_x => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
 
-    	finalExpBLS12381_f23_y => C            		:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied)
-    	ROTL_C => C                                 	:JMPNZ(_equation_is_not_satisfied, _equation_is_satisfied)
+    	finalExpBLS12381_f23_y => C            		        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied)
+    	ROTL_C => C                                 	        :JMPNZ(_equation_is_not_satisfied, _equation_is_satisfied)
 
 _equation_is_not_satisfied:
         ; the pairing equation is not satisfied, then output 0
-        0 => A,B 					:JMP(_end)
+        0 => A,B 					        :JMP(_end)
 
 _equation_is_satisfied:
         ; the pairing equation is satisfied, then output 1
         1 => A
-	0 => B						:JMP(_end)
+	0 => B						        :JMP(_end)
+
+
+; ERRORS
+; =================
+_commit_too_large:
+        1 => B                                		        :JMP(_error)
+
+_invalid_commit_serialization:
+        2 => B                                		        :JMP(_error)
+
+_invalid_lhs:
+        3 => B                                		        :JMP(_error)
+
+_proof_too_large:
+    	4 => B                                		        :JMP(_error)
+
+_invalid_proof_serialization:
+    	5 => B                                		        :JMP(_error)
+
+_invalid_rhs:
+    	6 => B                                		        :JMP(_error)
+
+_y_too_large:
+    	7 => B                                		        :JMP(_error)
+
+_z_too_large:
+    	8 => B                                		        :JMP(_error)
+; =================
 
 _error:
-	0 => A
-        1 => B						:JMP(_end)
+	0 => A                                                  :JMP(_end)
 
 _end:
-        _RR => RR         				:RETURN
+        _RR => RR         				        :RETURN
