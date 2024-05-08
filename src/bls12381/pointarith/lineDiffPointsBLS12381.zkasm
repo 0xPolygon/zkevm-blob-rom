@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P1,P2 ∈ E'(Fp2) with P1 != P2,-P2 and Q ∈ E(Fp) and their coordinates are in the range [0,BLS12_381_P)
+;; PRE: P1,P2 ∈ E'(Fp2)\{𝒪} and Q ∈ E(Fp)\{𝒪} with P1 != P2,-P2 and P1.x1,P1.x2,P1.y1,P1.y2,P2.x1,P2.x2,P2.y1,P2.y2,Q.x,Q.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; lineDiffPointsBLS12381:
@@ -46,18 +46,18 @@ lineDiffPointsBLS12381:
         lineDiffPointsBLS12381_P2_x1 => A
         lineDiffPointsBLS12381_P2_x2 => B
         lineDiffPointsBLS12381_P1_y1 => C
-        lineDiffPointsBLS12381_P1_y2 => D       :CALL(mulFp2BLS12381)
+        lineDiffPointsBLS12381_P1_y2 => D       :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         E => _P2x_P1y_x
         C => _P2x_P1y_y
 
         lineDiffPointsBLS12381_P1_x1 => A
         lineDiffPointsBLS12381_P1_x2 => B
         lineDiffPointsBLS12381_P2_y1 => C
-        lineDiffPointsBLS12381_P2_y2 => D       :CALL(mulFp2BLS12381)
+        lineDiffPointsBLS12381_P2_y2 => D       :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         E => A
         C => B
         _P2x_P1y_x => C
-        _P2x_P1y_y => D                         :CALL(subFp2BLS12381)
+        _P2x_P1y_y => D                         :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         E => lineDiffPointsBLS12381_l11_x
         C => lineDiffPointsBLS12381_l11_y
 
@@ -65,10 +65,10 @@ lineDiffPointsBLS12381:
         lineDiffPointsBLS12381_P1_y1 => A
         lineDiffPointsBLS12381_P1_y2 => B
         lineDiffPointsBLS12381_P2_y1 => C
-        lineDiffPointsBLS12381_P2_y2 => D       :CALL(subFp2BLS12381)
+        lineDiffPointsBLS12381_P2_y2 => D       :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         lineDiffPointsBLS12381_Q_x => A
         C => D
-        E => C                                  :CALL(scalarMulFp2BLS12381)
+        E => C                                  :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
         E => lineDiffPointsBLS12381_l12_x
         C => lineDiffPointsBLS12381_l12_y
 
@@ -76,10 +76,10 @@ lineDiffPointsBLS12381:
         lineDiffPointsBLS12381_P2_x1 => A
         lineDiffPointsBLS12381_P2_x2 => B
         lineDiffPointsBLS12381_P1_x1 => C
-        lineDiffPointsBLS12381_P1_x2 => D       :CALL(subFp2BLS12381)
+        lineDiffPointsBLS12381_P1_x2 => D       :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         lineDiffPointsBLS12381_Q_y => A
         C => D
-        E => C                                  :CALL(scalarMulFp2BLS12381)
+        E => C                                  :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
         E => lineDiffPointsBLS12381_l22_x
         C => lineDiffPointsBLS12381_l22_y
 

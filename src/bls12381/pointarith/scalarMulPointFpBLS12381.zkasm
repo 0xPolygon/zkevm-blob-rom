@@ -1,11 +1,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: s ∈ Fr, P ∈ E(Fp)\{𝒪} with coordinates in the range [0,BLS12_381_P)
+;; PRE: s ∈ Fr\{0}, P ∈ E(Fp)\{𝒪} of order larger than s and P.x,P.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFpBLS12381
 ;;
 ;;
 ;; scalarMulPointFpBLS12381:
 ;;             in: P = (P.x, P.y) ∈ E(Fp)
-;;             out: [(x²-1)/3]·P = (Q.x, Q.y) ∈ E(Fp), where (x²-1)/3 = 0x396c8c005555e1560000000055555555
+;;             out: [s]·P = (Q.x, Q.y) ∈ E(Fp)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -19,26 +19,30 @@ VAR GLOBAL scalarMulPointFpBLS12381_P_y
 VAR GLOBAL scalarMulPointFpBLS12381_Q_x
 VAR GLOBAL scalarMulPointFpBLS12381_Q_y
 
-VAR GLOBAL _len_s
+VAR GLOBAL _accumulator
 
 VAR GLOBAL _RR
 
 scalarMulPointFpBLS12381:
         RR => _RR
 
-        $0{lenBinDecomp(mem.scalarMulPointFpBLS12381_s) - 1} => RCX ; receive the length of the binary representation of s
-        ; TODO: Check its correctness
+        ; receive the length of the binary representation of s minus 1 (i.e., the index)
+        ; It should be that: 0 <= len(s) - 1 <= 254
+        $BYTE{lenBinDecomp(mem.scalarMulPointFpBLS12381_s) - 1} => RCX,E               :JMP_EQ(255, failAssert)
 
-        ; Set Q = P
+        ; Initialize the accumulator
+        0 => HASHPOS,_accumulator
+
+        ; Initialize Q = P
         scalarMulPointFpBLS12381_P_x => A
         scalarMulPointFpBLS12381_P_y => B
         A => scalarMulPointFpBLS12381_Q_x
         B => scalarMulPointFpBLS12381_Q_y
 
-_loop:
+        ; It cannot be that the MSB of s is 0 (recall this function does not accept s = 0)
+        $0{(mem.scalarMulPointFpBLS12381_s >> RCX) & 0x1}                               :JMP_NE(1, failAssert, @_update_first_bit + E)
 
-        RCX - 1 => RCX                                          :JMPN(_end)
-
+_double:
         ; We always double
         scalarMulPointFpBLS12381_Q_x => A
         scalarMulPointFpBLS12381_Q_y => B
@@ -51,10 +55,9 @@ _loop:
         A => scalarMulPointFpBLS12381_Q_x
         B => scalarMulPointFpBLS12381_Q_y
 
-        ; TODO: Update and check the acumulator
-
-        ; Receive the next bit of s. If bit = 1, then add, otherwise, repeat
-        $0{(mem.scalarMulPointFpBLS12381_s >> RCX) & 0x1}        :JMPNZ(_add, _loop)
+        ; If bit = 1, then add, otherwise, repeat
+        RCX => E
+        $0{(mem.scalarMulPointFpBLS12381_s >> RCX) & 0x1}      :JMPZ(@_update_bit_is_0 + E, @_update_bit_is_1 + E)
 
 _add:
         ; We add
@@ -71,9 +74,838 @@ _add:
         addPointFpBLS12381_P3_x => A
         addPointFpBLS12381_P3_y => B
         A => scalarMulPointFpBLS12381_Q_x
-        B => scalarMulPointFpBLS12381_Q_y               :JMP(_loop)
+        B => scalarMulPointFpBLS12381_Q_y
+
+        RCX - 1 => RCX		                                :JMPN(_check, _double)
+
+_check:
+        scalarMulPointFpBLS12381_s => A
+        A                                                       :MLOAD(_accumulator)
 
 _end:
-        ; TODO: Check the accumulator
-
         _RR => RR                                       :RETURN
+
+; ====================
+; Tables
+; ====================
+_save_s_short:
+        ; There is no need to load C since it has been done in the table
+        ; _accumulator => C
+        ROTL_C + HASHPOS => _accumulator
+
+        0 => HASHPOS
+
+_update_index:
+        RCX - 1 => RCX		:JMPN(_check, _double)
+
+_save_s:
+        _accumulator => C
+        ROTL_C + HASHPOS => _accumulator
+
+        0 => HASHPOS 	                        :JMP(_add)
+; Sage code
+; ----------------------------------------
+; binLen = 254
+; clock = 48
+; for i in range(binLen):
+;     latch = i % clock
+;     power = 2**latch
+;     if (latch == 0):
+;         print("\t_accumulator => C\t:JMP(_save_s_short)\t; RCX = {}".format(i))
+;     else:
+;         print("\tRCX - 1 => RCX\t\t:JMPN(_check, _double)\t; RCX = {}".format(i))
+; ----------------------------------------
+_update_bit_is_0:
+	_accumulator => C	:JMP(_save_s_short)	; RCX = 0
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 1
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 2
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 3
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 4
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 5
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 6
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 7
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 8
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 9
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 10
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 11
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 12
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 13
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 14
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 15
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 16
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 17
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 18
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 19
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 20
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 21
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 22
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 23
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 24
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 25
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 26
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 27
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 28
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 29
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 30
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 31
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 32
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 33
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 34
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 35
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 36
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 37
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 38
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 39
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 40
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 41
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 42
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 43
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 44
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 45
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 46
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 47
+	_accumulator => C	:JMP(_save_s_short)	; RCX = 48
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 49
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 50
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 51
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 52
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 53
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 54
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 55
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 56
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 57
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 58
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 59
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 60
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 61
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 62
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 63
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 64
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 65
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 66
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 67
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 68
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 69
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 70
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 71
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 72
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 73
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 74
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 75
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 76
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 77
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 78
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 79
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 80
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 81
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 82
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 83
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 84
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 85
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 86
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 87
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 88
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 89
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 90
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 91
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 92
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 93
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 94
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 95
+	_accumulator => C	:JMP(_save_s_short)	; RCX = 96
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 97
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 98
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 99
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 100
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 101
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 102
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 103
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 104
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 105
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 106
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 107
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 108
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 109
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 110
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 111
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 112
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 113
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 114
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 115
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 116
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 117
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 118
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 119
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 120
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 121
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 122
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 123
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 124
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 125
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 126
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 127
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 128
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 129
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 130
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 131
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 132
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 133
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 134
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 135
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 136
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 137
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 138
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 139
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 140
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 141
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 142
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 143
+	_accumulator => C	:JMP(_save_s_short)	; RCX = 144
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 145
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 146
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 147
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 148
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 149
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 150
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 151
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 152
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 153
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 154
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 155
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 156
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 157
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 158
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 159
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 160
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 161
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 162
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 163
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 164
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 165
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 166
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 167
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 168
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 169
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 170
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 171
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 172
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 173
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 174
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 175
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 176
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 177
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 178
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 179
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 180
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 181
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 182
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 183
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 184
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 185
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 186
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 187
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 188
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 189
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 190
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 191
+	_accumulator => C	:JMP(_save_s_short)	; RCX = 192
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 193
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 194
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 195
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 196
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 197
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 198
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 199
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 200
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 201
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 202
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 203
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 204
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 205
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 206
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 207
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 208
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 209
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 210
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 211
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 212
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 213
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 214
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 215
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 216
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 217
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 218
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 219
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 220
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 221
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 222
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 223
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 224
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 225
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 226
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 227
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 228
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 229
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 230
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 231
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 232
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 233
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 234
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 235
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 236
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 237
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 238
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 239
+	_accumulator => C	:JMP(_save_s_short)	; RCX = 240
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 241
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 242
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 243
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 244
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 245
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 246
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 247
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 248
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 249
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 250
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 251
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 252
+	RCX - 1 => RCX		:JMPN(_check, _double)	; RCX = 253
+
+; Sage code
+; ----------------------------------------
+; binLen = 254
+; clock = 48
+; for i in range(binLen):
+;     latch = i % clock
+;     power = 2**latch
+;     a = f"{power:#0{10}x}"
+;     if (latch == 0):
+;         print("\tHASHPOS + {0}n => HASHPOS\t:JMP(_save_s)\t; RCX = {1}".format(a,i))
+;     else:
+;         print("\tHASHPOS + {0}n => HASHPOS\t:JMP(_add)\t; RCX = {1}".format(a,i))
+; ----------------------------------------
+_update_bit_is_1:
+	HASHPOS + 0x00000001n => HASHPOS	:JMP(_save_s)	; RCX = 0
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_add)	; RCX = 1
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_add)	; RCX = 2
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_add)	; RCX = 3
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_add)	; RCX = 4
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_add)	; RCX = 5
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_add)	; RCX = 6
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_add)	; RCX = 7
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_add)	; RCX = 8
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_add)	; RCX = 9
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_add)	; RCX = 10
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_add)	; RCX = 11
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_add)	; RCX = 12
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_add)	; RCX = 13
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_add)	; RCX = 14
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_add)	; RCX = 15
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_add)	; RCX = 16
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_add)	; RCX = 17
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_add)	; RCX = 18
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_add)	; RCX = 19
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_add)	; RCX = 20
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_add)	; RCX = 21
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_add)	; RCX = 22
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_add)	; RCX = 23
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_add)	; RCX = 24
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_add)	; RCX = 25
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_add)	; RCX = 26
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_add)	; RCX = 27
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_add)	; RCX = 28
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_add)	; RCX = 29
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_add)	; RCX = 30
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_add)	; RCX = 31
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_add)	; RCX = 32
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_add)	; RCX = 33
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_add)	; RCX = 34
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_add)	; RCX = 35
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_add)	; RCX = 36
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_add)	; RCX = 37
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_add)	; RCX = 38
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_add)	; RCX = 39
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_add)	; RCX = 40
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_add)	; RCX = 41
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_add)	; RCX = 42
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_add)	; RCX = 43
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_add)	; RCX = 44
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_add)	; RCX = 45
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_add)	; RCX = 46
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_add)	; RCX = 47
+	HASHPOS + 0x00000001n => HASHPOS	:JMP(_save_s)	; RCX = 48
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_add)	; RCX = 49
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_add)	; RCX = 50
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_add)	; RCX = 51
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_add)	; RCX = 52
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_add)	; RCX = 53
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_add)	; RCX = 54
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_add)	; RCX = 55
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_add)	; RCX = 56
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_add)	; RCX = 57
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_add)	; RCX = 58
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_add)	; RCX = 59
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_add)	; RCX = 60
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_add)	; RCX = 61
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_add)	; RCX = 62
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_add)	; RCX = 63
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_add)	; RCX = 64
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_add)	; RCX = 65
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_add)	; RCX = 66
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_add)	; RCX = 67
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_add)	; RCX = 68
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_add)	; RCX = 69
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_add)	; RCX = 70
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_add)	; RCX = 71
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_add)	; RCX = 72
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_add)	; RCX = 73
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_add)	; RCX = 74
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_add)	; RCX = 75
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_add)	; RCX = 76
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_add)	; RCX = 77
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_add)	; RCX = 78
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_add)	; RCX = 79
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_add)	; RCX = 80
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_add)	; RCX = 81
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_add)	; RCX = 82
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_add)	; RCX = 83
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_add)	; RCX = 84
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_add)	; RCX = 85
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_add)	; RCX = 86
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_add)	; RCX = 87
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_add)	; RCX = 88
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_add)	; RCX = 89
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_add)	; RCX = 90
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_add)	; RCX = 91
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_add)	; RCX = 92
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_add)	; RCX = 93
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_add)	; RCX = 94
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_add)	; RCX = 95
+	HASHPOS + 0x00000001n => HASHPOS	:JMP(_save_s)	; RCX = 96
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_add)	; RCX = 97
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_add)	; RCX = 98
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_add)	; RCX = 99
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_add)	; RCX = 100
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_add)	; RCX = 101
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_add)	; RCX = 102
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_add)	; RCX = 103
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_add)	; RCX = 104
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_add)	; RCX = 105
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_add)	; RCX = 106
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_add)	; RCX = 107
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_add)	; RCX = 108
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_add)	; RCX = 109
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_add)	; RCX = 110
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_add)	; RCX = 111
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_add)	; RCX = 112
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_add)	; RCX = 113
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_add)	; RCX = 114
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_add)	; RCX = 115
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_add)	; RCX = 116
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_add)	; RCX = 117
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_add)	; RCX = 118
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_add)	; RCX = 119
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_add)	; RCX = 120
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_add)	; RCX = 121
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_add)	; RCX = 122
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_add)	; RCX = 123
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_add)	; RCX = 124
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_add)	; RCX = 125
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_add)	; RCX = 126
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_add)	; RCX = 127
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_add)	; RCX = 128
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_add)	; RCX = 129
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_add)	; RCX = 130
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_add)	; RCX = 131
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_add)	; RCX = 132
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_add)	; RCX = 133
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_add)	; RCX = 134
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_add)	; RCX = 135
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_add)	; RCX = 136
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_add)	; RCX = 137
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_add)	; RCX = 138
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_add)	; RCX = 139
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_add)	; RCX = 140
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_add)	; RCX = 141
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_add)	; RCX = 142
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_add)	; RCX = 143
+	HASHPOS + 0x00000001n => HASHPOS	:JMP(_save_s)	; RCX = 144
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_add)	; RCX = 145
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_add)	; RCX = 146
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_add)	; RCX = 147
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_add)	; RCX = 148
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_add)	; RCX = 149
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_add)	; RCX = 150
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_add)	; RCX = 151
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_add)	; RCX = 152
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_add)	; RCX = 153
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_add)	; RCX = 154
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_add)	; RCX = 155
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_add)	; RCX = 156
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_add)	; RCX = 157
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_add)	; RCX = 158
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_add)	; RCX = 159
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_add)	; RCX = 160
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_add)	; RCX = 161
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_add)	; RCX = 162
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_add)	; RCX = 163
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_add)	; RCX = 164
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_add)	; RCX = 165
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_add)	; RCX = 166
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_add)	; RCX = 167
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_add)	; RCX = 168
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_add)	; RCX = 169
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_add)	; RCX = 170
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_add)	; RCX = 171
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_add)	; RCX = 172
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_add)	; RCX = 173
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_add)	; RCX = 174
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_add)	; RCX = 175
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_add)	; RCX = 176
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_add)	; RCX = 177
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_add)	; RCX = 178
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_add)	; RCX = 179
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_add)	; RCX = 180
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_add)	; RCX = 181
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_add)	; RCX = 182
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_add)	; RCX = 183
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_add)	; RCX = 184
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_add)	; RCX = 185
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_add)	; RCX = 186
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_add)	; RCX = 187
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_add)	; RCX = 188
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_add)	; RCX = 189
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_add)	; RCX = 190
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_add)	; RCX = 191
+	HASHPOS + 0x00000001n => HASHPOS	:JMP(_save_s)	; RCX = 192
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_add)	; RCX = 193
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_add)	; RCX = 194
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_add)	; RCX = 195
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_add)	; RCX = 196
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_add)	; RCX = 197
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_add)	; RCX = 198
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_add)	; RCX = 199
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_add)	; RCX = 200
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_add)	; RCX = 201
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_add)	; RCX = 202
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_add)	; RCX = 203
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_add)	; RCX = 204
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_add)	; RCX = 205
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_add)	; RCX = 206
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_add)	; RCX = 207
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_add)	; RCX = 208
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_add)	; RCX = 209
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_add)	; RCX = 210
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_add)	; RCX = 211
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_add)	; RCX = 212
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_add)	; RCX = 213
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_add)	; RCX = 214
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_add)	; RCX = 215
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_add)	; RCX = 216
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_add)	; RCX = 217
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_add)	; RCX = 218
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_add)	; RCX = 219
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_add)	; RCX = 220
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_add)	; RCX = 221
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_add)	; RCX = 222
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_add)	; RCX = 223
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_add)	; RCX = 224
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_add)	; RCX = 225
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_add)	; RCX = 226
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_add)	; RCX = 227
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_add)	; RCX = 228
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_add)	; RCX = 229
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_add)	; RCX = 230
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_add)	; RCX = 231
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_add)	; RCX = 232
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_add)	; RCX = 233
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_add)	; RCX = 234
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_add)	; RCX = 235
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_add)	; RCX = 236
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_add)	; RCX = 237
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_add)	; RCX = 238
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_add)	; RCX = 239
+	HASHPOS + 0x00000001n => HASHPOS	:JMP(_save_s)	; RCX = 240
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_add)	; RCX = 241
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_add)	; RCX = 242
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_add)	; RCX = 243
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_add)	; RCX = 244
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_add)	; RCX = 245
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_add)	; RCX = 246
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_add)	; RCX = 247
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_add)	; RCX = 248
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_add)	; RCX = 249
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_add)	; RCX = 250
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_add)	; RCX = 251
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_add)	; RCX = 252
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_add)	; RCX = 253
+
+; Sage code
+; ----------------------------------------
+; binLen = 255
+; clock = 48
+; for i in range(binLen):
+;     latch = i % clock
+;     power = 2**latch
+;     a = f"{power:#0{10}x}"
+;     if (latch == 0):
+;         print("\t{0}n => _accumulator\t\t:JMP(_update_index)\t; RCX = {1}".format(a,i))
+;     else:
+;         print("\tHASHPOS + {0}n => HASHPOS\t:JMP(_update_index)\t; RCX = {1}".format(a,i))
+; ----------------------------------------
+_update_first_bit:
+	0x00000001n => _accumulator	        :JMP(_check)	        ; RCX = 0
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_update_index)	; RCX = 1
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_update_index)	; RCX = 2
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_update_index)	; RCX = 3
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_update_index)	; RCX = 4
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_update_index)	; RCX = 5
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_update_index)	; RCX = 6
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_update_index)	; RCX = 7
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_update_index)	; RCX = 8
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_update_index)	; RCX = 9
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_update_index)	; RCX = 10
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_update_index)	; RCX = 11
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_update_index)	; RCX = 12
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_update_index)	; RCX = 13
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_update_index)	; RCX = 14
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_update_index)	; RCX = 15
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_update_index)	; RCX = 16
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_update_index)	; RCX = 17
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_update_index)	; RCX = 18
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_update_index)	; RCX = 19
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_update_index)	; RCX = 20
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_update_index)	; RCX = 21
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_update_index)	; RCX = 22
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_update_index)	; RCX = 23
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_update_index)	; RCX = 24
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_update_index)	; RCX = 25
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_update_index)	; RCX = 26
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_update_index)	; RCX = 27
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_update_index)	; RCX = 28
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_update_index)	; RCX = 29
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_update_index)	; RCX = 30
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_update_index)	; RCX = 31
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_update_index)	; RCX = 32
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_update_index)	; RCX = 33
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_update_index)	; RCX = 34
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_update_index)	; RCX = 35
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_update_index)	; RCX = 36
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_update_index)	; RCX = 37
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_update_index)	; RCX = 38
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_update_index)	; RCX = 39
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_update_index)	; RCX = 40
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_update_index)	; RCX = 41
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_update_index)	; RCX = 42
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_update_index)	; RCX = 43
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_update_index)	; RCX = 44
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_update_index)	; RCX = 45
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_update_index)	; RCX = 46
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_update_index)	; RCX = 47
+	0x00000001n => _accumulator		:JMP(_update_index)	; RCX = 48
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_update_index)	; RCX = 49
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_update_index)	; RCX = 50
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_update_index)	; RCX = 51
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_update_index)	; RCX = 52
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_update_index)	; RCX = 53
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_update_index)	; RCX = 54
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_update_index)	; RCX = 55
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_update_index)	; RCX = 56
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_update_index)	; RCX = 57
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_update_index)	; RCX = 58
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_update_index)	; RCX = 59
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_update_index)	; RCX = 60
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_update_index)	; RCX = 61
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_update_index)	; RCX = 62
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_update_index)	; RCX = 63
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_update_index)	; RCX = 64
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_update_index)	; RCX = 65
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_update_index)	; RCX = 66
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_update_index)	; RCX = 67
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_update_index)	; RCX = 68
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_update_index)	; RCX = 69
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_update_index)	; RCX = 70
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_update_index)	; RCX = 71
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_update_index)	; RCX = 72
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_update_index)	; RCX = 73
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_update_index)	; RCX = 74
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_update_index)	; RCX = 75
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_update_index)	; RCX = 76
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_update_index)	; RCX = 77
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_update_index)	; RCX = 78
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_update_index)	; RCX = 79
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_update_index)	; RCX = 80
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_update_index)	; RCX = 81
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_update_index)	; RCX = 82
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_update_index)	; RCX = 83
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_update_index)	; RCX = 84
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_update_index)	; RCX = 85
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_update_index)	; RCX = 86
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_update_index)	; RCX = 87
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_update_index)	; RCX = 88
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_update_index)	; RCX = 89
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_update_index)	; RCX = 90
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_update_index)	; RCX = 91
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_update_index)	; RCX = 92
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_update_index)	; RCX = 93
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_update_index)	; RCX = 94
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_update_index)	; RCX = 95
+	0x00000001n => _accumulator		:JMP(_update_index)	; RCX = 96
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_update_index)	; RCX = 97
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_update_index)	; RCX = 98
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_update_index)	; RCX = 99
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_update_index)	; RCX = 100
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_update_index)	; RCX = 101
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_update_index)	; RCX = 102
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_update_index)	; RCX = 103
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_update_index)	; RCX = 104
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_update_index)	; RCX = 105
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_update_index)	; RCX = 106
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_update_index)	; RCX = 107
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_update_index)	; RCX = 108
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_update_index)	; RCX = 109
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_update_index)	; RCX = 110
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_update_index)	; RCX = 111
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_update_index)	; RCX = 112
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_update_index)	; RCX = 113
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_update_index)	; RCX = 114
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_update_index)	; RCX = 115
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_update_index)	; RCX = 116
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_update_index)	; RCX = 117
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_update_index)	; RCX = 118
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_update_index)	; RCX = 119
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_update_index)	; RCX = 120
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_update_index)	; RCX = 121
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_update_index)	; RCX = 122
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_update_index)	; RCX = 123
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_update_index)	; RCX = 124
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_update_index)	; RCX = 125
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_update_index)	; RCX = 126
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_update_index)	; RCX = 127
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_update_index)	; RCX = 128
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_update_index)	; RCX = 129
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_update_index)	; RCX = 130
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_update_index)	; RCX = 131
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_update_index)	; RCX = 132
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_update_index)	; RCX = 133
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_update_index)	; RCX = 134
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_update_index)	; RCX = 135
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_update_index)	; RCX = 136
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_update_index)	; RCX = 137
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_update_index)	; RCX = 138
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_update_index)	; RCX = 139
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_update_index)	; RCX = 140
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_update_index)	; RCX = 141
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_update_index)	; RCX = 142
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_update_index)	; RCX = 143
+	0x00000001n => _accumulator		:JMP(_update_index)	; RCX = 144
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_update_index)	; RCX = 145
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_update_index)	; RCX = 146
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_update_index)	; RCX = 147
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_update_index)	; RCX = 148
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_update_index)	; RCX = 149
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_update_index)	; RCX = 150
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_update_index)	; RCX = 151
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_update_index)	; RCX = 152
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_update_index)	; RCX = 153
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_update_index)	; RCX = 154
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_update_index)	; RCX = 155
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_update_index)	; RCX = 156
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_update_index)	; RCX = 157
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_update_index)	; RCX = 158
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_update_index)	; RCX = 159
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_update_index)	; RCX = 160
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_update_index)	; RCX = 161
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_update_index)	; RCX = 162
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_update_index)	; RCX = 163
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_update_index)	; RCX = 164
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_update_index)	; RCX = 165
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_update_index)	; RCX = 166
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_update_index)	; RCX = 167
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_update_index)	; RCX = 168
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_update_index)	; RCX = 169
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_update_index)	; RCX = 170
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_update_index)	; RCX = 171
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_update_index)	; RCX = 172
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_update_index)	; RCX = 173
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_update_index)	; RCX = 174
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_update_index)	; RCX = 175
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_update_index)	; RCX = 176
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_update_index)	; RCX = 177
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_update_index)	; RCX = 178
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_update_index)	; RCX = 179
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_update_index)	; RCX = 180
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_update_index)	; RCX = 181
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_update_index)	; RCX = 182
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_update_index)	; RCX = 183
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_update_index)	; RCX = 184
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_update_index)	; RCX = 185
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_update_index)	; RCX = 186
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_update_index)	; RCX = 187
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_update_index)	; RCX = 188
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_update_index)	; RCX = 189
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_update_index)	; RCX = 190
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_update_index)	; RCX = 191
+	0x00000001n => _accumulator		:JMP(_update_index)	; RCX = 192
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_update_index)	; RCX = 193
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_update_index)	; RCX = 194
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_update_index)	; RCX = 195
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_update_index)	; RCX = 196
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_update_index)	; RCX = 197
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_update_index)	; RCX = 198
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_update_index)	; RCX = 199
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_update_index)	; RCX = 200
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_update_index)	; RCX = 201
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_update_index)	; RCX = 202
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_update_index)	; RCX = 203
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_update_index)	; RCX = 204
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_update_index)	; RCX = 205
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_update_index)	; RCX = 206
+	HASHPOS + 0x00008000n => HASHPOS	:JMP(_update_index)	; RCX = 207
+	HASHPOS + 0x00010000n => HASHPOS	:JMP(_update_index)	; RCX = 208
+	HASHPOS + 0x00020000n => HASHPOS	:JMP(_update_index)	; RCX = 209
+	HASHPOS + 0x00040000n => HASHPOS	:JMP(_update_index)	; RCX = 210
+	HASHPOS + 0x00080000n => HASHPOS	:JMP(_update_index)	; RCX = 211
+	HASHPOS + 0x00100000n => HASHPOS	:JMP(_update_index)	; RCX = 212
+	HASHPOS + 0x00200000n => HASHPOS	:JMP(_update_index)	; RCX = 213
+	HASHPOS + 0x00400000n => HASHPOS	:JMP(_update_index)	; RCX = 214
+	HASHPOS + 0x00800000n => HASHPOS	:JMP(_update_index)	; RCX = 215
+	HASHPOS + 0x01000000n => HASHPOS	:JMP(_update_index)	; RCX = 216
+	HASHPOS + 0x02000000n => HASHPOS	:JMP(_update_index)	; RCX = 217
+	HASHPOS + 0x04000000n => HASHPOS	:JMP(_update_index)	; RCX = 218
+	HASHPOS + 0x08000000n => HASHPOS	:JMP(_update_index)	; RCX = 219
+	HASHPOS + 0x10000000n => HASHPOS	:JMP(_update_index)	; RCX = 220
+	HASHPOS + 0x20000000n => HASHPOS	:JMP(_update_index)	; RCX = 221
+	HASHPOS + 0x40000000n => HASHPOS	:JMP(_update_index)	; RCX = 222
+	HASHPOS + 0x80000000n => HASHPOS	:JMP(_update_index)	; RCX = 223
+	HASHPOS + 0x100000000n => HASHPOS	:JMP(_update_index)	; RCX = 224
+	HASHPOS + 0x200000000n => HASHPOS	:JMP(_update_index)	; RCX = 225
+	HASHPOS + 0x400000000n => HASHPOS	:JMP(_update_index)	; RCX = 226
+	HASHPOS + 0x800000000n => HASHPOS	:JMP(_update_index)	; RCX = 227
+	HASHPOS + 0x1000000000n => HASHPOS	:JMP(_update_index)	; RCX = 228
+	HASHPOS + 0x2000000000n => HASHPOS	:JMP(_update_index)	; RCX = 229
+	HASHPOS + 0x4000000000n => HASHPOS	:JMP(_update_index)	; RCX = 230
+	HASHPOS + 0x8000000000n => HASHPOS	:JMP(_update_index)	; RCX = 231
+	HASHPOS + 0x10000000000n => HASHPOS	:JMP(_update_index)	; RCX = 232
+	HASHPOS + 0x20000000000n => HASHPOS	:JMP(_update_index)	; RCX = 233
+	HASHPOS + 0x40000000000n => HASHPOS	:JMP(_update_index)	; RCX = 234
+	HASHPOS + 0x80000000000n => HASHPOS	:JMP(_update_index)	; RCX = 235
+	HASHPOS + 0x100000000000n => HASHPOS	:JMP(_update_index)	; RCX = 236
+	HASHPOS + 0x200000000000n => HASHPOS	:JMP(_update_index)	; RCX = 237
+	HASHPOS + 0x400000000000n => HASHPOS	:JMP(_update_index)	; RCX = 238
+	HASHPOS + 0x800000000000n => HASHPOS	:JMP(_update_index)	; RCX = 239
+	0x00000001n => _accumulator		:JMP(_update_index)	; RCX = 240
+	HASHPOS + 0x00000002n => HASHPOS	:JMP(_update_index)	; RCX = 241
+	HASHPOS + 0x00000004n => HASHPOS	:JMP(_update_index)	; RCX = 242
+	HASHPOS + 0x00000008n => HASHPOS	:JMP(_update_index)	; RCX = 243
+	HASHPOS + 0x00000010n => HASHPOS	:JMP(_update_index)	; RCX = 244
+	HASHPOS + 0x00000020n => HASHPOS	:JMP(_update_index)	; RCX = 245
+	HASHPOS + 0x00000040n => HASHPOS	:JMP(_update_index)	; RCX = 246
+	HASHPOS + 0x00000080n => HASHPOS	:JMP(_update_index)	; RCX = 247
+	HASHPOS + 0x00000100n => HASHPOS	:JMP(_update_index)	; RCX = 248
+	HASHPOS + 0x00000200n => HASHPOS	:JMP(_update_index)	; RCX = 249
+	HASHPOS + 0x00000400n => HASHPOS	:JMP(_update_index)	; RCX = 250
+	HASHPOS + 0x00000800n => HASHPOS	:JMP(_update_index)	; RCX = 251
+	HASHPOS + 0x00001000n => HASHPOS	:JMP(_update_index)	; RCX = 252
+	HASHPOS + 0x00002000n => HASHPOS	:JMP(_update_index)	; RCX = 253
+	HASHPOS + 0x00004000n => HASHPOS	:JMP(_update_index)	; RCX = 254

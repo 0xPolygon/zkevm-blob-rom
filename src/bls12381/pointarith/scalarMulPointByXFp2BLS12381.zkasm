@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P ∈ E'(Fp2)\{𝒪} with P of order larger than x and its coordinates are in the range [0,BLS12_381_P)
+;; PRE: P ∈ E'(Fp2)\{𝒪} with P of order larger than x and P.x1,P.x2,P.y1,P.y2,Q.x,Q.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFp2BLS12381
 ;;
 ;;
@@ -8,6 +8,8 @@
 ;;             out: [|x|]·P = (Q.x1 + Q.x2·u, Q.y1 + Q.y2·u) ∈ E'(Fp2), where |x| = 0xd201000000010000n
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
 
 ; Since the curve is E'/Fp2: y² = x³ + 4·(1+u), there is no issue in representing the point at infinity as (0, 0).
 

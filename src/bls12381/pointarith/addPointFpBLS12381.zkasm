@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P1,P2 ∈ E(Fp)\{𝒪} with P1 != P2,-P2 and their coordinates are in the range [0,BLS12_381_P)
+;; PRE: P1,P2 ∈ E(Fp)\{𝒪} with P1 != P2,-P2 and P1.x,P1.y,P2.x,P2.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to Fp arithmetic
 ;;
 ;; addPointFpBLS12381:
@@ -7,6 +7,8 @@
 ;;             out: P1 + P2 = (P3.x, P3.y) ∈ E(Fp)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
 
 ; Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity as (0, 0).
 

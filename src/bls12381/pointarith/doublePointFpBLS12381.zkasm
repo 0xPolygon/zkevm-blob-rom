@@ -1,12 +1,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P is in E(Fp)\{𝒪} with P != -P and its coordinates are in the range [0,BLS12_381_P)
+;; PRE: P is in E(Fp)\{𝒪} with P != -P and P.x,P.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; doublePointFpBLS12381:
 ;;             in: P = (P.x, P.y) ∈ E(Fp)
-;;             out: 2·P = (Q.x, Q.y) ∈ E(Fp)
+;;             out: [2]·P = (Q.x, Q.y) ∈ E(Fp)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
 
 ; Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity as (0, 0).
 
@@ -64,7 +66,7 @@ doublePointFpBLS12381:
         C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
         ; C = lambda·(P.x - Q.x)
 
-        doublePointFpBLS12381_P_y => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        doublePointFpBLS12381_P_y => A  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
         ; C = lambda·(P.x - Q.x) - P.y
 
         C => doublePointFpBLS12381_Q_y

@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P ∈ E'(Fp2) and Q ∈ E(Fp) with P != -P and their coordinates are in the range [0,BLS12_381_P)
+;; PRE: P ∈ E'(Fp2)\{𝒪} and Q ∈ E(Fp)\{𝒪} with P != -P and P.x1,P.x2,P.y1,P.y2,Q.x,Q.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; lineSamePointsBLS12381:
@@ -41,49 +41,49 @@ lineSamePointsBLS12381:
 
         ; 1] (3·P.x1³ - 2·P.y1²)
         lineSamePointsBLS12381_P_y1 => A
-        lineSamePointsBLS12381_P_y2 => B        :CALL(squareFp2BLS12381)
+        lineSamePointsBLS12381_P_y2 => B        :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
         C => D
         E => C
-        2n => A                                 :CALL(scalarMulFp2BLS12381)
+        2n => A                                 :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
         E => _P_y1_square
         C => _P_y2_square
 
         lineSamePointsBLS12381_P_x1 => A
-        lineSamePointsBLS12381_P_x2 => B        :CALL(squareFp2BLS12381)
+        lineSamePointsBLS12381_P_x2 => B        :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
         ; save the square for latter
         E => A,_P_x1_square
         C => B,_P_x2_square
         lineSamePointsBLS12381_P_x1 => C
-        lineSamePointsBLS12381_P_x2 => D        :CALL(mulFp2BLS12381)
+        lineSamePointsBLS12381_P_x2 => D        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         C => D
         E => C
-        3n => A                                 :CALL(scalarMulFp2BLS12381)
+        3n => A                                 :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
 
         E => A
         C => B
         _P_y1_square => C
-        _P_y2_square => D                       :CALL(subFp2BLS12381)
+        _P_y2_square => D                       :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
         E => lineSamePointsBLS12381_l21_x
         C => lineSamePointsBLS12381_l21_y
 
 
         ; 2] -3·Q.x·P.x1²
         %BLS12_381_P_MINUS_THREE => A
-        lineSamePointsBLS12381_Q_x => B         :CALL(mulFpBLS12381)
+        lineSamePointsBLS12381_Q_x => B         :CALL(mulFpBLS12381) ; in: [A,B,C,D] out: [E,C]
 
         C => A
         _P_x1_square => C
-        _P_x2_square => D                       :CALL(scalarMulFp2BLS12381)
+        _P_x2_square => D                       :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
         E => lineSamePointsBLS12381_l22_x
         C => lineSamePointsBLS12381_l22_y
 
         ; 3] 2·Q.y·P.y1
         2n => A
-        lineSamePointsBLS12381_Q_y => B         :CALL(mulFpBLS12381)
+        lineSamePointsBLS12381_Q_y => B         :CALL(mulFpBLS12381) ; in: [A,B,C,D] out: [E,C]
 
         C => A
         lineSamePointsBLS12381_P_y1 => C
-        lineSamePointsBLS12381_P_y2 => D        :CALL(scalarMulFp2BLS12381)
+        lineSamePointsBLS12381_P_y2 => D        :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
         E => lineSamePointsBLS12381_l13_x
         C => lineSamePointsBLS12381_l13_y
 

@@ -59,7 +59,6 @@ module.exports = class myHelper {
      * @param tag - Tag.
      * @returns Length of the binary representation of the input scalar. If there are multiple input scalars, it returns the maximum length.
      */
-    // TODO: Rethink it
     eval_lenBinDecomp(ctx, tag) {
         let k = BigInt(this.evalCommand(ctx, tag.params[0]));
         if (k === 0n) return 1;
