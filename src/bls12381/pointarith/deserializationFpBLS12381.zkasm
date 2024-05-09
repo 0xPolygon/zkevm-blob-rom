@@ -1,16 +1,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  PRE: The input is a 384-bit integer (i.e., point deserialization only works for E elements)
-;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to Fp arithmetic
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because it falls back to Fp arithmetic
 ;;
 ;; deserializationFpBLS12381:
 ;;             in: A ∈ [0, 2³⁸⁴-1]
 ;;             out:
 ;; 		   · A ∈ [0, BLS12381_P - 1], representing the x-coordinate of the deserialized point
 ;; 		   · B ∈ [0, BLS12381_P - 1], representing the y-coordinate of the deserialized point
-;; 		   · C ∈ {0,1,2} Error code (check list below)
+;; 		   · C ∈ {0,1,2,3,4} Error code (check list below)
 ;;                 · D = 1 if the deserialized point is the point at infinity, 0 otherwise
 ;;
-;; Note: Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity with A = B = 0
+;; Note: A correct input is of the form C_bit || I_bit || S_bit || in, where in is the x-coordinate and:
+;;    	   · C_bit = 1 if point compression has been used, otherwise 0
+;;         · I_bit = 1 if P is the point at infinity, otherwise 0
+;;         · S_bit = 0 if P is the point at infinity (or if point compression has not been used)
+;;                   Otherwise, S_bit = sign_GF_p(y) = {1 if y > (p - 1n) / 2n, 0 otherwise}
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRAGMA MODE_384_BITS
@@ -21,6 +26,14 @@ PRAGMA MODE_384_BITS
 ; 2 - Compression has not been used
 ; 3 - Invalid point at infinity encoding
 ; 4 - Has not square root
+; 5 - Input lower than 384 bits
+; 6 - Input is 2³⁸⁴-1
+; 7 - x-coordinate greater than p-2
+
+CONSTL %TWO_384_MINUS_1 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn
+CONSTL %TWO_383 = 0x800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n
+CONSTL %TWO_376 = 0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n
+CONSTL %TWO_376_MINUS_1 = %TWO_376 - 1n
 
 VAR GLOBAL _in
 VAR GLOBAL _in_high
@@ -37,27 +50,59 @@ VAR GLOBAL _RR
 deserializationFpBLS12381:
 	RR => _RR
 
-	A => _in
+	; The input must have exactly 48 bytes = 384 bits (since C_bit is always one in this case)
+	; this means that the value must be between 2³⁸³ and 2³⁸⁴-1
 
-	; TODO: Handle the case where A = 2³⁸⁴-1
+	; Check that the input is at least 384 bits:
+	; A·1 + 0 = op (mod 2³⁸³)
+	1 => B
+	0 => C
+	%TWO_383 => D
+	${A % D} => E           :ARITH_384_MOD
+
+        A - E => C              :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPNZ(_check_largest_case)
+        ROTL_C => C             :JMPZ(_input_too_small)
+
+	; Note: We do not need to check that the input is at most 384 bits
+	;       because by design, we do not allow for it
+
+_check_largest_case:
+	; We treat separately the case where in = 2³⁸⁴-1, and since this case is not possible, we return an error
+        A - %TWO_384_MINUS_1 => C  	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPNZ(_decompose_input)
+        ROTL_C => C             	:JMPZ(_input_too_big)
+
+_decompose_input:
+	A => _in
 
 	; We compute in = in₀ + 2³⁷⁶·in₁ (mod 2³⁸⁴-1) to isolate the most significant byte
 	${(A >> 376) & 0xFF} => A,_in_high
-	0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n => B
-	${mem._in & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF} => C,_in_low
-	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => D
+	%TWO_376 => B
+	${mem._in & const.TWO_376_MINUS_1} => C,_in_low
+	%TWO_384_MINUS_1 => D
 	${(A*B + C) % D} => E 									:ARITH_384_MOD
 
 	; Check the previous decomposition has been done correctly
 	_in => B
-        E - B => C              :JMPNZ(failAssert) ; chunk 0
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 2
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 3
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 4
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 5
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 6
-        ROTL_C => C             :JMPNZ(failAssert) ; chunk 7
+        E - B => C              :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
+        ROTL_C => C             :JMPNZ(failAssert)
 
 	; B = in, _in_high = in₁, _in_low = in₀
 
@@ -73,40 +118,60 @@ deserializationFpBLS12381:
 
 	; Save the third most significant bit
 	0x20 => B               :MODE_256_BITS
-	$ 		        :AND, MODE_256_BITS, JMPNC(@next + 1) ; 0 if P is the point at infinity or if point compression is not used, otherwise 1
-        1 => _S_bit             :JMP(_I_bit)
+	$ 		        :AND, MODE_256_BITS, JMPNC(@next + 1) ; 0 if P is the point at infinity (or if point compression is not used)
+        1 => _S_bit             :JMP(_I_bit)			      ; Otherwise, S_bit = sign_GF_p(y) = {1 if y > (p - 1n) / 2n, 0 otherwise}
         0 => _S_bit
 
 _I_bit:
 	; Save the second most significant bit
 	0x40 => B               :MODE_256_BITS
 	$ 		        :AND, MODE_256_BITS, JMPNC(@next + 1) ; 1 if P is the point at infinity, otherwise 0
-        1 => _I_bit             :JMP(_most_sig_bit)
+        1 => _I_bit             :JMP(_C_bit)
         0 => _I_bit
 
-_most_sig_bit:
+_C_bit:
 	; Save the most significant bit
 	0x80 => B               :MODE_256_BITS
 	$ 		        :AND, MODE_256_BITS, JMPNC(_no_compression) ; 1 if point compression has been used, otherwise 0
                                                                             ; by assumption, the only possible value is 1
 
+_compressed_point:
 	; We compute an AND against 0x1F = 0b00011111, therefore removing the 3 most significant bits of in
 	_in_high => A           :MODE_256_BITS
 	0x1F => B               :MODE_256_BITS
 	$ => A 		        :AND, MODE_256_BITS
 
-	; TODO: Handle the case where A = 2³⁸⁴-1
 	; Recompose the result
-	0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n => B
+	%TWO_376 => B
 	_in_low => C
-	0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => D
-	${(A*B + C) % D} => E,_in_x										:ARITH_384_MOD
+	%TWO_384_MINUS_1 => D
+	${(A*B + C) % D} => A,_in_x										:ARITH_384_MOD
 
 	; If P represents the point at infinity, return it only if it is correctly encoded.
 	_I_bit			:JMPNZ(_point_at_infinity)
 
 	; Path: P is not the point at infinity
 
+	; Note: The largest possible x-coordinate for which there exists an y-coordinate
+	;       such that (x,y) ∈ E(Fp) is p-3
+
+	; Check that the x-coordinate is at most p-3
+	; A·1 + 0 = op (mod p-2)
+	1 => B
+	0 => C
+	%BLS12_381_P_MINUS_TWO => D
+	${A % D} => E           :ARITH_384_MOD
+
+        _in_x - E => C         	:JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+        ROTL_C => C             :JMPNZ(_x_coordinate_too_big)
+
+_compute_y:
 	; Compute x³ + 4
 	_in_x => A         	:CALL(squareFpBLS12381) ; in: [A]   out: [B]
 	_in_x => A            	:CALL(mulFpBLS12381)    ; in: [A,B] out: [C]
@@ -150,14 +215,14 @@ _assing_result:
 
 _point_at_infinity:
 	; Check the input is 0
-        E => C              	:JMPNZ(_point_at_infinity_invalid) ; chunk 0
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 1
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 2
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 3
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 4
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 5
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 6
-        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid) ; chunk 7
+        _in_x => C              :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
+        ROTL_C => C             :JMPNZ(_point_at_infinity_invalid)
 
 	0 => C ; no error
         1 => D                  :JMP(_end) ; point at infinity
@@ -175,6 +240,15 @@ _point_at_infinity_invalid:
 
 _has_not_sqrt:
     	4 => C                                		:JMP(_end)
+
+_input_too_small:
+    	5 => C                                		:JMP(_end)
+
+_input_too_big:
+	6 => C						:JMP(_end)
+
+_x_coordinate_too_big:
+	7 => C						:JMP(_end)
 ; =================
 
 _end:

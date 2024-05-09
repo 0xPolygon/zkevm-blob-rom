@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: Q ∈ E'(Fp2)
+;;  PRE: Q ∈ E'(Fp2)\{𝒪} and Q.x1,Q.x2,Q.y1,Q.y2 ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2/FP arithmetic
 ;;
 ;;  This function applies the untwist-Frobenius-twist endomorphism 𝜑⁻¹𝜋ₚ𝜑 to a point Q ∈ E'(Fp2), where
