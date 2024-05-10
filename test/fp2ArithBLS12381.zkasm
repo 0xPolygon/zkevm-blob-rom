@@ -1,8 +1,8 @@
 PRAGMA MODE_384_BITS
 
-        /**
-         * Addition(A,B,C,D) -> (E,C)
-         **/
+	; ====================
+        ; Addition(A,B,C,D) -> (E,C)
+        ; ====================
 	; Test with ZERO
 	%ZERO => A
 	%ZERO => B
@@ -90,13 +90,58 @@ PRAGMA MODE_384_BITS
 	0xDA27E155FF3C55AD3253FD8EF5BD868EBAC75679958B438D4D7E3C5D04F89C27E55D2D7D1681A6C57AA02A260CB94C5n	:ASSERT
 
 
-        /**
-         * Doubling(A,B) -> (E,C)
-         **/
+	; ====================
+        ; Doubling(A,B) -> (E,C)
+        ; ====================
+	; Test with ZERO
+	%ZERO => A
+	%ZERO => B
+	:CALL(dblFp2BLS12381)
+	E => A
+	0n	:ASSERT
+	C => A
+	0n	:ASSERT
 
-        /**
-         * Inversion(A,B) -> (C,D)
-         **/
+	; Test with BLS12_381_P
+	%BLS12_381_P => A
+	%BLS12_381_P => B
+	:CALL(dblFp2BLS12381)
+	E => A
+	0n	:ASSERT
+	C => A
+	0n	:ASSERT
+
+	; Test with TWO_384
+	%TWO_384_MINUS_ONE => A
+	%TWO_384_MINUS_ONE => B
+	:CALL(dblFp2BLS12381)
+	E => A
+	0x11ebab9dbb81e28c6cf28d7901622c038b256521ed1f9bcb57605e0db0ddbb51b93c0018d6c40005321300000006554dn	:ASSERT
+	C => A
+	0x11ebab9dbb81e28c6cf28d7901622c038b256521ed1f9bcb57605e0db0ddbb51b93c0018d6c40005321300000006554dn	:ASSERT
+
+	; Random tests
+	; #1
+	0x153529e09d1b9442e36fcd99f342c7bbcd3d3b468f6abfe52aa87dba63c1296bad50f576a82022ee5efb00d516538ea8n => A
+	0x112b02c30b9d3f9d5a33b1f37834831449bc7467a8caee66d9b3bbfb8d10766cf0b8ecc1c6c48681ad094aaa9fcc1ebbn => B
+	:CALL(dblFp2BLS12381)
+	E => A
+	0x106941d700b741eb7bc3f37da339e2a036032b082b506d0aee2028d3d0d15cb33bf5eaee9eec45dd03f701aa2ca772a5n	:ASSERT
+	C => A
+	0x854f39bddba98a0694bbc30ad1d59512f019d4a5e10ca0e4c36a556236ff6b5c2c5d984dc350d03a01395553f9892cbn	:ASSERT
+
+	; #2
+	0x10181d357cd9f5ccd3b703014a0ab3333567e7175804e1dddf7b702cb7e8c8c205081ae2d7243367daec4dbf67303460n => A
+	0xe7d5a76df4464cc9bd34a92dd1be9b7186d5b3b11bfb221747b88a512893a52f356555f33081741ed692f494e3a5d38n => B
+	:CALL(dblFp2BLS12381)
+	E => A
+	0x62f2880c03404ff5c525e4c50c9b98f065882a9bc84b0fc57c60db879209b5feb6435c6fcf466cffbd99b7ece60be15n	:ASSERT
+	C => A
+	0x2f9a3038508e2feec8aed6f76ec2696cc636af12ffa518381c63ea92e617e81c800aabfb4bc2e8420d35e929c750fc5n	:ASSERT
+
+	; ====================
+        ; Inversion(A,B) -> (C,D)
+        ; ====================
         0n => A
         0n => B
                                                                                         :CALL(invFp2BLS12381)
@@ -137,9 +182,9 @@ PRAGMA MODE_384_BITS
         D => A
         0x16f1e2a17e07711ebabe0c73a4ca4d3685d2ac0be5ede35d97493251ca9c247a392e5a59330de1e1a41d3c3c3c3bf0f1n   :ASSERT
 
-        /**
-         * Multiplication(A,B,C,D) -> (E,C)
-         **/
+	; ====================
+        ; Multiplication(A,B,C,D) -> (E,C)
+        ; ====================
 	; Test with ZERO
 	%ZERO => A
 	%ZERO => B
@@ -226,13 +271,21 @@ PRAGMA MODE_384_BITS
 	C => A
 	0x12E2A82364F6E2848584D661D0E356092A1C630ADB9BA68CF72C05AAD271D68C7D0C93BE69F4F970B26F323EBE11933En	:ASSERT
 
-        /**
-         * Negation(C,D) -> (E,C)
-         **/
+	; ====================
+        ; Negation(C,D) -> (E,C)
+        ; ====================
+        1n => C
+        4n => D
+                                                                                        :CALL(negFp2BLS12381)
+        E => A
+        0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaaan  	:ASSERT
+        C => A
+        0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaa7n 	:ASSERT
 
-        /**
-         * ScalarMul(A,C,D) -> (E,C)
-         **/
+
+	; ====================
+        ; ScalarMul(A,C,D) -> (E,C)
+        ; ====================
         3n => A
         6n => C
         4n => D
@@ -242,9 +295,9 @@ PRAGMA MODE_384_BITS
         C => A
         12n                                                                             :ASSERT
 
-        /**
-         * Square(A,B) -> (E,C)
-         **/
+	; ====================
+        ; Square(A,B) -> (E,C)
+        ; ====================
         1n => A
         4n => B
                                                                                         :CALL(squareFp2BLS12381)
@@ -253,9 +306,9 @@ PRAGMA MODE_384_BITS
         C => A
         8n                                                                              :ASSERT
 
-        /**
-         * Sub(A,B,C,D) -> (E,C)
-         **/
+	; ====================
+        ; Sub(A,B,C,D) -> (E,C)
+        ; ====================
 	; Test with ZERO
 	%ZERO => A
 	%ZERO => B

@@ -17,16 +17,16 @@ invFpBLS12381:
 
 _zero_check:
         ; We must ensure that A != 0
-        A => C                  :JMPNZ(_input_is_not_zero) ; chunk 0
-        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 1
-        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 2
-        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 3
-        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 4
-        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 5
-        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 6
+        A => C                  :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 0
+        ROTL_C => C             :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 1
+        ROTL_C => C             :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 2
+        ROTL_C => C             :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 3
+        ROTL_C => C             :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 4
+        ROTL_C => C             :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 5
+        ROTL_C => C             :JMPNZ(invFpBLS12381_input_is_not_zero) ; chunk 6
         ROTL_C => C             :JMPZ(failAssert)          ; chunk 7
 
-_input_is_not_zero:
+invFpBLS12381_input_is_not_zero:
         ; A·A⁻¹ + 0 = 1 (mod BLS12381_P)
         ${fpBLS12_381_inv(A)} => B
         0 => C
