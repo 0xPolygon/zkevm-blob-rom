@@ -185,7 +185,6 @@ INCLUDE "../src/bls12381/subCheckG2BLS12381.zkasm"
 INCLUDE "../src/bls12381/millerLoopBLS12381.zkasm"
 INCLUDE "../src/bls12381/finalExpBLS12381.zkasm"
 INCLUDE "../src/bls12381/halfPairingBLS12381.zkasm"
-INCLUDE "../src/bls12381/pairingBLS12381.zkasm"
 INCLUDE "../src/bls12381/KZGVerify.zkasm"
 
 ; Point arithmetic
@@ -255,6 +254,3 @@ INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/squareCompCycloFp12BLS12381.
 INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/expByXCompCycloFp12BLS12381.zkasm"
 INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/expByXOneCompCycloFp12BLS12381.zkasm"
 INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/expByXThreeCompCycloFp12BLS12381.zkasm"
-
-; Utils
-INCLUDE "../src/bls12381/utilsTests/expCycloFp12BLS12381.zkasm"
