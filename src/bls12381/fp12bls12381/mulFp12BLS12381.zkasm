@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL mulFp12BLS12381_a11_x
 VAR GLOBAL mulFp12BLS12381_a11_y
 VAR GLOBAL mulFp12BLS12381_a12_x

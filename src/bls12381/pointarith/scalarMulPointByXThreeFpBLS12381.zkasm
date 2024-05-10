@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P ∈ E(Fp)\{𝒪} with P of order larger than (x²-1)/3 and P.x,P.y ∈ [0, 2³⁸⁴ - 1]
+;; PRE: P ∈ E(Fp)\{𝒪} with P.x,P.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFpBLS12381
 ;;
 ;;
@@ -11,12 +11,11 @@
 
 PRAGMA MODE_384_BITS
 
-; Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity as (0, 0).
-
 VAR GLOBAL scalarMulPointByXThreeFpBLS12381_P_x
 VAR GLOBAL scalarMulPointByXThreeFpBLS12381_P_y
 VAR GLOBAL scalarMulPointByXThreeFpBLS12381_Q_x
 VAR GLOBAL scalarMulPointByXThreeFpBLS12381_Q_y
+VAR GLOBAL scalarMulPointByXThreeFpBLS12381_Q_infinity
 
 VAR GLOBAL _RR
 
@@ -67,10 +66,34 @@ _add:
         B => addPointFpBLS12381_P2_y                    :CALL(addPointFpBLS12381)
         ; Q = Q + P
 
+        addPointFpBLS12381_P3_infinity                  :JMPZ(_continue_normal)
+
+_addition_infinity_loop:
+        ; if we are at the end, we return the infinity point
+        RCX - 1 => RCX                                  :JMPZ(_result_is_infinity)
+
+        ; otherwise, we continue to the next bit equal to 1 (since 2·𝒪 = 𝒪)
+        ; if it does not exist, we return the infinity point
+        RCX - 1 => RR
+                                                        :CALL(@xSqThreeBinBLS12381 + RR)
+
+        ; if bit = 0, then repeat
+        B                                               :JMPZ(_addition_infinity_loop)
+
+        ; we directly set Q = P
+        scalarMulPointByXThreeFpBLS12381_P_x => A
+        scalarMulPointByXThreeFpBLS12381_P_y => B
+        A => scalarMulPointByXThreeFpBLS12381_Q_x
+        B => scalarMulPointByXThreeFpBLS12381_Q_y       :JMP(_loop)
+
+_continue_normal:
         addPointFpBLS12381_P3_x => A
         addPointFpBLS12381_P3_y => B
         A => scalarMulPointByXThreeFpBLS12381_Q_x
         B => scalarMulPointByXThreeFpBLS12381_Q_y       :JMP(_loop)
+
+_result_is_infinity:
+        1 => scalarMulPointByXThreeFpBLS12381_Q_infinity
 
 _end:
         _RR => RR                                       :RETURN

@@ -11,7 +11,7 @@
 ;; Note1: [a]₁ is a standarized shortand used to indicate a·G₁, where G₁ is the generator of the group G1
 ;;        [a]₂ is a standarized shortand used to indicate a·G₂, where G₂ is the generator of the group G2
 ;; Note2: [x]₂ is given as part of the SRS, where x is the "toxic waste" value
-;; Not32: We check e(commit - [y]₁, -[1]₂)·e(proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
+;; Note3: We check e(commit - [y]₁, -[1]₂)·e(proof, [x]₂ - [z]₂) = 1 instead to perform the check with a single final exponentiation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 PRAGMA MODE_384_BITS
@@ -59,6 +59,7 @@ KZGVerify:
 	KZGVerify_y => A                                :MODE_256_BITS
         %BLS12_381_R => B                               :MODE_256_BITS
         $                                               :LT, JMPC(_check_y_zero, _y_too_large), MODE_256_BITS
+
 _check_y_zero:
         0 => B                                          :MODE_256_BITS
         $ => A,C     		                        :ARITH_256TO384, JMPNZ(_compute_commit_y)
@@ -79,10 +80,10 @@ _compute_commit_y:
 
 _deserialize_commit:
 	;    1.2] Reconstruct and deserialize commit
-        KZGVerify_commit_high => B     			:MODE_256_BITS
 
-        ; if B >= 2¹²⁸, error
+        ; if commit_high >= 2¹²⁸, error
         0x100000000000000000000000000000000n => A 	:MODE_256_BITS
+        KZGVerify_commit_high => B     			:MODE_256_BITS
         $                                               :LT, JMPC(_commit_too_large), MODE_256_BITS
 
         KZGVerify_commit_low => A     			:MODE_256_BITS
@@ -99,15 +100,18 @@ _deserialize_commit:
 
 _commit_is_zero:
         _commit_y_is_zero                               :JMPNZ(_commit_and_commit_y_are_zero)
+
+	; commit - [y]₁ = - [y]₁
 	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
 	scalarMulPointFpBLS12381_Q_x => A               :JMP(_compute_Miller_lhs)
 
 _commit_and_commit_y_are_zero:
+	; commit - [y]₁ = 𝒪
         ; output Miller_loop(𝒪, -[1]₂) = 1
         1 => _lhs_is_one                                :JMP(_compute_rhs)
 
 _check_inv_lhs:
-        ; here, neither commit nor [y]₁ are zero. Let's checker whether they are inverse of each other
+        ; here, neither commit nor [y]₁ are zero. Let's checker whether they are the same point
         ; Is commit.x == [y]₁.x?
         scalarMulPointFpBLS12381_Q_x - A => C           :JMPNZ(_compute_sub_lhs)
         ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
@@ -118,7 +122,7 @@ _check_inv_lhs:
         ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
         ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
 
-        ; Is commit.y == [y]₁.y?
+        ; If commit.x == [y]₁.x, then necessarily commit == [y]₁,-[y]₁
         scalarMulPointFpBLS12381_Q_y - B => C           :JMPNZ(_compute_sub_lhs)
         ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
         ROTL_C => C                                     :JMPNZ(_compute_sub_lhs)
@@ -135,7 +139,6 @@ _compute_sub_lhs:
 	A => addPointFpBLS12381_P1_x
 	B => addPointFpBLS12381_P1_y
 
-        ; Before adding, let's check whether one is the inverse of the other or if some is the point at infinity
 	scalarMulPointFpBLS12381_Q_y => A 		:CALL(negFpBLS12381) ; in: [A] out: [B]
 	scalarMulPointFpBLS12381_Q_x => A
 	A => addPointFpBLS12381_P2_x
@@ -150,15 +153,11 @@ _compute_Miller_lhs:
 	%BLS12_381_G2X1 => halfPairingBLS12381_Q_x1
 	%BLS12_381_G2X2 => halfPairingBLS12381_Q_x2
 	%BLS12_381_G2Y1_neg => halfPairingBLS12381_Q_y1
-	%BLS12_381_G2Y2_neg => halfPairingBLS12381_Q_y2
-        1 => halfPairingBLS12381_P_and_Q_not_zero       :CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
+	%BLS12_381_G2Y2_neg => halfPairingBLS12381_Q_y2 :CALL(halfPairingBLS12381) ; in: [P_x,P_y,Q_x1,Q_x2,Q_y1,Q_y2]
 									           ;out: [out11_x,out11_y,out12_x,out12_y,out13_x,out13_y,out21_x,out21_y,out22_x,out22_y,out23_x,out23_y]
 
 	; Check if error
 	B  						:JMPNZ(_invalid_lhs)
-
-	; input it to multiplication unless lhs = 1
-        _lhs_is_one                                     :JMPNZ(_compute_rhs)
 
 	halfPairingBLS12381_out11_x => A
 	halfPairingBLS12381_out11_y => B
@@ -192,6 +191,7 @@ _compute_rhs:
 	KZGVerify_z => A                                :MODE_256_BITS
         %BLS12_381_R => B                               :MODE_256_BITS
         $                                               :LT, JMPC(_check_z_zero, _z_too_large), MODE_256_BITS
+
 _check_z_zero:
         0 => B                                          :MODE_256_BITS
         $ => A,C     		                        :ARITH_256TO384, JMPNZ(_compute_commit_z)
@@ -238,6 +238,8 @@ _check_inv_rhs:
         ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
         ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
 
+	; If [x]₂.x == [z]₂.x, then necessarily [x]₂ == [z]₂,-[z]₂
+
         ; Is [x]₂.y1 == [z]₂.y1?
         %BLS12_381_X_Y1 - scalarMulPointFp2BLS12381_Q_y1 => C   :JMPNZ(_compute_sub_rhs)
         ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
@@ -256,8 +258,9 @@ _check_inv_rhs:
         ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
         ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
         ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
-        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs) ; same as both being zero
+        ROTL_C => C                                             :JMPNZ(_compute_sub_rhs)
 
+	; [x]₂ - [z]₂ = 𝒪
         ; output Miller_loop(proof, 𝒪) = 1
         1 => _rhs_is_one                                        :JMP(_input_mul_lhs_rhs)
 
@@ -286,10 +289,10 @@ _compute_Miller_rhs:
 	; 4] Compute Miller_loop(proof, [x]₂ - [z]₂)
 
 	;    4.1] Reconstruct and deserialize proof
-        KZGVerify_proof_high => B     			        :MODE_256_BITS
 
-        ; if B >= 2¹²⁸, error
+        ; if proof_high >= 2¹²⁸, error
         0x100000000000000000000000000000000n => A 	        :MODE_256_BITS
+        KZGVerify_proof_high => B     			        :MODE_256_BITS
         $                                                       :LT, JMPC(_proof_too_large), MODE_256_BITS
 
         KZGVerify_proof_low => A     			        :MODE_256_BITS
@@ -312,8 +315,7 @@ _compute_Miller_rhs:
 	addPointFp2BLS12381_P3_y1 => A
 	addPointFp2BLS12381_P3_y2 => B
 	A => halfPairingBLS12381_Q_y1
-	B => halfPairingBLS12381_Q_y2
-        1 => halfPairingBLS12381_P_and_Q_not_zero               :CALL(halfPairingBLS12381)
+	B => halfPairingBLS12381_Q_y2 				:CALL(halfPairingBLS12381)
 
 	; Check if error
 	B  						        :JMPNZ(_invalid_rhs)

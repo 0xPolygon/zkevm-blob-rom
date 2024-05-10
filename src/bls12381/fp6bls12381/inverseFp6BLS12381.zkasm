@@ -14,6 +14,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL inverseFp6BLS12381_a1_x
 VAR GLOBAL inverseFp6BLS12381_a1_y
 VAR GLOBAL inverseFp6BLS12381_a2_x

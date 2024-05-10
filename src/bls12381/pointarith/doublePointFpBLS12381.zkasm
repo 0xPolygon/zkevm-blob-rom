@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P is in E(Fp)\{𝒪} with P != -P and P.x,P.y ∈ [0, 2³⁸⁴ - 1]
+;; PRE: P is in E(Fp)\{𝒪} with P.x,P.y ∈ [0, 2³⁸⁴ - 1]
 ;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
 ;;
 ;; doublePointFpBLS12381:
@@ -10,7 +10,8 @@
 
 PRAGMA MODE_384_BITS
 
-; Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity as (0, 0).
+; Points of order 2 are of the form (x, 0), but notice that on E/Fp: y² = x³ + 4 there
+; not exist such points, so we can assume that P.y ≠ 0 and the output will never be the point at infinity
 
 VAR GLOBAL doublePointFpBLS12381_P_x
 VAR GLOBAL doublePointFpBLS12381_P_y

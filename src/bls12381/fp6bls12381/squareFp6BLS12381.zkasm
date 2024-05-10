@@ -13,6 +13,8 @@
 ;;                  - c3 = a2² + 2·a1·a3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL squareFp6BLS12381_a1_x
 VAR GLOBAL squareFp6BLS12381_a1_y
 VAR GLOBAL squareFp6BLS12381_a2_x

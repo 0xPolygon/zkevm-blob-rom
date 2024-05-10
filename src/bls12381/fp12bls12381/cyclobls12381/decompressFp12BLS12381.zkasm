@@ -15,6 +15,8 @@
 ;;       technique is not well defined. This means that D(C(a)) != a.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL decompressFp12BLS12381_Ca2_x
 VAR GLOBAL decompressFp12BLS12381_Ca2_y
 VAR GLOBAL decompressFp12BLS12381_Ca3_x

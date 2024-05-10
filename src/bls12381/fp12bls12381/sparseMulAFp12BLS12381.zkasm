@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL sparseMulAFp12BLS12381_a11_x
 VAR GLOBAL sparseMulAFp12BLS12381_a11_y
 VAR GLOBAL sparseMulAFp12BLS12381_a12_x

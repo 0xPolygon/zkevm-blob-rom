@@ -9,8 +9,6 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Since the curve is E/Fp: y² = x³ + 4, there is no issue in representing the point at infinity as (0, 0).
-
 PRAGMA MODE_384_BITS
 
 VAR GLOBAL scalarMulPointFpBLS12381_s

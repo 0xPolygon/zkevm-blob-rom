@@ -1,9 +1,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  PRE: f != 0,1
+;;  PRE: f ∈ Fp12
 ;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
 ;;
 ;;  finalExpBLS12381:
-;;          input: f ∈ Fp12*
+;;          input: f ∈ Fp12
 ;;          output: f^{(p¹²-1)/r} ∈ μ_r
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

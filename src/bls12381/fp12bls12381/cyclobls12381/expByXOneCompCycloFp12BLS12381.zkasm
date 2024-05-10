@@ -8,6 +8,8 @@
 ;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL expByXOneCompCycloFp12BLS12381_a0_x
 VAR GLOBAL expByXOneCompCycloFp12BLS12381_a0_y
 VAR GLOBAL expByXOneCompCycloFp12BLS12381_a2_x

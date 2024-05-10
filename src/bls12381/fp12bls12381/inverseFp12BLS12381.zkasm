@@ -9,6 +9,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL inverseFp12BLS12381_a11_x
 VAR GLOBAL inverseFp12BLS12381_a11_y
 VAR GLOBAL inverseFp12BLS12381_a12_x
@@ -50,7 +52,7 @@ VAR GLOBAL _RR
 ; -----------------------------
 
 inverseFp12BLS12381:
-        RR              :MSTORE(_RR)
+        RR => _RR
 
         ; 1] c1 = a1·(a1² - a2²·v)⁻¹
         ; 1.1] a1²

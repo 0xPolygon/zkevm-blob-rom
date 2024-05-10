@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; PRE: P coordinates are in the range [0,BLS12_381_P)
+;; PRE: P ∈ E(Fp)\{𝒪} with P1.x,P1.y ∈ [0, 2³⁸⁴ - 1]
 ;;
 ;;  subCheckG1BLS12381:
 ;;          input: P = (x,y), x,y ∈ Fp
@@ -57,9 +57,9 @@ subCheckG1BLS12381:
     C => _sigma_P_x_sq
 
     _sigma_P_x => A
+    subCheckG1BLS12381_P_y => B
     A => doublePointFpBLS12381_P_x
-    subCheckG1BLS12381_P_y => A
-    A => doublePointFpBLS12381_P_y              :CALL(doublePointFpBLS12381)
+    B => doublePointFpBLS12381_P_y              :CALL(doublePointFpBLS12381)
 
     doublePointFpBLS12381_Q_x => A
     doublePointFpBLS12381_Q_y => B
@@ -71,6 +71,11 @@ subCheckG1BLS12381:
     B => _neg_P_y
     B => addPointFpBLS12381_P2_y                :CALL(addPointFpBLS12381)
 
+    addPointFpBLS12381_P3_infinity              :JMPZ(_first_sum_not_zero)
+    _sigma_P_x_sq => A
+    _neg_P_y => B                               :JMP(_continue_scalar_mul)
+
+_first_sum_not_zero:
     addPointFpBLS12381_P3_x => A
     addPointFpBLS12381_P3_y => B
     A => addPointFpBLS12381_P1_x
@@ -80,10 +85,16 @@ subCheckG1BLS12381:
     A => addPointFpBLS12381_P2_x
     B => addPointFpBLS12381_P2_y                :CALL(addPointFpBLS12381)
 
+    addPointFpBLS12381_P3_infinity              :JMPNZ(_P_is_not_in_G1)
+
     addPointFpBLS12381_P3_x => A
     addPointFpBLS12381_P3_y => B
+
+_continue_scalar_mul:
     A => scalarMulPointByXThreeFpBLS12381_P_x
     B => scalarMulPointByXThreeFpBLS12381_P_y   :CALL(scalarMulPointByXThreeFpBLS12381)
+
+    scalarMulPointByXThreeFpBLS12381_Q_infinity :JMPNZ(_P_is_not_in_G1)
 
     scalarMulPointByXThreeFpBLS12381_Q_x => B
     _sigma_P_x_sq => C

@@ -8,6 +8,8 @@
 ;;       technique is not well defined. This means that D(C(a)) != a.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+PRAGMA MODE_384_BITS
+
 VAR GLOBAL compressFp12BLS12381_a0_x
 VAR GLOBAL compressFp12BLS12381_a0_y
 VAR GLOBAL compressFp12BLS12381_a2_x

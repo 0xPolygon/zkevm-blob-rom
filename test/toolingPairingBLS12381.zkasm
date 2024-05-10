@@ -1,0 +1,309 @@
+PRAGMA MODE_384_BITS
+
+	; ====================
+        ; Subgroup Check G1
+        ; ====================
+	; ERROR CODES (B)
+	; 0 - P is not in E
+	; 1 - P is not in G1
+
+	; P not in E
+	0x0n => subCheckG1BLS12381_P_x
+	0x0n => subCheckG1BLS12381_P_y
+	:CALL(subCheckG1BLS12381)
+	0 :ASSERT
+	B => A
+	0 :ASSERT
+
+	; P in E but not in G1 because [2]σ(P) - P - σ²(P) = 𝒪
+	0x0n => subCheckG1BLS12381_P_x
+	0x2n => subCheckG1BLS12381_P_y
+	:CALL(subCheckG1BLS12381)
+	0 :ASSERT
+	B => A
+	1 :ASSERT
+
+	; ; P in E but not in G1 because [(x²-1)/3]([2]σ(P) - P - σ²(P)) = 𝒪
+	; 0x0n => subCheckG1BLS12381_P_x
+	; 0x2n => subCheckG1BLS12381_P_y
+	; :CALL(subCheckG1BLS12381)
+	; 0 :ASSERT
+	; B => A
+	; 1 :ASSERT
+
+	; P in E but not in G1 because [(x²-1)/3]([2]σ(P) - P - σ²(P)) != σ²(P)
+	0x17628d094a5172ba8d833299e15bde24cac7dcb8ec4a89ad5fdc46847b4ad8add975b18675993fb5bd39e4f27cf17704n => subCheckG1BLS12381_P_x
+	0x11517b1d8ac5870fb1e9d592b816be88798367df36872ded773c0d2d666dd1b0873f9a270e5925c2c9829eeee7909d4cn => subCheckG1BLS12381_P_y
+	:CALL(subCheckG1BLS12381)
+	0 :ASSERT
+	B => A
+	1 :ASSERT
+
+	; P in G1
+	%BLS12_381_G1X => subCheckG1BLS12381_P_x
+	%BLS12_381_G1Y => subCheckG1BLS12381_P_y
+	:CALL(subCheckG1BLS12381)
+	1 :ASSERT
+
+	; ====================
+        ; Subgroup Check G2
+        ; ====================
+	; ERROR CODES (B)
+	; 0 - Q is not in tE
+	; 1 - Q is not in G2
+
+	; Q not in tE
+	0x0n => subCheckG2BLS12381_Q_x1
+	0x0n => subCheckG2BLS12381_Q_x2
+	0x0n => subCheckG2BLS12381_Q_y1
+	0x0n => subCheckG2BLS12381_Q_y2
+	:CALL(subCheckG2BLS12381)
+	0 :ASSERT
+	B => A
+	0 :ASSERT
+
+	; ; Q in tE but not in G2 because [x]ψ³(Q) + Q = 𝒪
+	; 0x0n => subCheckG2BLS12381_Q_x1
+	; 0x0n => subCheckG2BLS12381_Q_x2
+	; 0x0n => subCheckG2BLS12381_Q_y1
+	; 0x0n => subCheckG2BLS12381_Q_y2
+	; :CALL(subCheckG2BLS12381)
+	; 0 :ASSERT
+	; B => A
+	; 1 :ASSERT
+
+	; Q in tE but not in G2 because [x]ψ³(Q) + Q != ψ²(Q)
+	0x49cba99937f94b96ece304b64402a7daa118a413ef513b12312a3409a8e34f34964428bdf7d37a1cbd2067ad7eabe3cn => subCheckG2BLS12381_Q_x1
+	0x3a080a0d243f32b28c6d182b3081732ad03c6ffd557722c39656ab43ef555aae72a315083733581d71b855962d019f9n => subCheckG2BLS12381_Q_x2
+	0x11f70e9595193c53149b30320317bc199d384f56e3bea00de33854e18e218b6e6526b8d209b2baa7ce5b6195e617c12n => subCheckG2BLS12381_Q_y1
+	0x170715337f115e6abb5103e17cc74ace7d2ec1de67a84f128452f1f815c2cde9ba6525e2699cee95c54b69fe931968c2n => subCheckG2BLS12381_Q_y2
+	:CALL(subCheckG2BLS12381)
+	0 :ASSERT
+	B => A
+	1 :ASSERT
+
+	; Q in G2
+	%BLS12_381_G2X1 => subCheckG2BLS12381_Q_x1
+	%BLS12_381_G2X2 => subCheckG2BLS12381_Q_x2
+	%BLS12_381_G2Y1 => subCheckG2BLS12381_Q_y1
+	%BLS12_381_G2Y2 => subCheckG2BLS12381_Q_y2
+	:CALL(subCheckG2BLS12381)
+	1 :ASSERT
+
+
+	; ====================
+        ; Half Pairing
+        ; ====================
+
+	; ERROR CODES (B)
+	; 0 - no error
+	; 1 - P is not in E
+	; 2 - P is not in G1
+	; 3 - Q is not in tE
+	; 4 - Q is not in G2
+
+	; P not in E
+	0x1n => halfPairingBLS12381_P_x
+	0x0n => halfPairingBLS12381_P_y
+	0x0n => halfPairingBLS12381_Q_x1
+	0x0n => halfPairingBLS12381_Q_x2
+	0x0n => halfPairingBLS12381_Q_y1
+	0x0n => halfPairingBLS12381_Q_y2
+	:CALL(halfPairingBLS12381)
+	B => A
+	1 :ASSERT
+
+	; P in E but not in G1
+	0x0n => halfPairingBLS12381_P_x
+	0x2n => halfPairingBLS12381_P_y
+	0x0n => halfPairingBLS12381_Q_x1
+	0x0n => halfPairingBLS12381_Q_x2
+	0x0n => halfPairingBLS12381_Q_y1
+	0x0n => halfPairingBLS12381_Q_y2
+	:CALL(halfPairingBLS12381)
+	B => A
+	2 :ASSERT
+
+	; Q not in tE
+	%BLS12_381_G1X => halfPairingBLS12381_P_x
+	%BLS12_381_G1Y => halfPairingBLS12381_P_y
+	0x0n => halfPairingBLS12381_Q_x1
+	0x0n => halfPairingBLS12381_Q_x2
+	0x0n => halfPairingBLS12381_Q_y1
+	0x0n => halfPairingBLS12381_Q_y2
+	:CALL(halfPairingBLS12381)
+	B => A
+	3 :ASSERT
+
+	; Q in tE but not in G2
+	%BLS12_381_G1X => halfPairingBLS12381_P_x
+	%BLS12_381_G1Y => halfPairingBLS12381_P_y
+	0x12deda8bb70be4c4794dcc94585b263c52da132e02454fba08128a799cfa5ad06652eb89a9f721031d6a5c58c078e23bn => halfPairingBLS12381_Q_x1
+	0x9853e6c9e41ad691c279000d77c1713c56e92a48c7de15cf67f5d2dbc060968ce701f18627311716cd027f26aea6aban => halfPairingBLS12381_Q_x2
+	0x6f121f7e95186bafe0cab771806462afc315624bf4a1f4c626ce9d2e909d056dfbd53b141ae79a46c8110971a87fff6n => halfPairingBLS12381_Q_y1
+	0x141dfa6695364be5cb6f15c2a90a0013750785679c9dae741b8974080db11deb0c1c79d8b7ab299f98741b93fcc3a77cn => halfPairingBLS12381_Q_y2
+	:CALL(halfPairingBLS12381)
+	B => A
+	4 :ASSERT
+
+	; Correct inputs
+	%BLS12_381_G1X => halfPairingBLS12381_P_x
+	%BLS12_381_G1Y => halfPairingBLS12381_P_y
+	%BLS12_381_G2X1 => halfPairingBLS12381_Q_x1
+	%BLS12_381_G2X2 => halfPairingBLS12381_Q_x2
+	%BLS12_381_G2Y1 => halfPairingBLS12381_Q_y1
+	%BLS12_381_G2Y2 => halfPairingBLS12381_Q_y2
+	:CALL(halfPairingBLS12381)
+	B => A
+	0 :ASSERT
+	0x2e0b524e383474a7f031d5ea218bfe08d2bde01d647b6678c747ba7fa102e24f9b90b4f7b3e80c3aa966db99f5a1d2en :MLOAD(halfPairingBLS12381_out11_x)
+	0xaa54a1af832c2f606d4f500f6b98f684292287aeb01819d537ab27161cbcb9456da9e630172e0d902231768d7c42c63n :MLOAD(halfPairingBLS12381_out11_y)
+	0x170b1d5f5d4d59e22403e8246332478820a386f6093c641a106eafbcb88e926a47740f832f8556ede45fc58894d9321en :MLOAD(halfPairingBLS12381_out12_x)
+	0x19a2bbc302d0c96a1f72d1310004330a5ad5b7fe03b0e4de50b788b54f715efb5a8b38f64f0ee819048a92a206cafb0dn :MLOAD(halfPairingBLS12381_out12_y)
+	0x56f3a2aebaf142920601510474e821b28d516d97b83d157b318ce2769d99eb0d4ff149e6527773c013c1b2274ea3830n :MLOAD(halfPairingBLS12381_out13_x)
+	0x12a3c46edb0a2b8e2ba10c91ac967ef4ff192a3b2af02605c1f19fc6a3a1580167c231247241fbe698c2ec05b379f5b3n :MLOAD(halfPairingBLS12381_out13_y)
+	0x260dc4dc640daad2235c132c66432d8b955913f255f49c3b4bf9620829a38ac6a0d0ee94dfab9a815c7a20c505c5312n :MLOAD(halfPairingBLS12381_out21_x)
+	0x6d134a86ba43d6dd28d1c90bbd384df15c81243f91b064442f99a4836f5f555f283d7c7c4faad2530d56e93fdbc1d49n :MLOAD(halfPairingBLS12381_out21_y)
+	0xeabc1b32e5ffb409f7bcc43a322d03768cbe03aa81edc8134bcdb452b9f5764ec5b651850ffb98f4e32e41839588dd9n :MLOAD(halfPairingBLS12381_out22_x)
+	0x168de3714977bf8a4833d189ad5f1da642e8c20d9dc40c06b370438b75aa5c734bbde16ab0e75d735ef8ffdd8ebc93f8n :MLOAD(halfPairingBLS12381_out22_y)
+	0x5957009d21b0992995ff6a0e7a9d96e57d0d1afdc8eee4e9fe275e1e2d6885da873c12aeaed14d9073fc9fc5b8c5f16n :MLOAD(halfPairingBLS12381_out23_x)
+	0x9273dcde1f49396b22def424b6d45d421069c1059e10bdfa182fcc08f0bbf6f1b3e95eaf2186389e3d94f4aeaa474f7n :MLOAD(halfPairingBLS12381_out23_y)
+
+	; ====================
+        ; Final Exponentiation
+        ; ====================
+        ; 0^{(p¹²-1)/r} = 0
+	0 => finalExpBLS12381_f11_x
+	0 => finalExpBLS12381_f11_y
+	0 => finalExpBLS12381_f12_x
+	0 => finalExpBLS12381_f12_y
+	0 => finalExpBLS12381_f13_x
+	0 => finalExpBLS12381_f13_y
+	0 => finalExpBLS12381_f21_x
+	0 => finalExpBLS12381_f21_y
+	0 => finalExpBLS12381_f22_x
+	0 => finalExpBLS12381_f22_y
+	0 => finalExpBLS12381_f23_x
+	0 => finalExpBLS12381_f23_y
+	:CALL(finalExpBLS12381)
+        0               :MLOAD(finalExpBLS12381_f11_x)
+        0               :MLOAD(finalExpBLS12381_f11_y)
+        0               :MLOAD(finalExpBLS12381_f12_x)
+        0               :MLOAD(finalExpBLS12381_f12_y)
+        0               :MLOAD(finalExpBLS12381_f13_x)
+        0               :MLOAD(finalExpBLS12381_f13_y)
+        0               :MLOAD(finalExpBLS12381_f21_x)
+        0               :MLOAD(finalExpBLS12381_f21_y)
+        0               :MLOAD(finalExpBLS12381_f22_x)
+        0               :MLOAD(finalExpBLS12381_f22_y)
+        0               :MLOAD(finalExpBLS12381_f23_x)
+        0               :MLOAD(finalExpBLS12381_f23_y)
+
+        ; 1^{(p¹²-1)/r} = 1
+	1 => finalExpBLS12381_f11_x
+	0 => finalExpBLS12381_f11_y
+	0 => finalExpBLS12381_f12_x
+	0 => finalExpBLS12381_f12_y
+	0 => finalExpBLS12381_f13_x
+	0 => finalExpBLS12381_f13_y
+	0 => finalExpBLS12381_f21_x
+	0 => finalExpBLS12381_f21_y
+	0 => finalExpBLS12381_f22_x
+	0 => finalExpBLS12381_f22_y
+	0 => finalExpBLS12381_f23_x
+	0 => finalExpBLS12381_f23_y
+	:CALL(finalExpBLS12381)
+        1               :MLOAD(finalExpBLS12381_f11_x)
+        0               :MLOAD(finalExpBLS12381_f11_y)
+        0               :MLOAD(finalExpBLS12381_f12_x)
+        0               :MLOAD(finalExpBLS12381_f12_y)
+        0               :MLOAD(finalExpBLS12381_f13_x)
+        0               :MLOAD(finalExpBLS12381_f13_y)
+        0               :MLOAD(finalExpBLS12381_f21_x)
+        0               :MLOAD(finalExpBLS12381_f21_y)
+        0               :MLOAD(finalExpBLS12381_f22_x)
+        0               :MLOAD(finalExpBLS12381_f22_y)
+        0               :MLOAD(finalExpBLS12381_f23_x)
+        0               :MLOAD(finalExpBLS12381_f23_y)
+
+        ; random tests
+	;1
+	0x6e73c6cbb8510f455c91a77155cfeac78b2eff90dcfd55e8bcdc51d3ad3d49c25ecfbe39af09ed23faa8d81744136e8n => finalExpBLS12381_f11_x
+	0x11406323a5b47de46f93f8c07ecff67380b309adc403d5598598de9e4d0b1b27f6b7aad7f4d2e5e33f3c46b95077257cn => finalExpBLS12381_f11_y
+	0xec1cceed76e063727e7d129534c5c7c52a732bda74d8398247811e665e4b9ca168e532306213609d2d24a7c49b84e7cn => finalExpBLS12381_f12_x
+	0x42e714ddb732f8587f13ee972c31e61c78fb5c427e7599732c9e8e352fd9f576af4fbe03da58fe6fc44905f1f7cd8bcn => finalExpBLS12381_f12_y
+	0x4a8ec7ccbb93fa8445f12d64649c25c6eebd777318ce49b85961c24b58aba15db92fd518c5932b9a59972e9678957a6n => finalExpBLS12381_f13_x
+	0x5f8f34f67ef150fdb393f4667a5c3fd1fb3e4b474d2215d03352b98effb86881b33050a9f3a82e7709ba3a71cff16een => finalExpBLS12381_f13_y
+	0x14c9616045fe3f1196cd2e33b6b711297a7fb1c45e68953124570ef4db7171f4623e8166e48bd7ff4393209ff6871356n => finalExpBLS12381_f21_x
+	0x18c1f7dabcb5518ca160db2677d95666516ee1c33356f38803960ae0be086cfdeeb9817e22dfe8e46f9eebd4df6e61e3n => finalExpBLS12381_f21_y
+	0x859536a96bc6efee3976c32ee6482ef25400768ffe5cd7a9b1fb56aae074499523fd9968d8ad127afe187032c5b9b4n => finalExpBLS12381_f22_x
+	0x3642b811e0ec187a5b4bfe41704fa8f48fe899596162cc3332714b91ae6f2d23d01cf6693ded37dccade0063e929165n => finalExpBLS12381_f22_y
+	0x18851dfe259eae0d1a18b396790a02a7b656787270335957ea3416af6c8ca46635793cbd0bb1816500946d48e2d40c69n => finalExpBLS12381_f23_x
+	0x51228f8fe1aad4277751d76ff4e717221730b7d99a7acc4860e1f8ba1fe6435d2ebd093351a9da4d7ed7e34c983a5c9n => finalExpBLS12381_f23_y
+	:CALL(finalExpBLS12381)
+        0x179411650dff7199add851aa48f9f66afd982bdc042a5478f7ad8e3718e2f53ddfb446d92eb41119e9f76b934d089bd2n               :MLOAD(finalExpBLS12381_f11_x)
+        0x1031778c9c9434bbee8582b8e60b39d9604db6c9b4dc471561dd65507b32008a8460a5ea688326c9c7af91de4b110a9cn               :MLOAD(finalExpBLS12381_f11_y)
+        0x07e68cefa6700ae85daac39385290fbbc1b81a273fa6b86cea26fada37971ecc2b6fe132a47ef9560999815ebd565519n               :MLOAD(finalExpBLS12381_f12_x)
+        0x18496f18de230234e599e197788d6148df2f4fd87ea41a7245a1e75488e4b84d6185a6045d9540ca7f3f9d4a27ae15ddn               :MLOAD(finalExpBLS12381_f12_y)
+        0x006fda369355514420b83e1f046ee101e4640cfbd061d529bee22e3660e76e93362601af10d1aa5774e21f525cf3810cn               :MLOAD(finalExpBLS12381_f13_x)
+        0x00fc8cdfd4a9339f279c467d8541e8ba254dc8021c026d1e8c2da687558049eff00aeb0605cf1a1cef89038eb287e217n               :MLOAD(finalExpBLS12381_f13_y)
+        0x0d0fd539b41e354a949a6578196143afc22e60223fee761f23609d8b3d5389caece7e104ffe75d4c15983b9aee139373n               :MLOAD(finalExpBLS12381_f21_x)
+        0x06af54072e5b0603ae2c2d92b48d632e96cdb838acea89aef49e9c878eca56189ea92f97b0244296784b8e198d02ff5an               :MLOAD(finalExpBLS12381_f21_y)
+        0x108daec66c4e18660089742da1ea577559e0ba34f53637bed7c492a5cefc9c7007d577aecea4bbc0f6000e1c363138ean               :MLOAD(finalExpBLS12381_f22_x)
+        0x10863effb74ec54265911503ed53f31b712c1b6f892119363caba008fdf069987c75591d513f9fb5bc7adca58c724104n               :MLOAD(finalExpBLS12381_f22_y)
+        0x09488ecb3d4aed1bd4c656a35f0dee5d582defa8eef8f53510da7fa52db1bc4c18287df1cc5ea759f5e4ea31790a4393n               :MLOAD(finalExpBLS12381_f23_x)
+        0x14f531c530cbb251649300bbdacb0c52f2ea693b34cf0422956c568ee87925bed4e5649dea88b9ef45a9be4a4ff993d7n               :MLOAD(finalExpBLS12381_f23_y)
+
+	;2
+	0xef76b35b467ebe7980566ce1320ebc7455e01f4148230cbe9b8e6c3a1c05be2a3a654f1709b45be45c301342914efd6n => finalExpBLS12381_f11_x
+	0x2cfa21c350a5e0bba517f0314e54e2730fd50691c8ac5cbbffc076aa7ade30d49d4ef0d844a89d75a9601e09df90302n => finalExpBLS12381_f11_y
+	0xe393aa3ba9fbab2c2c02137ab43c563384a9d973aeebafed5e0aec327caaed5b48aaa510983ad858d6cca0d42aba4d9n => finalExpBLS12381_f12_x
+	0x809902d6cf36f175feb2e1b7418fcc3a78b04c52752cee01b28d52df92a6a36c38dec6e2eb0cf2c93e502a758111b28n => finalExpBLS12381_f12_y
+	0x1acd49ebecdcee7fbfde8b8b0ce10002bd0b14dc4bc45d9b49e249a51f3857317c72b0ef08faedd3514873621f3d01fn => finalExpBLS12381_f13_x
+	0x151fc3b6ec8dfe7c67317a4c27b91a9a5beb227909e86ca195862191231d20f8748279d44f7e93e097e496ba3824053n => finalExpBLS12381_f13_y
+	0x10a3176a7ea9d2adb750b0ef756c8db1c7fe4be47901724f88cccb6e8a71f435d8b49035e0286c80f76d8f170af82807n => finalExpBLS12381_f21_x
+	0xd37fe8690c494fbe958110b3ba5483fc34996b49d651de013460d4e7b86dd28bdd35c5ef329c7b042e3eced4a26a98cn => finalExpBLS12381_f21_y
+	0xdadb6559339932210b3162fe9f6cee1959cb0baa89e32af98c18f1aae71ee97ef131de3fa4a4e31b8ad7201e8e99d42n => finalExpBLS12381_f22_x
+	0x1094fdb4c91c7b0693903d04b6a2cf45711c242be33365865d2b23b6dbcf246b5cc17671d6647065deaa25cfa30c4038n => finalExpBLS12381_f22_y
+	0x2588a5b399bf0561f5868a3449c69b991eeb6ee1113200d6a9be2ac0138ae4da335f6226821eab6fa45e493d99bb89bn => finalExpBLS12381_f23_x
+	0x24e24d7dd546a84322bab23056b1458a4a4671def9ca6b07803563f22693c7cea1140ba550b3e9da119e9fd7c89d3aan => finalExpBLS12381_f23_y
+	:CALL(finalExpBLS12381)
+        0x1462a4a81e6f6ac88f3b397bbb583069f5a57084ee0ce958f6704753199d8a70557c27bc2f9020fb5ad0b3173871bf89n               :MLOAD(finalExpBLS12381_f11_x)
+        0x118e703d5f1ed76b5daea2f62e2f518320bb22e9c3fe911752de5fa6740063160c2d6ff27a187b2d68a1da3669c0730en               :MLOAD(finalExpBLS12381_f11_y)
+        0x01a2df1cd28a00da1dccf19a3506ff7a6e0ffd3ba96e65b8c3fb262e02b31f1e5c9d6cff8382eda68470d333cb64f83dn               :MLOAD(finalExpBLS12381_f12_x)
+        0x0db41c2e0962b80813e9130a1cbd4587dd1a8861d9986e9efc2a69a915aff1fff3b11be1f18d703fe043eddb85668e48n               :MLOAD(finalExpBLS12381_f12_y)
+        0x045736c9d745034f5f7bdecfa2f6f0e824d7157f8500578eed84fa1488325f2f57b2628d922c7f40b48746624484b0a7n               :MLOAD(finalExpBLS12381_f13_x)
+        0x0feca5791efb2639a3e6f4eca0f4dc386f691c286555ed57547c6fa7e39b407412dd751535399d1276901c63a15a76a7n               :MLOAD(finalExpBLS12381_f13_y)
+        0x0f88258b56db8c3b7d0759d4bd0c0cb5204eff98918fd5b94eda25d429f79b644b87007acf575c1c20993580a43086aan               :MLOAD(finalExpBLS12381_f21_x)
+        0x01b057fa8e3819c5393192e2fce8a5ea163a6d73439f052d34a3b2192928d5bd1c6d5a9882757674488faa1f610d0144n               :MLOAD(finalExpBLS12381_f21_y)
+        0x132f1906cc438fc8724fe23ae5f90a5dd102d2943cf9737a8c1797de3bbed2055365c92aa0132f56148e6bc25e52fed3n               :MLOAD(finalExpBLS12381_f22_x)
+        0x0fece3b8b6a1f2d2d4a840531244f39f006ff7190f35f0c8535ae15b03e94f53e29cc8af94050a9a3ea528b9a5ccef81n               :MLOAD(finalExpBLS12381_f22_y)
+        0x0a5b1db0ba5e32c7d668b783099132b219c7d5d924e107a37af2e95e03423f3b1e4a73f11f80ef82cf8838f8be462311n               :MLOAD(finalExpBLS12381_f23_x)
+        0x123e510c6cca5eb31d99ee158bcbdb8f9977074516c6cf9afefeaa839d6ce1a05706e664e8e00b3d0b0695a3fb58b16fn               :MLOAD(finalExpBLS12381_f23_y)
+
+	;3
+	0xdef55f6ce5ecaa7a5443190deaaaab568b7bcc93968199725bc397eeba7083a7c3b6820fa81d123ee14a9dad36d2fe7n => finalExpBLS12381_f11_x
+	0xbd7d3c272972c1f4e9fb28f772f7be834cacc0c264315d756c561340b56a8b8e3d37dc01da0f5967ce85f520b13f33dn => finalExpBLS12381_f11_y
+	0x6913034cb5148361a03979d4f54a3e451788d35db822e19bdcaf96c5a9c76a5771dd1519f84f0be44ad1346ad784d18n => finalExpBLS12381_f12_x
+	0xca87536cf4d5a1266c1c7b12bcf8aa282b2991a016333e9dc4f4d3de45965bf195c6ff41c5fa37493207854c5b4f83an => finalExpBLS12381_f12_y
+	0xfec29364a81f1d911e646fcb17f6c91ca485aa345f4b1406f52d46fbbb405499fe4bbf787d909f9d21de6f5a07da4b6n => finalExpBLS12381_f13_x
+	0x16adfa0effcdb0769e0a3c564c6f4c4348356416f9b7b9f29692c9d4ab523a8b3e5bf4f264a75e16b03fbb6ffebeafb0n => finalExpBLS12381_f13_y
+	0xdd98e669ee3185a3aa3b269b3c974cb9bfc5d938b267b3b691dc6b4c08e5840f46a0cff910feb91a5fd9bf6dca44ccan => finalExpBLS12381_f21_x
+	0xf87e6cd493e1f5ad49170c76ef7fbc7d487b61964c4d3f25c89617e0b6209308805e4f92b9bc6d59bf2bc33fbce8386n => finalExpBLS12381_f21_y
+	0x107dd0d712bba613fe5759db9a23fab52c17bcebd299225a41da35439a30da382e61c3d59c987ac2b8a36e3e7725fb7fn => finalExpBLS12381_f22_x
+	0x1485e44a20f92bbc9708d77de33a76f24d62918f3566c937bbdb441a2e7dc6717c6ac0eda06c53c40ec802d3caaf96b8n => finalExpBLS12381_f22_y
+	0x103a5d9d178e56747b111ed2201dc7894d058c3a896b971925b5f3c339d9eb2b4c97e52139e9f4548786414c5186965bn => finalExpBLS12381_f23_x
+	0x10a82724f5d5d4e14898d3c4a96ed6ebcb8132bff965950dba3731ed03617aafb1d47f48320a4b8fa07c4597411e4237n => finalExpBLS12381_f23_y
+	:CALL(finalExpBLS12381)
+        0x08ca39bd02aa96bcbc0e369d186825153d6986e9ad64c746abf7160b0954ccaf77155f1c1c3b8416aa7203d32cd45bc2n               :MLOAD(finalExpBLS12381_f11_x)
+        0x0308190e93d426fbad31b595aadef7ada563c87a67ee7cb7844bcc8fb29491867206ac799d1c5fc6cf7e19e7bf4111f9n               :MLOAD(finalExpBLS12381_f11_y)
+        0x0f72ba317adfbc7fa263bbddd6915b498646e7dc5d5a831289546a031b028211accb117b79ab8e9337a3b48724a3fc88n               :MLOAD(finalExpBLS12381_f12_x)
+        0x112e48ba4b26247e15ffb49e286a28c3e4deaf7fed1d1495ce995caad58ed653781a378021700f3d5479d72bc53892b1n               :MLOAD(finalExpBLS12381_f12_y)
+        0x15c12b02f19bce7618e60b33f2f92e86b5c85cfc13018b33eb6df06870af12b68745e121d9047b81c42766b5c916668bn               :MLOAD(finalExpBLS12381_f13_x)
+        0x115adb221e73415b4e3603bcc4ac53ce9bcabf3813d91b69b4f8679ea84b5f04dfef8aee1d487df242507ca20b1b282bn               :MLOAD(finalExpBLS12381_f13_y)
+        0x08f609aed2d2d7b4d280cde1ba51675eaf2b79853280b3467db20881eaddd01ee72ddbea47b58732f5cbffa09732713dn               :MLOAD(finalExpBLS12381_f21_x)
+        0x0babe5453967842935b3d08ee061cf3ed3fcf12428c6c8e8d7f6717d3b435f4efbcdfc52e01a58b618e409353686c14cn               :MLOAD(finalExpBLS12381_f21_y)
+        0x0223bf765332607fb6086ba2fb318d050b54904aacab3f3f698306d7e668582063998461717b2b590210d51eaf0c3154n               :MLOAD(finalExpBLS12381_f22_x)
+        0x0e201f1c70606e694d03f2c7444b824e528bd19e915ec029d99b71b47a8e317bb49788bc8c65de69d9a238ccbeb4e4ebn               :MLOAD(finalExpBLS12381_f22_y)
+        0x13cd2014465ebf8b38c9044969d99adfdb0ea191431b7112472a6cf8524b3c649cb480d3ec1863504e25a3832ffee3d7n               :MLOAD(finalExpBLS12381_f23_x)
+        0x145bc7bccb1ff6c83dacdfa8345a546e2f3c84818fafb9c1200e60dd6753055acc1cf6de375915439d33f54059de7734n               :MLOAD(finalExpBLS12381_f23_y)
