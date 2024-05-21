@@ -57,4 +57,4 @@ addFp6BLS12381:
         E => addFp6BLS12381_c3_x
         C => addFp6BLS12381_c3_y
 
-        $ => RR                         :MLOAD(_RR), RETURN
+        _RR => RR                       :RETURN
