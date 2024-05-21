@@ -39,8 +39,6 @@ VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c5_y
 
 VAR GLOBAL _RR
 
-; TODO: unroll the loop
-
 ;     let Ca = comp(a);
 ;     let result = [[1n]];
 ;     for (let i = 0; i < e_bin.length; i++) {

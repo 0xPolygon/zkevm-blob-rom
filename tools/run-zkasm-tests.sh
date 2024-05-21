@@ -29,9 +29,8 @@ for file in *zkasm; do
             continue
         fi
 
-        # TODO: Add the blob executor instead.
         echo -e "${BLUE}   --> Test${NC} $file"
-        if ! node --max-old-space-size=5120 "$zkasmtest_path" -E -H "$helper_path" -N "2**25" "header.zkasm" "$file" "footer.zkasm" &> ../tmp/output.txt; then
+        if ! node --max-old-space-size=6144 "$zkasmtest_path" -bsE -H "$helper_path" -N "2**25" "header.zkasm" "$file" "footer.zkasm" &> ../tmp/output.txt; then
             # Check if output.txt is not empty
             if [[ -s ../tmp/output.txt ]]; then
                 cat ../tmp/output.txt

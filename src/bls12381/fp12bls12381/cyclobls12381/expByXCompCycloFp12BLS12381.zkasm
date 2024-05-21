@@ -37,8 +37,6 @@ VAR GLOBAL expByXCompCycloFp12BLS12381_c5_y
 
 VAR GLOBAL _RR
 
-; TODO: unroll the loop
-
 expByXCompCycloFp12BLS12381:
         RR => _RR
 
