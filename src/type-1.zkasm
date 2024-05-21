@@ -12,8 +12,8 @@ startBlobType1:
 
         A                               :HASHSDIGEST(E) ; used when type = 1
 
-        $                               :HASHS16(E),MSTORE(kzgCommitment_high)
-        $                               :HASHS32(E),MSTORE(kzgCommitment_low)
+        $                               :HASHS16(E),MSTORE(KZGVerify_commit_high)
+        $                               :HASHS32(E),MSTORE(KZGVerify_commit_low)
 
         1 + %MEM_ALIGN_LEN*31 => C
         $ => B                          :MEM_ALIGN_RD
@@ -23,8 +23,8 @@ startBlobType1:
         A + B => A
         $ => B                          :MLOAD(versionedHash)
         $                               :EQ,JMPNC(failAssertVersionedHash)
-        ${getKzgProof(high)}            :MSTORE(kzgProof_high) ; used when type = 1
-        ${getKzgProof(low)}             :MSTORE(kzgProof_low) ; used when type = 1
+        ${getKzgProof(high)}            :MSTORE(KZGVerify_proof_high) ; used when type = 1
+        ${getKzgProof(low)}             :MSTORE(KZGVerify_proof_low) ; used when type = 1
 
         ; HASHPOS start after kzgCommitment --> poseidon(kgzCommitment + blobData)
         %BYTES_KZGCOMMITMENT => HASHPOS
@@ -60,13 +60,18 @@ addBlobDataMemInvalid:
         RR + 1 => RR                    :JMP_NE(%NUM_ARRAY_ETH_BLOB_DATA,addBlobDataMemInvalid)
 
 callAndAssert:
+        ${getY()} => A                  :MSTORE(y)
         ; call polEvalFrBLS12381
-                                        :CALL(polEvalFrBLS12381) ; ouputs
+                                        :CALL(polEvalFrBLS12381)
+        $ => A                          :MLOAD(polEvalFrBLS12381_y)
+        ; assert output pointY
+        $                               :MLOAD(y),ASSERT
         $                               :MLOAD(polEvalFrBLS12381_index),JMPNZ(invalidMSBByte)
-        
+        ${mem.polEvalFrBLS12381_z}      :MSTORE(KZGVerify_z)
+        ${mem.polEvalFrBLS12381_y}      :MSTORE(KZGVerify_y)
         ; add batchData to batchHashData = LinearPoseidon(batchData)
         0 => RR
-        31 - 1 - 4 => RCX
+
         ; reading type
         $ => A                          :MLOAD(polEvalFrBLS12381_pol_eval[RR])
         1 + %MEM_ALIGN_LEN * 1 => C
@@ -75,6 +80,10 @@ callAndAssert:
         ; getting totalBodyLen
         2 + %MEM_ALIGN_LEN * 4 => C
         $ => B                          :MEM_ALIGN_RD,MSTORE(totalBodyLen)
+
+        ; update RCX remaining bytes on A
+        31 - %BYTES_COMPRESSION_TYPE - %BYTES_BODY_LENGTH => RCX
+
         ; BYTES_ETH_BLOB_DATA >= 5 + totalBodyLen
         %BYTES_ETH_BLOB_DATA - 5 - B    :JMPN(invalidParsing)
 
@@ -99,7 +108,7 @@ readBatchDataLen:
 
         ; read 4 bytes, if there are not enought bytes it's filled with zero of m1(B)
         $ => D                          :MEM_ALIGN_RD
-        RCX - 4 => RCX                  :JMP_LE(0, readRemainingBatchDataLen,readBatchData)
+        RCX - %BYTES_BATCH_LENGTH => RCX        :JMP_LE(0, readRemainingBatchDataLen,readBatchData)
 
 ; all batchlen it's at begining of memory
 readBytesBatchDataLenOnTop:
@@ -108,7 +117,7 @@ readBytesBatchDataLenOnTop:
         ; offset = 1, len = 4 bytes
         1 + %MEM_ALIGN_LEN * 4 => C
         $ => D                          :MEM_ALIGN_RD
-        31 - 4 => RCX                   :JMP(readBatchData)
+        31 - %BYTES_BATCH_LENGTH => RCX :JMP(readBatchData)
     
 ; read rest of bytes of batchDataLen
 readRemainingBatchDataLen:
@@ -165,6 +174,83 @@ hashBatchDataEnd:
         $ => B                          :MLOAD(blobDataProcessed)
         $ => C                          :MLOAD(batchLen)
         ; blobDataProcessed = B (blobDataProcessed) + C (batchLen) + 4 bytes of batch length
-        C + B + 4                       :MSTORE(blobDataProcessed)
+        C + B + %BYTES_BATCH_LENGTH     :MSTORE(blobDataProcessed)
         ; if batchLen === 0 --> readBatchDataLen, else --> nextBatch
         C                               :JMPZ(readBatchDataLen, nextBatch)
+
+; Pairing stuff
+INCLUDE "../src/bls12381/loopLengthBLS12381.zkasm"
+INCLUDE "../src/bls12381/subCheckG1BLS12381.zkasm"
+INCLUDE "../src/bls12381/subCheckG2BLS12381.zkasm"
+INCLUDE "../src/bls12381/millerLoopBLS12381.zkasm"
+INCLUDE "../src/bls12381/finalExpBLS12381.zkasm"
+INCLUDE "../src/bls12381/halfPairingBLS12381.zkasm"
+INCLUDE "../src/bls12381/KZGVerify.zkasm"
+
+; Point arithmetic
+INCLUDE "../src/bls12381/pointarith/deserializationFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/scalarMulPointFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/addPointFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/scalarMulPointFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/doublePointFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/addPointFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/doublePointFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/xSqThreeBinBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/scalarMulPointByXThreeFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/scalarMulPointByXFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/psiEndoBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/lineSamePointsBLS12381.zkasm"
+INCLUDE "../src/bls12381/pointarith/lineDiffPointsBLS12381.zkasm"
+
+; Field extensions arithmetic
+INCLUDE "../src/bls12381/frbls12381/subFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/invFrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/expBy4096FrBLS12381.zkasm"
+INCLUDE "../src/bls12381/frbls12381/polEvalFrBLS12381.zkasm"
+
+INCLUDE "../src/bls12381/fpbls12381/squareFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/addFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/subFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/dblFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/mulFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/negFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/invFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/sqrtFpBLS12381.zkasm"
+INCLUDE "../src/bls12381/fpbls12381/assertNQRFpBLS12381.zkasm"
+
+INCLUDE "../src/bls12381/fp2bls12381/addFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/subFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/dblFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/mulFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/squareFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/negFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/scalarMulFp2BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp2bls12381/invFp2BLS12381.zkasm"
+
+INCLUDE "../src/bls12381/fp6bls12381/addFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/subFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/mulFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/scalarMulFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/sparseMulAFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/sparseMulBFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/sparseMulCFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/sparseMulDFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/squareFp6BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp6bls12381/inverseFp6BLS12381.zkasm"
+
+INCLUDE "../src/bls12381/fp12bls12381/mulFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/sparseMulAFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/sparseMulBFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/squareFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/inverseFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/frobFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/frob2Fp12BLS12381.zkasm"
+
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/xAbsOneBinBLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/xAbsThreeBinBLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/compressFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/decompressFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/squareCompCycloFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/expByXCompCycloFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/expByXOneCompCycloFp12BLS12381.zkasm"
+INCLUDE "../src/bls12381/fp12bls12381/cyclobls12381/expByXThreeCompCycloFp12BLS12381.zkasm"

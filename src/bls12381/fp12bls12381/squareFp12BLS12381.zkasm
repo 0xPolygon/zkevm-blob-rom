@@ -1,0 +1,377 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP6 arithmetic
+;;
+;; squareFp12BLS12381:
+;;             in: (a1 + a2·w) ∈ Fp12, where ai ∈ Fp6
+;;             out: (a1 + a2·w)² = (c1 + c2·w) ∈ Fp12, where:
+;;                  - c1 = (a1-a2)·(a1-a2·v) + a1·a2 + a1·a2·v
+;;                  - c2 = 2·a1·a2
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL squareFp12BLS12381_a11_x
+VAR GLOBAL squareFp12BLS12381_a11_y
+VAR GLOBAL squareFp12BLS12381_a12_x
+VAR GLOBAL squareFp12BLS12381_a12_y
+VAR GLOBAL squareFp12BLS12381_a13_x
+VAR GLOBAL squareFp12BLS12381_a13_y
+VAR GLOBAL squareFp12BLS12381_a21_x
+VAR GLOBAL squareFp12BLS12381_a21_y
+VAR GLOBAL squareFp12BLS12381_a22_x
+VAR GLOBAL squareFp12BLS12381_a22_y
+VAR GLOBAL squareFp12BLS12381_a23_x
+VAR GLOBAL squareFp12BLS12381_a23_y
+VAR GLOBAL squareFp12BLS12381_c11_x
+VAR GLOBAL squareFp12BLS12381_c11_y
+VAR GLOBAL squareFp12BLS12381_c12_x
+VAR GLOBAL squareFp12BLS12381_c12_y
+VAR GLOBAL squareFp12BLS12381_c13_x
+VAR GLOBAL squareFp12BLS12381_c13_y
+VAR GLOBAL squareFp12BLS12381_c21_x
+VAR GLOBAL squareFp12BLS12381_c21_y
+VAR GLOBAL squareFp12BLS12381_c22_x
+VAR GLOBAL squareFp12BLS12381_c22_y
+VAR GLOBAL squareFp12BLS12381_c23_x
+VAR GLOBAL squareFp12BLS12381_c23_y
+
+VAR GLOBAL _a1a2mul1_x
+VAR GLOBAL _a1a2mul1_y
+VAR GLOBAL _a1a2mul2_x
+VAR GLOBAL _a1a2mul2_y
+VAR GLOBAL _a1a2mul3_x
+VAR GLOBAL _a1a2mul3_y
+
+VAR GLOBAL _a2vmul1_x
+VAR GLOBAL _a2vmul1_y
+VAR GLOBAL _a2vmul2_x
+VAR GLOBAL _a2vmul2_y
+VAR GLOBAL _a2vmul3_x
+VAR GLOBAL _a2vmul3_y
+
+VAR GLOBAL _a1a2vmul1_x
+VAR GLOBAL _a1a2vmul1_y
+VAR GLOBAL _a1a2vmul2_x
+VAR GLOBAL _a1a2vmul2_y
+VAR GLOBAL _a1a2vmul3_x
+VAR GLOBAL _a1a2vmul3_y
+
+VAR GLOBAL _a1a2sub1_x
+VAR GLOBAL _a1a2sub1_y
+VAR GLOBAL _a1a2sub2_x
+VAR GLOBAL _a1a2sub2_y
+VAR GLOBAL _a1a2sub3_x
+VAR GLOBAL _a1a2sub3_y
+VAR GLOBAL _a1a2vsub1_x
+VAR GLOBAL _a1a2vsub1_y
+VAR GLOBAL _a1a2vsub2_x
+VAR GLOBAL _a1a2vsub2_y
+VAR GLOBAL _a1a2vsub3_x
+VAR GLOBAL _a1a2vsub3_y
+
+VAR GLOBAL _RR
+
+squareFp12BLS12381:
+        RR => _RR
+
+        ; 1] a1·a2
+        squareFp12BLS12381_a11_x => A
+        squareFp12BLS12381_a11_y => B
+        A => mulFp6BLS12381_a1_x
+        B => mulFp6BLS12381_a1_y
+        squareFp12BLS12381_a12_x => A
+        squareFp12BLS12381_a12_y => B
+        A => mulFp6BLS12381_a2_x
+        B => mulFp6BLS12381_a2_y
+        squareFp12BLS12381_a13_x => A
+        squareFp12BLS12381_a13_y => B
+        A => mulFp6BLS12381_a3_x
+        B => mulFp6BLS12381_a3_y
+
+        squareFp12BLS12381_a21_x => A
+        squareFp12BLS12381_a21_y => B
+        A => mulFp6BLS12381_b1_x
+        B => mulFp6BLS12381_b1_y
+        squareFp12BLS12381_a22_x => A
+        squareFp12BLS12381_a22_y => B
+        A => mulFp6BLS12381_b2_x
+        B => mulFp6BLS12381_b2_y
+        squareFp12BLS12381_a23_x => A
+        squareFp12BLS12381_a23_y => B
+        A => mulFp6BLS12381_b3_x
+        B => mulFp6BLS12381_b3_y                :CALL(mulFp6BLS12381)
+        mulFp6BLS12381_c1_x => A
+        mulFp6BLS12381_c1_y => B
+        A => _a1a2mul1_x
+        B => _a1a2mul1_y
+        mulFp6BLS12381_c2_x => A
+        mulFp6BLS12381_c2_y => B
+        A => _a1a2mul2_x
+        B => _a1a2mul2_y
+        mulFp6BLS12381_c3_x => A
+        mulFp6BLS12381_c3_y => B
+        A => _a1a2mul3_x
+        B => _a1a2mul3_y
+
+        ; 2] a2·v
+        squareFp12BLS12381_a21_x => A
+        squareFp12BLS12381_a21_y => B
+        A => sparseMulBFp6BLS12381_a1_x
+        B => sparseMulBFp6BLS12381_a1_y
+        squareFp12BLS12381_a22_x => A
+        squareFp12BLS12381_a22_y => B
+        A => sparseMulBFp6BLS12381_a2_x
+        B => sparseMulBFp6BLS12381_a2_y
+        squareFp12BLS12381_a23_x => A
+        squareFp12BLS12381_a23_y => B
+        A => sparseMulBFp6BLS12381_a3_x
+        B => sparseMulBFp6BLS12381_a3_y
+
+        1 => sparseMulBFp6BLS12381_b2_x
+        0 => sparseMulBFp6BLS12381_b2_y         :CALL(sparseMulBFp6BLS12381)
+        sparseMulBFp6BLS12381_c1_x => A
+        sparseMulBFp6BLS12381_c1_y => B
+        A => _a2vmul1_x
+        B => _a2vmul1_y
+        sparseMulBFp6BLS12381_c2_x => A
+        sparseMulBFp6BLS12381_c2_y => B
+        A => _a2vmul2_x
+        B => _a2vmul2_y
+        sparseMulBFp6BLS12381_c3_x => A
+        sparseMulBFp6BLS12381_c3_y => B
+        A => _a2vmul3_x
+        B => _a2vmul3_y
+
+        ; 2] a1·a2·v
+        _a1a2mul1_x => A
+        _a1a2mul1_y => B
+        A => sparseMulBFp6BLS12381_a1_x
+        B => sparseMulBFp6BLS12381_a1_y
+        _a1a2mul2_x => A
+        _a1a2mul2_y => B
+        A => sparseMulBFp6BLS12381_a2_x
+        B => sparseMulBFp6BLS12381_a2_y
+        _a1a2mul3_x => A
+        _a1a2mul3_y => B
+        A => sparseMulBFp6BLS12381_a3_x
+        B => sparseMulBFp6BLS12381_a3_y
+
+        1 => sparseMulBFp6BLS12381_b2_x
+        0 => sparseMulBFp6BLS12381_b2_y         :CALL(sparseMulBFp6BLS12381)
+        sparseMulBFp6BLS12381_c1_x => A
+        sparseMulBFp6BLS12381_c1_y => B
+        A => _a1a2vmul1_x
+        B => _a1a2vmul1_y
+        sparseMulBFp6BLS12381_c2_x => A
+        sparseMulBFp6BLS12381_c2_y => B
+        A => _a1a2vmul2_x
+        B => _a1a2vmul2_y
+        sparseMulBFp6BLS12381_c3_x => A
+        sparseMulBFp6BLS12381_c3_y => B
+        A => _a1a2vmul3_x
+        B => _a1a2vmul3_y
+
+        ; 3] c2 = 2·a1·a2
+        _a1a2mul1_x => A
+        _a1a2mul1_y => B
+        A => scalarMulFp6BLS12381_a1_x
+        B => scalarMulFp6BLS12381_a1_y
+        _a1a2mul2_x => A
+        _a1a2mul2_y => B
+        A => scalarMulFp6BLS12381_a2_x
+        B => scalarMulFp6BLS12381_a2_y
+        _a1a2mul3_x => A
+        _a1a2mul3_y => B
+        A => scalarMulFp6BLS12381_a3_x
+        B => scalarMulFp6BLS12381_a3_y
+
+        2 => scalarMulFp6BLS12381_b             :CALL(scalarMulFp6BLS12381)
+        scalarMulFp6BLS12381_c1_x => A
+        scalarMulFp6BLS12381_c1_y => B
+        A => squareFp12BLS12381_c21_x
+        B => squareFp12BLS12381_c21_y
+        scalarMulFp6BLS12381_c2_x => A
+        scalarMulFp6BLS12381_c2_y => B
+        A => squareFp12BLS12381_c22_x
+        B => squareFp12BLS12381_c22_y
+        scalarMulFp6BLS12381_c3_x => A
+        scalarMulFp6BLS12381_c3_y => B
+        A => squareFp12BLS12381_c23_x
+        B => squareFp12BLS12381_c23_y
+
+        ; 4] a1-a2
+        squareFp12BLS12381_a11_x => A
+        squareFp12BLS12381_a11_y => B
+        A => subFp6BLS12381_a1_x
+        B => subFp6BLS12381_a1_y
+        squareFp12BLS12381_a12_x => A
+        squareFp12BLS12381_a12_y => B
+        A => subFp6BLS12381_a2_x
+        B => subFp6BLS12381_a2_y
+        squareFp12BLS12381_a13_x => A
+        squareFp12BLS12381_a13_y => B
+        A => subFp6BLS12381_a3_x
+        B => subFp6BLS12381_a3_y
+
+        squareFp12BLS12381_a21_x => A
+        squareFp12BLS12381_a21_y => B
+        A => subFp6BLS12381_b1_x
+        B => subFp6BLS12381_b1_y
+        squareFp12BLS12381_a22_x => A
+        squareFp12BLS12381_a22_y => B
+        A => subFp6BLS12381_b2_x
+        B => subFp6BLS12381_b2_y
+        squareFp12BLS12381_a23_x => A
+        squareFp12BLS12381_a23_y => B
+        A => subFp6BLS12381_b3_x
+        B => subFp6BLS12381_b3_y                :CALL(subFp6BLS12381)
+
+        subFp6BLS12381_c1_x => A
+        subFp6BLS12381_c1_y => B
+        A => _a1a2sub1_x
+        B => _a1a2sub1_y
+        subFp6BLS12381_c2_x => A
+        subFp6BLS12381_c2_y => B
+        A => _a1a2sub2_x
+        B => _a1a2sub2_y
+        subFp6BLS12381_c3_x => A
+        subFp6BLS12381_c3_y => B
+        A => _a1a2sub3_x
+        B => _a1a2sub3_y
+
+
+        ; 5] a1-a2·v
+        squareFp12BLS12381_a11_x => A
+        squareFp12BLS12381_a11_y => B
+        A => subFp6BLS12381_a1_x
+        B => subFp6BLS12381_a1_y
+        squareFp12BLS12381_a12_x => A
+        squareFp12BLS12381_a12_y => B
+        A => subFp6BLS12381_a2_x
+        B => subFp6BLS12381_a2_y
+        squareFp12BLS12381_a13_x => A
+        squareFp12BLS12381_a13_y => B
+        A => subFp6BLS12381_a3_x
+        B => subFp6BLS12381_a3_y
+
+        _a2vmul1_x => A
+        _a2vmul1_y => B
+        A => subFp6BLS12381_b1_x
+        B => subFp6BLS12381_b1_y
+        _a2vmul2_x => A
+        _a2vmul2_y => B
+        A => subFp6BLS12381_b2_x
+        B => subFp6BLS12381_b2_y
+        _a2vmul3_x => A
+        _a2vmul3_y => B
+        A => subFp6BLS12381_b3_x
+        B => subFp6BLS12381_b3_y                :CALL(subFp6BLS12381)
+
+        subFp6BLS12381_c1_x => A
+        subFp6BLS12381_c1_y => B
+        A => _a1a2vsub1_x
+        B => _a1a2vsub1_y
+        subFp6BLS12381_c2_x => A
+        subFp6BLS12381_c2_y => B
+        A => _a1a2vsub2_x
+        B => _a1a2vsub2_y
+        subFp6BLS12381_c3_x => A
+        subFp6BLS12381_c3_y => B
+        A => _a1a2vsub3_x
+        B => _a1a2vsub3_y
+
+        ; 7] c1 = (a1-a2)·(a1-a2·v) + a1·a2 + a1·a2·v
+        _a1a2sub1_x => A
+        _a1a2sub1_y => B
+        A => mulFp6BLS12381_a1_x
+        B => mulFp6BLS12381_a1_y
+        _a1a2sub2_x => A
+        _a1a2sub2_y => B
+        A => mulFp6BLS12381_a2_x
+        B => mulFp6BLS12381_a2_y
+        _a1a2sub3_x => A
+        _a1a2sub3_y => B
+        A => mulFp6BLS12381_a3_x
+        B => mulFp6BLS12381_a3_y
+
+
+        _a1a2vsub1_x => A
+        _a1a2vsub1_y => B
+        A => mulFp6BLS12381_b1_x
+        B => mulFp6BLS12381_b1_y
+        _a1a2vsub2_x => A
+        _a1a2vsub2_y => B
+        A => mulFp6BLS12381_b2_x
+        B => mulFp6BLS12381_b2_y
+        _a1a2vsub3_x => A
+        _a1a2vsub3_y => B
+        A => mulFp6BLS12381_b3_x
+        B => mulFp6BLS12381_b3_y                :CALL(mulFp6BLS12381)
+
+        mulFp6BLS12381_c1_x => A
+        mulFp6BLS12381_c1_y => B
+        A => addFp6BLS12381_a1_x
+        B => addFp6BLS12381_a1_y
+        mulFp6BLS12381_c2_x => A
+        mulFp6BLS12381_c2_y => B
+        A => addFp6BLS12381_a2_x
+        B => addFp6BLS12381_a2_y
+        mulFp6BLS12381_c3_x => A
+        mulFp6BLS12381_c3_y => B
+        A => addFp6BLS12381_a3_x
+        B => addFp6BLS12381_a3_y
+
+        _a1a2mul1_x => A
+        _a1a2mul1_y => B
+        A => addFp6BLS12381_b1_x
+        B => addFp6BLS12381_b1_y
+        _a1a2mul2_x => A
+        _a1a2mul2_y => B
+        A => addFp6BLS12381_b2_x
+        B => addFp6BLS12381_b2_y
+        _a1a2mul3_x => A
+        _a1a2mul3_y => B
+        A => addFp6BLS12381_b3_x
+        B => addFp6BLS12381_b3_y                :CALL(addFp6BLS12381)
+
+        addFp6BLS12381_c1_x => A
+        addFp6BLS12381_c1_y => B
+        A => addFp6BLS12381_a1_x
+        B => addFp6BLS12381_a1_y
+        addFp6BLS12381_c2_x => A
+        addFp6BLS12381_c2_y => B
+        A => addFp6BLS12381_a2_x
+        B => addFp6BLS12381_a2_y
+        addFp6BLS12381_c3_x => A
+        addFp6BLS12381_c3_y => B
+        A => addFp6BLS12381_a3_x
+        B => addFp6BLS12381_a3_y
+
+        _a1a2vmul1_x => A
+        _a1a2vmul1_y => B
+        A => addFp6BLS12381_b1_x
+        B => addFp6BLS12381_b1_y
+        _a1a2vmul2_x => A
+        _a1a2vmul2_y => B
+        A => addFp6BLS12381_b2_x
+        B => addFp6BLS12381_b2_y
+        _a1a2vmul3_x => A
+        _a1a2vmul3_y => B
+        A => addFp6BLS12381_b3_x
+        B => addFp6BLS12381_b3_y                :CALL(addFp6BLS12381)
+
+        addFp6BLS12381_c1_x => A
+        addFp6BLS12381_c1_y => B
+        A => squareFp12BLS12381_c11_x
+        B => squareFp12BLS12381_c11_y
+        addFp6BLS12381_c2_x => A
+        addFp6BLS12381_c2_y => B
+        A => squareFp12BLS12381_c12_x
+        B => squareFp12BLS12381_c12_y
+        addFp6BLS12381_c3_x => A
+        addFp6BLS12381_c3_y => B
+        A => squareFp12BLS12381_c13_x
+        B => squareFp12BLS12381_c13_y
+
+        _RR => RR                               :RETURN

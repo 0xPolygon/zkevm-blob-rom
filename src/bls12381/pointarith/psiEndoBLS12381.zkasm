@@ -1,0 +1,91 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: Q ∈ E'(Fp2)\{𝒪} and Q.x1,Q.x2,Q.y1,Q.y2 ∈ [0, 2³⁸⁴ - 1]
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2/FP arithmetic
+;;
+;;  This function applies the untwist-Frobenius-twist endomorphism 𝜑⁻¹𝜋ₚ𝜑 to a point Q ∈ E'(Fp2), where
+;;  𝜑 : E'(Fp2) -> E(Fp12) defined by 𝜑(x,y) = (x/ω²,y/ω³) = (x·(%W_INV_X + %W_INV_Y·u)·ω⁴,y·(%W_INV_X + %W_INV_Y·u)·ω³) is the untwist map
+;;  𝜋ₚ : E(Fp12) -> E(Fp12) defined by 𝜋ₚ(x,y) = (xᵖ,yᵖ) is the Frobenius map
+;;  𝜑⁻¹ : E(Fp12) -> E'(Fp2) defined by 𝜑⁻¹(x,y) = (x·ω²,y·ω³) is the twist map
+;;
+;;  psiEndoBLS12381:
+;;          input: Q ∈ E'(Fp2)
+;;          output: ψ(Q) := (𝜑⁻¹𝜋ₚ𝜑)(Q) = 𝜑⁻¹(𝜋ₚ(𝜑(Q))) ∈ E'(Fp2)\{𝒪}
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL psiEndoBLS12381_Q_x1
+VAR GLOBAL psiEndoBLS12381_Q_x2
+VAR GLOBAL psiEndoBLS12381_Q_y1
+VAR GLOBAL psiEndoBLS12381_Q_y2
+
+VAR GLOBAL psiEndoBLS12381_psi_Q_x1
+VAR GLOBAL psiEndoBLS12381_psi_Q_x2
+VAR GLOBAL psiEndoBLS12381_psi_Q_y1
+VAR GLOBAL psiEndoBLS12381_psi_Q_y2
+
+VAR GLOBAL _phi_Q_x1
+VAR GLOBAL _phi_Q_x2
+VAR GLOBAL _phi_Q_y1
+VAR GLOBAL _phi_Q_y2
+VAR GLOBAL _frob_Q_x1
+VAR GLOBAL _frob_Q_x2
+VAR GLOBAL _frob_Q_y1
+VAR GLOBAL _frob_Q_y2
+
+VAR GLOBAL _RR
+
+psiEndoBLS12381:
+    RR => _RR
+
+    ; 1] Compute 𝜑(x,y) = (x/ω²,y/ω³) = (x·(%W_INV_X + %W_INV_Y·u)·ω⁴,y·(%W_INV_X + %W_INV_Y·u)·ω³) ∈ E(Fp12)
+    %W_INV_X => A
+    %W_INV_Y => B
+    psiEndoBLS12381_Q_x1 => C
+    psiEndoBLS12381_Q_x2 => D                   :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => _phi_Q_x1
+    C => _phi_Q_x2
+
+    %W_INV_X => A
+    %W_INV_Y => B
+    psiEndoBLS12381_Q_y1 => C
+    psiEndoBLS12381_Q_y2 => D                   :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => _phi_Q_y1
+    C => _phi_Q_y2
+    ; Define 𝜑(x,y) = (a,b)
+
+    ; 2] Compute 𝜋ₚ(a,b) = (aᵖ,bᵖ), i.e., apply the frobenius operator
+    ;    Since the previous result has only one non-zero coefficient, we can apply a specialized frobenius directly
+    ;    Frob(a·ω⁴) = a̅·γ14·ω⁴, Frob(a·ω³) = a̅·γ13·ω³
+    _phi_Q_x2 => A                              :CALL(negFpBLS12381) ; in: [A] out: [B]
+    %FROBENIUS_GAMMA14 => A
+    _phi_Q_x1 => C
+    B => D                                      :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+    E => _frob_Q_x1
+    C => _frob_Q_x2
+
+    _phi_Q_y2 => A                              :CALL(negFpBLS12381) ; in: [A] out: [B]
+    _phi_Q_y1 => A
+    %FROBENIUS_GAMMA13X => C
+    %FROBENIUS_GAMMA13Y => D                    :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => _frob_Q_y1
+    C => _frob_Q_y2
+
+    ; 3] Compute 𝜑⁻¹(a,b) = (a·ω²,b·ω³) ∈ E'(Fp2). In our particular case, we have:
+    ;         𝜑⁻¹((a̅·γ14·ω⁴)·ω²,(a̅·γ13·ω³)·ω³) = (a̅·γ14·(1+u), a̅·γ13·(1+u))
+    _frob_Q_x1 => A
+    _frob_Q_x2 => B
+    %BLS12_381_EXT_X => C
+    %BLS12_381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => psiEndoBLS12381_psi_Q_x1
+    C => psiEndoBLS12381_psi_Q_x2
+
+    _frob_Q_y1 => A
+    _frob_Q_y2 => B
+    %BLS12_381_EXT_X => C
+    %BLS12_381_EXT_Y => D                        :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => psiEndoBLS12381_psi_Q_y1
+    C => psiEndoBLS12381_psi_Q_y2
+
+    _RR => RR                                   :RETURN

@@ -1,0 +1,156 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: All the 4096 evals must be set in polEvalFrBLS12381_pol_eval[4096] (even if they are 0)
+;;       polEvalFrBLS12381_index ∈ [1,4096]
+;; POST: Each pol_eva[i] gets reduced modulo BLS12_381_R if its bigger, for i in [0,4095]
+;;       The resulting evaluation y is in the range [0,BLS12_381_R)
+;;
+;; polEvalFrBLS12381:
+;;          input: A polynomial f(X) = ∑ᵢ fᵢ·Lᵢ(X) represented in the Lagrange basis,
+;;                 with i ∈ [0,4095], coefficients f(ωⁱ) ∈ [0, 2²⁵⁶-1] and an evaluation point z ∈ [0, 2²⁵⁶-1]
+;;          output: The evaluation:
+;;                          f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ) ∈ Fr
+;;
+;; NOTE: Lᵢ are the Lagrange polynomials on the multiplicative subgroup of Fr of order 4096,
+;;       ω is the 4096-th primitive root of unity in Fr and fᵢ = f(ωⁱ) for i ∈ [0,4095]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+INCLUDE "./rootsOfUnity4096FrBLS12381.zkasm"
+
+VAR GLOBAL polEvalFrBLS12381_pol_eval[4096]
+VAR GLOBAL polEvalFrBLS12381_index ; index of first pol_eval with alias from 1 to 4096; 0 if none have alias
+VAR GLOBAL polEvalFrBLS12381_z
+
+VAR GLOBAL polEvalFrBLS12381_y ; output
+
+VAR GLOBAL _accum
+VAR GLOBAL _inv_i
+
+VAR GLOBAL _RR
+
+; NOTE: If z is a 4096-th root of unity, say ωⁱ, we should return the i-th evaluation of the polynomial
+
+polEvalFrBLS12381:
+        RR => _RR
+
+        ; Reduce z to the range [0,BLS12_381_R) if necessary
+        polEvalFrBLS12381_z => A
+        %BLS12_381_R => B
+        $                                       :LT, JMPC(_check_index)
+
+        ; Reduction: A·1 + 0 = op (mod BLS12_381_R)
+        1 => B
+        0 => C
+        %BLS12_381_R => D
+        ${A % D} => polEvalFrBLS12381_z         :ARITH_MOD
+
+_check_index:
+        polEvalFrBLS12381_index => E          :JMPZ(_compute)
+        ; Index is in range [1,4096] if some pol_eval has alias; otherwise, it is 0
+
+        ; Reduce pol_eval_i to the range [0,BLS12_381_R) if necessary
+        E - 1 => E
+        polEvalFrBLS12381_pol_eval[E] => A
+
+        ; Reduction: A·1 + 0 = op (mod BLS12_381_R)
+        1 => B
+        0 => C
+        %BLS12_381_R => D
+        ${A % D} => polEvalFrBLS12381_pol_eval[E]      :ARITH_MOD
+
+_reduce_evals:
+        E + 1 => E
+        E                                       :JMP_EQ(4096, _compute)
+        polEvalFrBLS12381_pol_eval[E] => A
+        %BLS12_381_R => B
+        $                                       :LT, JMPC(_reduce_evals)
+
+        ; Reduction: A·1 + 0 = op (mod BLS12_381_R)
+        1 => B
+        ${A % D} => polEvalFrBLS12381_pol_eval[E] :ARITH_MOD, JMP(_reduce_evals)
+
+_compute:
+        ; Objective: f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
+
+        ; 1] Compute (z⁴⁰⁹⁶-1)/4096
+        polEvalFrBLS12381_z => A                :CALL(expBy4096FrBLS12381)
+
+        ; Check whether z is a 4096-th root of unity by checking if z⁴⁰⁹⁶ = 1
+        $0{A == 1}                              :JMPZ(_z_is_not_root_of_unity)
+
+_z_is_root_of_unity:
+        1n                                              :ASSERT
+
+        ; The following method returns the index of the associated root
+        $0{get4096RootIndex(mem.polEvalFrBLS12381_z)} => E      :JMPN(failAssert) ; if E < 0 ERROR
+
+        ; Check that the received index is in the range [0,4095]
+        E                                       :JMP_GT(4095, failAssert) ; if E > 4095 ERROR
+
+        ; Check that the received index and the root in z are correctly related
+                                                :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
+        polEvalFrBLS12381_z => A
+        C                                       :ASSERT
+
+        ; Return the corresponding evaluation
+        polEvalFrBLS12381_pol_eval[E] => A
+        A => polEvalFrBLS12381_y                :JMP(_end)
+
+_z_is_not_root_of_unity:
+        ; Objective: f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
+
+        ; ensure z its not a 4096-th root of unity
+        1 => B
+        0               :EQ
+
+        ; A = z⁴⁰⁹⁶
+        1 => C         :CALL(subFrBLS12381)
+
+        ; Compute (z⁴⁰⁹⁶-1)/4096
+        C => A
+        %BLS12_381_R_4096_inv => B
+        0 => C
+        %BLS12_381_R => D
+        ${(A*B) % D} => polEvalFrBLS12381_y       :ARITH_MOD
+
+        ; 2] Compute ∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
+        0 => _accum ; Initialize the accumulator
+        4095 => E
+
+_loop:
+        ; 2.1] Compute 1/(z-ωⁱ)
+        polEvalFrBLS12381_z => A
+                                        :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
+                                        :CALL(subFrBLS12381)
+        C => A                          :CALL(invFrBLS12381)
+        A => _inv_i
+
+        ; 2.2] Compute fᵢ·ωⁱ and multiply by 1/(z-ωⁱ)
+        polEvalFrBLS12381_pol_eval[E] => A
+                                        :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
+
+        ; fᵢ·ωⁱ
+        C => B
+        0 => C
+        %BLS12_381_R => D
+        ${(A*B) % D} => A               :ARITH_MOD
+
+        ; 1/(z-ωⁱ)
+        _inv_i => B
+        ${(A*B) % D} => C               :ARITH_MOD
+
+        ; 2.3] Accumulate the i-th term
+        _accum => A
+        1 => B
+        ${(A + C) % D} => _accum        :ARITH_MOD
+
+        E - 1 => E                      :JMPN(_last_mul, _loop)
+
+_last_mul:
+        ; 3] Multiply the accumulator by (z⁴⁰⁹⁶-1)/4096
+        _accum => A
+        polEvalFrBLS12381_y => B
+        0 => C
+        ${(A*B) % D} => polEvalFrBLS12381_y       :ARITH_MOD
+
+_end:
+        _RR => RR                       :RETURN

@@ -1,0 +1,81 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P1,P2 ∈ E'(Fp2)\{𝒪} and Q ∈ E(Fp)\{𝒪} with P1 != P2,-P2 and P1.x1,P1.x2,P1.y1,P1.y2,P2.x1,P2.x2,P2.y1,P2.y2,Q.x,Q.y ∈ [0, 2³⁸⁴ - 1]
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
+;;
+;; lineDiffPointsBLS12381:
+;;              in: P1 = (P1.x1 + P1.x2·u, P1.y1 + P1.y2·u), P2 = (P2.x1 + P2.x2·u, P2.y1 + P2.y2·u) ∈ E'(Fp2)
+;;                  and Q = (Q.x,Q.y) ∈ E(Fp)
+;;             out: line_{twist(P1), twist(P2)}(Q) = (P1.x·P2.y - P2.x·P1.y) + (P1.y - P2.y)·Q.x·w² + (P2.x - P1.x)·Q.y·w³ ∈ Fp12
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL lineDiffPointsBLS12381_P1_x1
+VAR GLOBAL lineDiffPointsBLS12381_P1_x2
+VAR GLOBAL lineDiffPointsBLS12381_P1_y1
+VAR GLOBAL lineDiffPointsBLS12381_P1_y2
+VAR GLOBAL lineDiffPointsBLS12381_P2_x1
+VAR GLOBAL lineDiffPointsBLS12381_P2_x2
+VAR GLOBAL lineDiffPointsBLS12381_P2_y1
+VAR GLOBAL lineDiffPointsBLS12381_P2_y2
+VAR GLOBAL lineDiffPointsBLS12381_Q_x
+VAR GLOBAL lineDiffPointsBLS12381_Q_y
+
+VAR GLOBAL lineDiffPointsBLS12381_l11_x
+VAR GLOBAL lineDiffPointsBLS12381_l11_y
+VAR GLOBAL lineDiffPointsBLS12381_l12_x
+VAR GLOBAL lineDiffPointsBLS12381_l12_y
+VAR GLOBAL lineDiffPointsBLS12381_l22_x
+VAR GLOBAL lineDiffPointsBLS12381_l22_y
+
+VAR GLOBAL _P2x_P1y_x
+VAR GLOBAL _P2x_P1y_y
+
+VAR GLOBAL _RR
+
+lineDiffPointsBLS12381:
+        RR => _RR
+
+        ; 1] (P1.x·P2.y - P2.x·P1.y)
+        lineDiffPointsBLS12381_P2_x1 => A
+        lineDiffPointsBLS12381_P2_x2 => B
+        lineDiffPointsBLS12381_P1_y1 => C
+        lineDiffPointsBLS12381_P1_y2 => D       :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        E => _P2x_P1y_x
+        C => _P2x_P1y_y
+
+        lineDiffPointsBLS12381_P1_x1 => A
+        lineDiffPointsBLS12381_P1_x2 => B
+        lineDiffPointsBLS12381_P2_y1 => C
+        lineDiffPointsBLS12381_P2_y2 => D       :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        E => A
+        C => B
+        _P2x_P1y_x => C
+        _P2x_P1y_y => D                         :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        E => lineDiffPointsBLS12381_l11_x
+        C => lineDiffPointsBLS12381_l11_y
+
+        ; 2] (P1.y - P2.y)·Q.x
+        lineDiffPointsBLS12381_P1_y1 => A
+        lineDiffPointsBLS12381_P1_y2 => B
+        lineDiffPointsBLS12381_P2_y1 => C
+        lineDiffPointsBLS12381_P2_y2 => D       :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        lineDiffPointsBLS12381_Q_x => A
+        C => D
+        E => C                                  :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+        E => lineDiffPointsBLS12381_l12_x
+        C => lineDiffPointsBLS12381_l12_y
+
+        ; 3] (P2.x - P1.x)·Q.y
+        lineDiffPointsBLS12381_P2_x1 => A
+        lineDiffPointsBLS12381_P2_x2 => B
+        lineDiffPointsBLS12381_P1_x1 => C
+        lineDiffPointsBLS12381_P1_x2 => D       :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        lineDiffPointsBLS12381_Q_y => A
+        C => D
+        E => C                                  :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+        E => lineDiffPointsBLS12381_l22_x
+        C => lineDiffPointsBLS12381_l22_y
+
+        _RR => RR                               :RETURN

@@ -1,0 +1,247 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
+;;
+;; expByXThreeCompCycloFp12BLS12381:
+;;             in: x, a = a0 + a2·w + a4·w² + a1·w³ + a3·w⁴ + a5·w⁵ ∈ GΦ6(p²), where ai ∈ Fp2
+;;             out: a^((x+1)/3) = c0 + c2·w + c4·w² + c1·w³ + c3·w⁴ + c5·w⁵ ∈ ∈ GΦ6(p²), where where x = 0xd201000000010000
+;;
+;; NOTE: The output is not guaranteed to be in GΦ6(p²), if the input isn't.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a0_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a0_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a2_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a2_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a4_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a4_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a1_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a1_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a3_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a3_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a5_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_a5_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c0_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c0_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c2_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c2_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c4_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c4_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c1_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c1_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c3_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c3_y
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c5_x
+VAR GLOBAL expByXThreeCompCycloFp12BLS12381_c5_y
+
+VAR GLOBAL _RR
+
+;     let Ca = comp(a);
+;     let result = [[1n]];
+;     for (let i = 0; i < e_bin.length; i++) {
+;         if (e_bin[i] === 1n) {
+;             result = Fp12_o2.mul(decomp(Ca),result);
+;         }
+
+;         Ca = squarecomp(Ca);
+;     }
+
+;     return result;
+
+expByXThreeCompCycloFp12BLS12381:
+        RR => _RR
+
+        0 => RCX
+
+        ; Start by compressing the input C(a)
+        ; Store it in the output mulFp12 for future multiplications
+        expByXThreeCompCycloFp12BLS12381_a0_x => A
+        expByXThreeCompCycloFp12BLS12381_a0_y => B
+        A => compressFp12BLS12381_a0_x
+        B => compressFp12BLS12381_a0_y
+        expByXThreeCompCycloFp12BLS12381_a2_x => A
+        expByXThreeCompCycloFp12BLS12381_a2_y => B
+        A => compressFp12BLS12381_a2_x
+        B => compressFp12BLS12381_a2_y
+        expByXThreeCompCycloFp12BLS12381_a4_x => A
+        expByXThreeCompCycloFp12BLS12381_a4_y => B
+        A => compressFp12BLS12381_a4_x
+        B => compressFp12BLS12381_a4_y
+        expByXThreeCompCycloFp12BLS12381_a1_x => A
+        expByXThreeCompCycloFp12BLS12381_a1_y => B
+        A => compressFp12BLS12381_a1_x
+        B => compressFp12BLS12381_a1_y
+        expByXThreeCompCycloFp12BLS12381_a3_x => A
+        expByXThreeCompCycloFp12BLS12381_a3_y => B
+        A => compressFp12BLS12381_a3_x
+        B => compressFp12BLS12381_a3_y
+        expByXThreeCompCycloFp12BLS12381_a5_x => A
+        expByXThreeCompCycloFp12BLS12381_a5_y => B
+        A => compressFp12BLS12381_a5_x
+        B => compressFp12BLS12381_a5_y                  :CALL(compressFp12BLS12381)
+
+        ; Store it in the output squareCompCyclo for future compressed squarings
+        compressFp12BLS12381_Ca2_x => A
+        compressFp12BLS12381_Ca2_y => B
+        A => squareCompCycloFp12BLS12381_Cb2_x
+        B => squareCompCycloFp12BLS12381_Cb2_y
+        compressFp12BLS12381_Ca3_x => A
+        compressFp12BLS12381_Ca3_y => B
+        A => squareCompCycloFp12BLS12381_Cb3_x
+        B => squareCompCycloFp12BLS12381_Cb3_y
+        compressFp12BLS12381_Ca4_x => A
+        compressFp12BLS12381_Ca4_y => B
+        A => squareCompCycloFp12BLS12381_Cb4_x
+        B => squareCompCycloFp12BLS12381_Cb4_y
+        compressFp12BLS12381_Ca5_x => A
+        compressFp12BLS12381_Ca5_y => B
+        A => squareCompCycloFp12BLS12381_Cb5_x
+        B => squareCompCycloFp12BLS12381_Cb5_y
+
+        ; Set the result to 1
+        1 => mulFp12BLS12381_c11_x
+        0 => mulFp12BLS12381_c11_y
+        0 => mulFp12BLS12381_c12_x
+        0 => mulFp12BLS12381_c12_y
+        0 => mulFp12BLS12381_c13_x
+        0 => mulFp12BLS12381_c13_y
+        0 => mulFp12BLS12381_c21_x
+        0 => mulFp12BLS12381_c21_y
+        0 => mulFp12BLS12381_c22_x
+        0 => mulFp12BLS12381_c22_y
+        0 => mulFp12BLS12381_c23_x
+        0 => mulFp12BLS12381_c23_y
+
+
+_loop:
+        RCX => RR                                       :JMP_EQ(63, _last)
+
+        ; We check if the next bit is either 1 or 0
+                                                        :CALL(@xAbsThreeBinBLS12381 + RR)
+
+        ; if bit = 0, then avoid the multiplication and just square
+        B                                               :JMPZ(_square)
+
+        ; else, multiply by the last result
+
+        ; We decompress D(C(c)) = c
+        squareCompCycloFp12BLS12381_Cb2_x => A
+        squareCompCycloFp12BLS12381_Cb2_y => B
+        A => decompressFp12BLS12381_Ca2_x
+        B => decompressFp12BLS12381_Ca2_y
+        squareCompCycloFp12BLS12381_Cb3_x => A
+        squareCompCycloFp12BLS12381_Cb3_y => B
+        A => decompressFp12BLS12381_Ca3_x
+        B => decompressFp12BLS12381_Ca3_y
+        squareCompCycloFp12BLS12381_Cb4_x => A
+        squareCompCycloFp12BLS12381_Cb4_y => B
+        A => decompressFp12BLS12381_Ca4_x
+        B => decompressFp12BLS12381_Ca4_y
+        squareCompCycloFp12BLS12381_Cb5_x => A
+        squareCompCycloFp12BLS12381_Cb5_y => B
+        A => decompressFp12BLS12381_Ca5_x
+        B => decompressFp12BLS12381_Ca5_y               :CALL(decompressFp12BLS12381)
+
+        ; We multiply the last result with the decompressed c
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_a21_x
+        B => mulFp12BLS12381_a21_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_a22_x
+        B => mulFp12BLS12381_a22_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_a23_x
+        B => mulFp12BLS12381_a23_y
+        decompressFp12BLS12381_a0_x => A
+        decompressFp12BLS12381_a0_y => B
+        A => mulFp12BLS12381_b11_x
+        B => mulFp12BLS12381_b11_y
+        decompressFp12BLS12381_a2_x => A
+        decompressFp12BLS12381_a2_y => B
+        A => mulFp12BLS12381_b21_x
+        B => mulFp12BLS12381_b21_y
+        decompressFp12BLS12381_a4_x => A
+        decompressFp12BLS12381_a4_y => B
+        A => mulFp12BLS12381_b12_x
+        B => mulFp12BLS12381_b12_y
+        decompressFp12BLS12381_a1_x => A
+        decompressFp12BLS12381_a1_y => B
+        A => mulFp12BLS12381_b22_x
+        B => mulFp12BLS12381_b22_y
+        decompressFp12BLS12381_a3_x => A
+        decompressFp12BLS12381_a3_y => B
+        A => mulFp12BLS12381_b13_x
+        B => mulFp12BLS12381_b13_y
+        decompressFp12BLS12381_a5_x => A
+        decompressFp12BLS12381_a5_y => B
+        A => mulFp12BLS12381_b23_x
+        B => mulFp12BLS12381_b23_y                      :CALL(mulFp12BLS12381)
+
+_square:
+        ; We always square C(c)
+        squareCompCycloFp12BLS12381_Cb2_x => A
+        squareCompCycloFp12BLS12381_Cb2_y => B
+        A => squareCompCycloFp12BLS12381_Ca2_x
+        B => squareCompCycloFp12BLS12381_Ca2_y
+        squareCompCycloFp12BLS12381_Cb3_x => A
+        squareCompCycloFp12BLS12381_Cb3_y => B
+        A => squareCompCycloFp12BLS12381_Ca3_x
+        B => squareCompCycloFp12BLS12381_Ca3_y
+        squareCompCycloFp12BLS12381_Cb4_x => A
+        squareCompCycloFp12BLS12381_Cb4_y => B
+        A => squareCompCycloFp12BLS12381_Ca4_x
+        B => squareCompCycloFp12BLS12381_Ca4_y
+        squareCompCycloFp12BLS12381_Cb5_x => A
+        squareCompCycloFp12BLS12381_Cb5_y => B
+        A => squareCompCycloFp12BLS12381_Ca5_x
+        B => squareCompCycloFp12BLS12381_Ca5_y          :CALL(squareCompCycloFp12BLS12381)
+
+        ; update the index
+        RCX + 1 => RCX                                  :JMP(_loop)
+
+_last:
+        ; Last asignment
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => expByXThreeCompCycloFp12BLS12381_c0_x
+        B => expByXThreeCompCycloFp12BLS12381_c0_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => expByXThreeCompCycloFp12BLS12381_c4_x
+        B => expByXThreeCompCycloFp12BLS12381_c4_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => expByXThreeCompCycloFp12BLS12381_c3_x
+        B => expByXThreeCompCycloFp12BLS12381_c3_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => expByXThreeCompCycloFp12BLS12381_c2_x
+        B => expByXThreeCompCycloFp12BLS12381_c2_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => expByXThreeCompCycloFp12BLS12381_c1_x
+        B => expByXThreeCompCycloFp12BLS12381_c1_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => expByXThreeCompCycloFp12BLS12381_c5_x
+        B => expByXThreeCompCycloFp12BLS12381_c5_y
+
+        _RR => RR                               :RETURN

@@ -1,0 +1,241 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
+;;
+;; decompressFp12BLS12381:
+;;             in: [a2,a3,a4,a5] ∈ Fp2⁴, where ai ∈ Fp2
+;;             out: D(a) = a0 + a2·w + a4·w² + a1·w³ + a3·w⁴ + a5·w⁵ ∈ GΦ6(p²), where:
+;;                  - if a2 != 0, then:
+;;                      · a1 = (a5²·(1+u) + 3·a4² - 2·a3)/(4·a2)
+;;                      · a0 = (2·a1² + a2·a5 - 3·a3·a4)(1+u) + 1
+;;                  - if a2 == 0, then:
+;;                      · a1 = (2·a4·a5)/a3
+;;                      · a0 = (2·a1² - 3·a3·a4)(1+u) + 1
+;;
+;; NOTE: If the input is not of the form C(a), where a ∈ GΦ6(p²), then the compression-decompression
+;;       technique is not well defined. This means that D(C(a)) != a.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL decompressFp12BLS12381_Ca2_x
+VAR GLOBAL decompressFp12BLS12381_Ca2_y
+VAR GLOBAL decompressFp12BLS12381_Ca3_x
+VAR GLOBAL decompressFp12BLS12381_Ca3_y
+VAR GLOBAL decompressFp12BLS12381_Ca4_x
+VAR GLOBAL decompressFp12BLS12381_Ca4_y
+VAR GLOBAL decompressFp12BLS12381_Ca5_x
+VAR GLOBAL decompressFp12BLS12381_Ca5_y
+VAR GLOBAL decompressFp12BLS12381_a0_x
+VAR GLOBAL decompressFp12BLS12381_a0_y
+VAR GLOBAL decompressFp12BLS12381_a2_x
+VAR GLOBAL decompressFp12BLS12381_a2_y
+VAR GLOBAL decompressFp12BLS12381_a4_x
+VAR GLOBAL decompressFp12BLS12381_a4_y
+VAR GLOBAL decompressFp12BLS12381_a1_x
+VAR GLOBAL decompressFp12BLS12381_a1_y
+VAR GLOBAL decompressFp12BLS12381_a3_x
+VAR GLOBAL decompressFp12BLS12381_a3_y
+VAR GLOBAL decompressFp12BLS12381_a5_x
+VAR GLOBAL decompressFp12BLS12381_a5_y
+
+VAR GLOBAL _Ca3inv_x
+VAR GLOBAL _Ca3inv_y
+VAR GLOBAL _twoCa1sq_x
+VAR GLOBAL _twoCa1sq_y
+VAR GLOBAL _threeCa3Ca4_x
+VAR GLOBAL _threeCa3Ca4_y
+
+VAR GLOBAL _fourCa2inv_x
+VAR GLOBAL _fourCa2inv_y
+VAR GLOBAL _twoCa1sq2_x
+VAR GLOBAL _twoCa1sq2_y
+VAR GLOBAL _Ca5sq_x
+VAR GLOBAL _Ca5sq_y
+VAR GLOBAL _threeCa4sq_x
+VAR GLOBAL _threeCa4sq_y
+VAR GLOBAL _sum_x
+VAR GLOBAL _sum_y
+
+VAR GLOBAL _RR
+
+decompressFp12BLS12381:
+        RR => _RR
+
+        ; Move Ca2, Ca3, Ca4, Ca5 to a2, a3, a4, a5
+        decompressFp12BLS12381_Ca2_x => A
+        decompressFp12BLS12381_Ca2_y => B
+        A => decompressFp12BLS12381_a2_x
+        B => decompressFp12BLS12381_a2_y
+        decompressFp12BLS12381_Ca3_x => A
+        decompressFp12BLS12381_Ca3_y => B
+        A => decompressFp12BLS12381_a3_x
+        B => decompressFp12BLS12381_a3_y
+        decompressFp12BLS12381_Ca4_x => A
+        decompressFp12BLS12381_Ca4_y => B
+        A => decompressFp12BLS12381_a4_x
+        B => decompressFp12BLS12381_a4_y
+        decompressFp12BLS12381_Ca5_x => A
+        decompressFp12BLS12381_Ca5_y => B
+        A => decompressFp12BLS12381_a5_x
+        B => decompressFp12BLS12381_a5_y
+
+        ; Is Ca2 = 0?
+        decompressFp12BLS12381_Ca2_x => C       :JMPNZ(_Ca2_is_not_zero) ; chunk 0
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 1
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 2
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 3
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 4
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 5
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 6
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 7
+
+        decompressFp12BLS12381_Ca2_y => C       :JMPNZ(_Ca2_is_not_zero) ; chunk 0
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 1
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 2
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 3
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 4
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 5
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero) ; chunk 6
+        ROTL_C => C                             :JMPNZ(_Ca2_is_not_zero, _Ca2_is_zero) ; chunk 7
+
+_Ca2_is_zero:
+        ; 1] Compute a1 = (2·a4·a5)/a3
+        decompressFp12BLS12381_Ca3_x => A
+        decompressFp12BLS12381_Ca3_y => B       :CALL(invFp2BLS12381)
+        C => _Ca3inv_x
+        D => _Ca3inv_y
+
+        2n => A
+        decompressFp12BLS12381_Ca4_x => C
+        decompressFp12BLS12381_Ca4_y => D       :CALL(scalarMulFp2BLS12381)
+        E => A
+        C => B
+        decompressFp12BLS12381_Ca5_x => C
+        decompressFp12BLS12381_Ca5_y => D       :CALL(mulFp2BLS12381)
+        E => A
+        C => B
+        _Ca3inv_x => C
+        _Ca3inv_y => D                          :CALL(mulFp2BLS12381)
+        E => decompressFp12BLS12381_a1_x
+        C => decompressFp12BLS12381_a1_y
+
+        ; 2] Compute a0 = (2·a1² - 3·a3·a4)(1+u) + 1
+        decompressFp12BLS12381_a1_x => A
+        decompressFp12BLS12381_a1_y => B        :CALL(squareFp2BLS12381)
+        2n => A
+        C => D
+        E => C                                  :CALL(scalarMulFp2BLS12381)
+        E => _twoCa1sq_x
+        C => _twoCa1sq_y
+
+        3n => A
+        decompressFp12BLS12381_Ca3_x => C
+        decompressFp12BLS12381_Ca3_y => D       :CALL(scalarMulFp2BLS12381)
+        E => A
+        C => B
+        decompressFp12BLS12381_Ca4_x => C
+        decompressFp12BLS12381_Ca4_y => D       :CALL(mulFp2BLS12381)
+        E => _threeCa3Ca4_x
+        C => _threeCa3Ca4_y
+
+        _twoCa1sq_x => A
+        _twoCa1sq_y => B
+        C => D
+        E => C                                  :CALL(subFp2BLS12381)
+        E => A
+        C => B
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        C => decompressFp12BLS12381_a0_y
+        E => A
+        1n => C                                 :CALL(addFpBLS12381)
+        C => decompressFp12BLS12381_a0_x        :JMP(_end)
+
+_Ca2_is_not_zero:
+        ; 1] Compute a1 = (a5²·(1+u) + 3·a4² - 2·a3)/(4·a2)
+        4n => A
+        decompressFp12BLS12381_Ca2_x => C
+        decompressFp12BLS12381_Ca2_y => D       :CALL(scalarMulFp2BLS12381)
+        E => A
+        C => B                                  :CALL(invFp2BLS12381)
+        C => _fourCa2inv_x
+        D => _fourCa2inv_y
+
+        decompressFp12BLS12381_Ca5_x => A
+        decompressFp12BLS12381_Ca5_y => B       :CALL(squareFp2BLS12381)
+        E => A
+        C => B
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        E => _Ca5sq_x
+        C => _Ca5sq_y
+
+        decompressFp12BLS12381_Ca4_x => A
+        decompressFp12BLS12381_Ca4_y => B       :CALL(squareFp2BLS12381)
+        3n => A
+        C => D
+        E => C                                  :CALL(scalarMulFp2BLS12381)
+        E => _threeCa4sq_x
+        C => _threeCa4sq_y
+
+        2n => A
+        decompressFp12BLS12381_Ca3_x => C
+        decompressFp12BLS12381_Ca3_y => D       :CALL(scalarMulFp2BLS12381)
+        _threeCa4sq_x => A
+        _threeCa4sq_y => B
+        C => D
+        E => C                                  :CALL(subFp2BLS12381)
+        E => A
+        C => B
+        _Ca5sq_x => C
+        _Ca5sq_y => D                           :CALL(addFp2BLS12381)
+        E => A
+        C => B
+        _fourCa2inv_x => C
+        _fourCa2inv_y => D                      :CALL(mulFp2BLS12381)
+        E => decompressFp12BLS12381_a1_x
+        C => decompressFp12BLS12381_a1_y
+
+        ; 2] Compute a0 = (2·a1² + a2·a5 - 3·a3·a4)(1+u) + 1
+        decompressFp12BLS12381_a1_x => A
+        decompressFp12BLS12381_a1_y => B        :CALL(squareFp2BLS12381)
+        2n => A
+        C => D
+        E => C                                  :CALL(scalarMulFp2BLS12381)
+        E => _twoCa1sq2_x
+        C => _twoCa1sq2_y
+
+        decompressFp12BLS12381_Ca2_x => A
+        decompressFp12BLS12381_Ca2_y => B
+        decompressFp12BLS12381_Ca5_x => C
+        decompressFp12BLS12381_Ca5_y => D       :CALL(mulFp2BLS12381)
+        E => A
+        C => B
+        _twoCa1sq2_x => C
+        _twoCa1sq2_y => D                       :CALL(addFp2BLS12381)
+
+        E => _sum_x
+        C => _sum_y
+
+        decompressFp12BLS12381_Ca3_x => A
+        decompressFp12BLS12381_Ca3_y => B
+        decompressFp12BLS12381_Ca4_x => C
+        decompressFp12BLS12381_Ca4_y => D       :CALL(mulFp2BLS12381)
+        3n => A
+        C => D
+        E => C                                  :CALL(scalarMulFp2BLS12381)
+        _sum_x => A
+        _sum_y => B
+        C => D
+        E => C                                  :CALL(subFp2BLS12381)
+        E => A
+        C => B
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D                    :CALL(mulFp2BLS12381)
+        C => decompressFp12BLS12381_a0_y
+        E => A
+        1n => C                                 :CALL(addFpBLS12381)
+        C => decompressFp12BLS12381_a0_x
+
+_end:
+        _RR => RR                               :RETURN

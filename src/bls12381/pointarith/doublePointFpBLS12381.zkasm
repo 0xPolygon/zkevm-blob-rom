@@ -1,0 +1,70 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P is in E(Fp)\{𝒪} with P.x,P.y ∈ [0, 2³⁸⁴ - 1]
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
+;;
+;; doublePointFpBLS12381:
+;;             in: P = (P.x, P.y) ∈ E(Fp)
+;;             out: [2]·P = (Q.x, Q.y) ∈ E(Fp)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+; Points of order 2 are of the form (x, 0), but notice that on E/Fp: y² = x³ + 4 there
+; not exist such points, so we can assume that P.y ≠ 0 and the output will never be the point at infinity
+
+VAR GLOBAL doublePointFpBLS12381_P_x
+VAR GLOBAL doublePointFpBLS12381_P_y
+VAR GLOBAL doublePointFpBLS12381_Q_x
+VAR GLOBAL doublePointFpBLS12381_Q_y
+
+VAR GLOBAL _lambda
+
+VAR GLOBAL _RR
+
+doublePointFpBLS12381:
+        RR => _RR
+
+        doublePointFpBLS12381_P_y => A  :CALL(dblFpBLS12381) ; in: [A] out: [B]
+        ; C = 2·P.y
+
+        B => A                          :CALL(invFpBLS12381) ; in: [A] out: [B]
+        ; B = 1 / 2·P.y
+        B => _lambda
+
+        3 => A                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+        ; C = 3/2y
+
+        doublePointFpBLS12381_P_x => A
+        C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+        ; C = 3x/2y
+
+        doublePointFpBLS12381_P_x => A
+        C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+        ; C = lambda = 3x²/2y
+        C => A,_lambda                  :CALL(squareFpBLS12381) ; in: [A] out: [B]
+        ; B = lambda²
+
+        B => C
+        doublePointFpBLS12381_P_x => A  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = lambda² - P.x
+
+        doublePointFpBLS12381_P_x => A  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = lambda² - P.x - P.x
+
+        C => A,doublePointFpBLS12381_Q_x
+        ; Q.x = lambda² - P.x - P.x
+
+        doublePointFpBLS12381_P_x => C  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = P.x - Q.x
+
+        _lambda => A
+        C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+        ; C = lambda·(P.x - Q.x)
+
+        doublePointFpBLS12381_P_y => A  :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = lambda·(P.x - Q.x) - P.y
+
+        C => doublePointFpBLS12381_Q_y
+
+        _RR => RR                       :RETURN

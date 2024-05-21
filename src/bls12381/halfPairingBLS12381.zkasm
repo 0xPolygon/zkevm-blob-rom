@@ -1,0 +1,131 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
+;;
+;; halfPairingBLS12381:
+;;          input: P ∈ Fp² and Q ∈ Fp2²
+;;          output:
+;;                  · conjugate(f_{|x|,Q}(P)) ∈ Fp12, if everything went well
+;;                  · An error code in B, different from 0, otherwise (check list below)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+; ERROR CODES (B)
+; 0 - no error
+; 1 - P is not in E
+; 2 - P is not in G1
+; 3 - Q is not in tE
+; 4 - Q is not in G2
+
+; Note: This function is the subgroup checks followed by the Miller loop. The final exponentiation
+;       is yet to be performed to complete the pairing computation
+
+VAR GLOBAL halfPairingBLS12381_P_x
+VAR GLOBAL halfPairingBLS12381_P_y
+VAR GLOBAL halfPairingBLS12381_Q_x1
+VAR GLOBAL halfPairingBLS12381_Q_x2
+VAR GLOBAL halfPairingBLS12381_Q_y1
+VAR GLOBAL halfPairingBLS12381_Q_y2
+
+VAR GLOBAL halfPairingBLS12381_out11_x
+VAR GLOBAL halfPairingBLS12381_out11_y
+VAR GLOBAL halfPairingBLS12381_out12_x
+VAR GLOBAL halfPairingBLS12381_out12_y
+VAR GLOBAL halfPairingBLS12381_out13_x
+VAR GLOBAL halfPairingBLS12381_out13_y
+VAR GLOBAL halfPairingBLS12381_out21_x
+VAR GLOBAL halfPairingBLS12381_out21_y
+VAR GLOBAL halfPairingBLS12381_out22_x
+VAR GLOBAL halfPairingBLS12381_out22_y
+VAR GLOBAL halfPairingBLS12381_out23_x
+VAR GLOBAL halfPairingBLS12381_out23_y
+
+VAR GLOBAL _RR
+
+halfPairingBLS12381:
+    RR => _RR
+
+    ; Check that P ∈ G1
+    halfPairingBLS12381_P_x => A
+    halfPairingBLS12381_P_y => B
+    A => subCheckG1BLS12381_P_x
+    B => subCheckG1BLS12381_P_y                 :CALL(subCheckG1BLS12381) ; A = 1, if P ∈ G1
+                                                                          ; A = 0, otherwise -> B = 0, if P is not in E
+                                                                          ;                     B = 1, if P is not in G1
+
+    A                                           :JMPNZ(_Q_subgroup_check)
+    B                                           :JMPZ(_P_is_not_in_E, _P_is_not_in_G1)
+
+_Q_subgroup_check:
+    ; Check that Q ∈ G2
+    halfPairingBLS12381_Q_x1 => A
+    halfPairingBLS12381_Q_x2 => B
+    A => subCheckG2BLS12381_Q_x1
+    B => subCheckG2BLS12381_Q_x2
+    halfPairingBLS12381_Q_y1 => A
+    halfPairingBLS12381_Q_y2 => B
+    A => subCheckG2BLS12381_Q_y1
+    B => subCheckG2BLS12381_Q_y2                 :CALL(subCheckG2BLS12381) ; A = 1, if Q ∈ G2
+                                                                           ; A = 0, otherwise -> B = 0, if Q is not in tE
+                                                                           ;                     B = 1, if Q is not in G2
+
+    A                                           :JMPNZ(_Miller_loop)
+    B                                           :JMPZ(_Q_is_not_in_tE, _Q_is_not_in_G2)
+
+_Miller_loop:
+    halfPairingBLS12381_P_x => A
+    halfPairingBLS12381_P_y => B
+    A => millerLoopBLS12381_P_x
+    B => millerLoopBLS12381_P_y
+    halfPairingBLS12381_Q_x1 => A
+    halfPairingBLS12381_Q_x2 => B
+    halfPairingBLS12381_Q_y1 => C
+    halfPairingBLS12381_Q_y2 => D
+    A => millerLoopBLS12381_Q_x1
+    B => millerLoopBLS12381_Q_x2
+    C => millerLoopBLS12381_Q_y1
+    D => millerLoopBLS12381_Q_y2                :CALL(millerLoopBLS12381)
+
+    millerLoopBLS12381_f11_x => A
+    millerLoopBLS12381_f11_y => B
+    A => halfPairingBLS12381_out11_x
+    B => halfPairingBLS12381_out11_y
+    millerLoopBLS12381_f12_x => A
+    millerLoopBLS12381_f12_y => B
+    A => halfPairingBLS12381_out12_x
+    B => halfPairingBLS12381_out12_y
+    millerLoopBLS12381_f13_x => A
+    millerLoopBLS12381_f13_y => B
+    A => halfPairingBLS12381_out13_x
+    B => halfPairingBLS12381_out13_y
+    millerLoopBLS12381_f21_x => A
+    millerLoopBLS12381_f21_y => B
+    A => halfPairingBLS12381_out21_x
+    B => halfPairingBLS12381_out21_y
+    millerLoopBLS12381_f22_x => A
+    millerLoopBLS12381_f22_y => B
+    A => halfPairingBLS12381_out22_x
+    B => halfPairingBLS12381_out22_y
+    millerLoopBLS12381_f23_x => A
+    millerLoopBLS12381_f23_y => B
+    A => halfPairingBLS12381_out23_x
+    B => halfPairingBLS12381_out23_y
+
+    0 => B                                      :JMP(_end)
+
+; ERRORS
+_P_is_not_in_E:
+    1 => B                                      :JMP(_end)
+
+_P_is_not_in_G1:
+    2 => B                                      :JMP(_end)
+
+_Q_is_not_in_tE:
+    3 => B                                      :JMP(_end)
+
+_Q_is_not_in_G2:
+    4 => B                                     :JMP(_end)
+
+_end:
+    _RR => RR                                   :RETURN

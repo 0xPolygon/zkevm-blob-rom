@@ -1,0 +1,75 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  loopLengthBLS12381:
+;;          output: A bit of the (little-endian) binary representation of the loop length
+;;                  of the optimal ate pairing over the BLS12381:
+;;                      0000000000000000100000000000000000000000000000001000000001001011
+;;
+;; NOTE: The loop length is precisely |x| = 0xd201000000010000
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+loopLengthBLS12381:
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	1 => B 								 :RETURN

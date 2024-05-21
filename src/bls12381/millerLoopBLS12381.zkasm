@@ -1,0 +1,376 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: P ∈ G1\{𝒪} and Q ∈ G2\{𝒪}
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
+;;
+;;  millerLoopBLS12381:
+;;          input: P ∈ G1 and Q ∈ G2
+;;          output: conjugate(f_{|x|,Q}(P)) ∈ Fp12
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL millerLoopBLS12381_P_x
+VAR GLOBAL millerLoopBLS12381_P_y
+VAR GLOBAL millerLoopBLS12381_Q_x1
+VAR GLOBAL millerLoopBLS12381_Q_x2
+VAR GLOBAL millerLoopBLS12381_Q_y1
+VAR GLOBAL millerLoopBLS12381_Q_y2
+
+VAR GLOBAL millerLoopBLS12381_f11_x
+VAR GLOBAL millerLoopBLS12381_f11_y
+VAR GLOBAL millerLoopBLS12381_f12_x
+VAR GLOBAL millerLoopBLS12381_f12_y
+VAR GLOBAL millerLoopBLS12381_f13_x
+VAR GLOBAL millerLoopBLS12381_f13_y
+VAR GLOBAL millerLoopBLS12381_f21_x
+VAR GLOBAL millerLoopBLS12381_f21_y
+VAR GLOBAL millerLoopBLS12381_f22_x
+VAR GLOBAL millerLoopBLS12381_f22_y
+VAR GLOBAL millerLoopBLS12381_f23_x
+VAR GLOBAL millerLoopBLS12381_f23_y
+
+VAR GLOBAL _R_x1
+VAR GLOBAL _R_x2
+VAR GLOBAL _R_y1
+VAR GLOBAL _R_y2
+
+VAR GLOBAL _fsquare11_x
+VAR GLOBAL _fsquare11_y
+VAR GLOBAL _fsquare12_x
+VAR GLOBAL _fsquare12_y
+VAR GLOBAL _fsquare13_x
+VAR GLOBAL _fsquare13_y
+VAR GLOBAL _fsquare21_x
+VAR GLOBAL _fsquare21_y
+VAR GLOBAL _fsquare22_x
+VAR GLOBAL _fsquare22_y
+VAR GLOBAL _fsquare23_x
+VAR GLOBAL _fsquare23_y
+
+VAR GLOBAL _RR
+
+millerLoopBLS12381:
+    RR => _RR
+
+    64 => RCX
+
+    ; Initiliaze Miller loop with R = Q and f = 1
+    millerLoopBLS12381_Q_x1 => A
+    millerLoopBLS12381_Q_x2 => B
+    millerLoopBLS12381_Q_y1 => C
+    millerLoopBLS12381_Q_y2 => D
+    A => _R_x1
+    B => _R_x2
+    C => _R_y1
+    D => _R_y2
+
+    1n => millerLoopBLS12381_f11_x
+    0n => millerLoopBLS12381_f11_y
+    0n => millerLoopBLS12381_f12_x
+    0n => millerLoopBLS12381_f12_y
+    0n => millerLoopBLS12381_f13_x
+    0n => millerLoopBLS12381_f13_y
+    0n => millerLoopBLS12381_f21_x
+    0n => millerLoopBLS12381_f21_y
+    0n => millerLoopBLS12381_f22_x
+    0n => millerLoopBLS12381_f22_y
+    0n => millerLoopBLS12381_f23_x
+    0n => millerLoopBLS12381_f23_y
+
+_loop:
+
+    RCX - 1 => RCX                      :JMPZ(_conjugate)
+
+    ; 1] f = f² · line_{twist(R),twist(R)}(P)
+
+    ; 1.1] f²
+    millerLoopBLS12381_f11_x => A
+    millerLoopBLS12381_f11_y => B
+    A => squareFp12BLS12381_a11_x
+    B => squareFp12BLS12381_a11_y
+    millerLoopBLS12381_f12_x => A
+    millerLoopBLS12381_f12_y => B
+    A => squareFp12BLS12381_a12_x
+    B => squareFp12BLS12381_a12_y
+    millerLoopBLS12381_f13_x => A
+    millerLoopBLS12381_f13_y => B
+    A => squareFp12BLS12381_a13_x
+    B => squareFp12BLS12381_a13_y
+    millerLoopBLS12381_f21_x => A
+    millerLoopBLS12381_f21_y => B
+    A => squareFp12BLS12381_a21_x
+    B => squareFp12BLS12381_a21_y
+    millerLoopBLS12381_f22_x => A
+    millerLoopBLS12381_f22_y => B
+    A => squareFp12BLS12381_a22_x
+    B => squareFp12BLS12381_a22_y
+    millerLoopBLS12381_f23_x => A
+    millerLoopBLS12381_f23_y => B
+    A => squareFp12BLS12381_a23_x
+    B => squareFp12BLS12381_a23_y       :CALL(squareFp12BLS12381)
+
+    squareFp12BLS12381_c11_x => A
+    squareFp12BLS12381_c11_y => B
+    A => _fsquare11_x
+    B => _fsquare11_y
+    squareFp12BLS12381_c12_x => A
+    squareFp12BLS12381_c12_y => B
+    A => _fsquare12_x
+    B => _fsquare12_y
+    squareFp12BLS12381_c13_x => A
+    squareFp12BLS12381_c13_y => B
+    A => _fsquare13_x
+    B => _fsquare13_y
+    squareFp12BLS12381_c21_x => A
+    squareFp12BLS12381_c21_y => B
+    A => _fsquare21_x
+    B => _fsquare21_y
+    squareFp12BLS12381_c22_x => A
+    squareFp12BLS12381_c22_y => B
+    A => _fsquare22_x
+    B => _fsquare22_y
+    squareFp12BLS12381_c23_x => A
+    squareFp12BLS12381_c23_y => B
+    A => _fsquare23_x
+    B => _fsquare23_y
+
+    ; 1.2] line_{twist(R),twist(R)}(P)
+    _R_x1 => A
+    _R_x2 => B
+    _R_y1 => C
+    _R_y2 => D
+    A => lineSamePointsBLS12381_P_x1
+    B => lineSamePointsBLS12381_P_x2
+    C => lineSamePointsBLS12381_P_y1
+    D => lineSamePointsBLS12381_P_y2
+    millerLoopBLS12381_P_x => A
+    millerLoopBLS12381_P_y => B
+    A => lineSamePointsBLS12381_Q_x
+    B => lineSamePointsBLS12381_Q_y     :CALL(lineSamePointsBLS12381)
+
+    ; 1.3] f² · line_{twist(R),twist(R)}(P)
+    _fsquare11_x => A
+    _fsquare11_y => B
+    A => sparseMulBFp12BLS12381_a11_x
+    B => sparseMulBFp12BLS12381_a11_y
+    _fsquare12_x => A
+    _fsquare12_y => B
+    A => sparseMulBFp12BLS12381_a12_x
+    B => sparseMulBFp12BLS12381_a12_y
+    _fsquare13_x => A
+    _fsquare13_y => B
+    A => sparseMulBFp12BLS12381_a13_x
+    B => sparseMulBFp12BLS12381_a13_y
+    _fsquare21_x => A
+    _fsquare21_y => B
+    A => sparseMulBFp12BLS12381_a21_x
+    B => sparseMulBFp12BLS12381_a21_y
+    _fsquare22_x => A
+    _fsquare22_y => B
+    A => sparseMulBFp12BLS12381_a22_x
+    B => sparseMulBFp12BLS12381_a22_y
+    _fsquare23_x => A
+    _fsquare23_y => B
+    A => sparseMulBFp12BLS12381_a23_x
+    B => sparseMulBFp12BLS12381_a23_y
+
+    lineSamePointsBLS12381_l21_x => A
+    lineSamePointsBLS12381_l21_y => B
+    A => sparseMulBFp12BLS12381_b21_x
+    B => sparseMulBFp12BLS12381_b21_y
+    lineSamePointsBLS12381_l22_x => A
+    lineSamePointsBLS12381_l22_y => B
+    A => sparseMulBFp12BLS12381_b22_x
+    B => sparseMulBFp12BLS12381_b22_y
+    lineSamePointsBLS12381_l13_x => A
+    lineSamePointsBLS12381_l13_y => B
+    A => sparseMulBFp12BLS12381_b13_x
+    B => sparseMulBFp12BLS12381_b13_y   :CALL(sparseMulBFp12BLS12381)
+
+    sparseMulBFp12BLS12381_c11_x => A
+    sparseMulBFp12BLS12381_c11_y => B
+    A => millerLoopBLS12381_f11_x
+    B => millerLoopBLS12381_f11_y
+    sparseMulBFp12BLS12381_c12_x => A
+    sparseMulBFp12BLS12381_c12_y => B
+    A => millerLoopBLS12381_f12_x
+    B => millerLoopBLS12381_f12_y
+    sparseMulBFp12BLS12381_c13_x => A
+    sparseMulBFp12BLS12381_c13_y => B
+    A => millerLoopBLS12381_f13_x
+    B => millerLoopBLS12381_f13_y
+    sparseMulBFp12BLS12381_c21_x => A
+    sparseMulBFp12BLS12381_c21_y => B
+    A => millerLoopBLS12381_f21_x
+    B => millerLoopBLS12381_f21_y
+    sparseMulBFp12BLS12381_c22_x => A
+    sparseMulBFp12BLS12381_c22_y => B
+    A => millerLoopBLS12381_f22_x
+    B => millerLoopBLS12381_f22_y
+    sparseMulBFp12BLS12381_c23_x => A
+    sparseMulBFp12BLS12381_c23_y => B
+    A => millerLoopBLS12381_f23_x
+    B => millerLoopBLS12381_f23_y
+
+    ; 2] R = 2·R
+    _R_x1 => A
+    _R_x2 => B
+    _R_y1 => C
+    _R_y2 => D
+    A => doublePointFp2BLS12381_P_x1
+    B => doublePointFp2BLS12381_P_x2
+    C => doublePointFp2BLS12381_P_y1
+    D => doublePointFp2BLS12381_P_y2    :CALL(doublePointFp2BLS12381)
+
+    doublePointFp2BLS12381_Q_x1 => A
+    doublePointFp2BLS12381_Q_x2 => B
+    doublePointFp2BLS12381_Q_y1 => C
+    doublePointFp2BLS12381_Q_y2 => D
+    A => _R_x1
+    B => _R_x2
+    C => _R_y1
+    D => _R_y2
+
+    RCX-1 => RR
+                :CALL(@loopLengthBLS12381 + RR)
+
+    ; if bit = 0, then repeat
+    B           :JMPZ(_loop)
+
+    ; if bit = 1, then add
+
+_add:
+
+    ; 1] f = f · line_{twist(R),twist(Q)}(P)
+    ; 1.1] line_{twist(R),twist(Q)}(P)
+    _R_x1 => A
+    _R_x2 => B
+    A => lineDiffPointsBLS12381_P1_x1
+    B => lineDiffPointsBLS12381_P1_x2
+    _R_y1 => A
+    _R_y2 => B
+    A => lineDiffPointsBLS12381_P1_y1
+    B => lineDiffPointsBLS12381_P1_y2
+    millerLoopBLS12381_Q_x1 => A
+    millerLoopBLS12381_Q_x2 => B
+    A => lineDiffPointsBLS12381_P2_x1
+    B => lineDiffPointsBLS12381_P2_x2
+    millerLoopBLS12381_Q_y1 => A
+    millerLoopBLS12381_Q_y2 => B
+    A => lineDiffPointsBLS12381_P2_y1
+    B => lineDiffPointsBLS12381_P2_y2
+    millerLoopBLS12381_P_x => A
+    millerLoopBLS12381_P_y => B
+    A => lineDiffPointsBLS12381_Q_x
+    B => lineDiffPointsBLS12381_Q_y     :CALL(lineDiffPointsBLS12381)
+
+    ; 1.2] f · line_{twist(R),twist(Q)}(P)
+    millerLoopBLS12381_f11_x => A
+    millerLoopBLS12381_f11_y => B
+    A => sparseMulAFp12BLS12381_a11_x
+    B => sparseMulAFp12BLS12381_a11_y
+    millerLoopBLS12381_f12_x => A
+    millerLoopBLS12381_f12_y => B
+    A => sparseMulAFp12BLS12381_a12_x
+    B => sparseMulAFp12BLS12381_a12_y
+    millerLoopBLS12381_f13_x => A
+    millerLoopBLS12381_f13_y => B
+    A => sparseMulAFp12BLS12381_a13_x
+    B => sparseMulAFp12BLS12381_a13_y
+    millerLoopBLS12381_f21_x => A
+    millerLoopBLS12381_f21_y => B
+    A => sparseMulAFp12BLS12381_a21_x
+    B => sparseMulAFp12BLS12381_a21_y
+    millerLoopBLS12381_f22_x => A
+    millerLoopBLS12381_f22_y => B
+    A => sparseMulAFp12BLS12381_a22_x
+    B => sparseMulAFp12BLS12381_a22_y
+    millerLoopBLS12381_f23_x => A
+    millerLoopBLS12381_f23_y => B
+    A => sparseMulAFp12BLS12381_a23_x
+    B => sparseMulAFp12BLS12381_a23_y
+
+    lineDiffPointsBLS12381_l11_x => A
+    lineDiffPointsBLS12381_l11_y => B
+    A => sparseMulAFp12BLS12381_b11_x
+    B => sparseMulAFp12BLS12381_b11_y
+    lineDiffPointsBLS12381_l12_x => A
+    lineDiffPointsBLS12381_l12_y => B
+    A => sparseMulAFp12BLS12381_b12_x
+    B => sparseMulAFp12BLS12381_b12_y
+    lineDiffPointsBLS12381_l22_x => A
+    lineDiffPointsBLS12381_l22_y => B
+    A => sparseMulAFp12BLS12381_b22_x
+    B => sparseMulAFp12BLS12381_b22_y   :CALL(sparseMulAFp12BLS12381)
+
+    sparseMulAFp12BLS12381_c11_x => A
+    sparseMulAFp12BLS12381_c11_y => B
+    A => millerLoopBLS12381_f11_x
+    B => millerLoopBLS12381_f11_y
+    sparseMulAFp12BLS12381_c12_x => A
+    sparseMulAFp12BLS12381_c12_y => B
+    A => millerLoopBLS12381_f12_x
+    B => millerLoopBLS12381_f12_y
+    sparseMulAFp12BLS12381_c13_x => A
+    sparseMulAFp12BLS12381_c13_y => B
+    A => millerLoopBLS12381_f13_x
+    B => millerLoopBLS12381_f13_y
+    sparseMulAFp12BLS12381_c21_x => A
+    sparseMulAFp12BLS12381_c21_y => B
+    A => millerLoopBLS12381_f21_x
+    B => millerLoopBLS12381_f21_y
+    sparseMulAFp12BLS12381_c22_x => A
+    sparseMulAFp12BLS12381_c22_y => B
+    A => millerLoopBLS12381_f22_x
+    B => millerLoopBLS12381_f22_y
+    sparseMulAFp12BLS12381_c23_x => A
+    sparseMulAFp12BLS12381_c23_y => B
+    A => millerLoopBLS12381_f23_x
+    B => millerLoopBLS12381_f23_y
+
+    ; 2] R = R + Q
+    _R_x1 => A
+    _R_x2 => B
+    _R_y1 => C
+    _R_y2 => D
+    A => addPointFp2BLS12381_P1_x1
+    B => addPointFp2BLS12381_P1_x2
+    C => addPointFp2BLS12381_P1_y1
+    D => addPointFp2BLS12381_P1_y2
+    millerLoopBLS12381_Q_x1 => A
+    millerLoopBLS12381_Q_x2 => B
+    millerLoopBLS12381_Q_y1 => C
+    millerLoopBLS12381_Q_y2 => D
+    A => addPointFp2BLS12381_P2_x1
+    B => addPointFp2BLS12381_P2_x2
+    C => addPointFp2BLS12381_P2_y1
+    D => addPointFp2BLS12381_P2_y2      :CALL(addPointFp2BLS12381)
+
+    addPointFp2BLS12381_P3_x1 => A
+    addPointFp2BLS12381_P3_x2 => B
+    addPointFp2BLS12381_P3_y1 => C
+    addPointFp2BLS12381_P3_y2 => D
+    A => _R_x1
+    B => _R_x2
+    C => _R_y1
+    D => _R_y2                          :JMP(_loop)
+
+_conjugate:
+
+    ; 2] f = f̅
+    millerLoopBLS12381_f21_x => C
+    millerLoopBLS12381_f21_y => D       :CALL(negFp2BLS12381)
+    E => millerLoopBLS12381_f21_x
+    C => millerLoopBLS12381_f21_y
+    millerLoopBLS12381_f22_x => C
+    millerLoopBLS12381_f22_y => D       :CALL(negFp2BLS12381)
+    E => millerLoopBLS12381_f22_x
+    C => millerLoopBLS12381_f22_y
+    millerLoopBLS12381_f23_x => C
+    millerLoopBLS12381_f23_y => D       :CALL(negFp2BLS12381)
+    E => millerLoopBLS12381_f23_x
+    C => millerLoopBLS12381_f23_y
+
+_end:
+    _RR => RR                           :RETURN

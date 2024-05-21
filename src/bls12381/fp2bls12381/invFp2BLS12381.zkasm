@@ -1,0 +1,99 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: A,B are assumed to be distinct from 0 modulo BLS12_381_P
+;; POST: ARITH_BLS12381_MULFP2 ensures that the result is in the range [0,BLS12_381_P)
+;;
+;; invFp2BLS12381
+;;             in: (A + B·u) ∈ Fp2, where A,B ∈ Fp
+;;             out: C + D·u = (A·(A² + B²)⁻¹) + (-B·(A² + B²)⁻¹)·u ∈ Fp2
+;;
+;; NOTE: On input 0, it returns 0
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL _x
+VAR GLOBAL _y
+
+VAR GLOBAL _RR
+
+invFp2BLS12381:
+        ; Check if A = B = 0, and if so, return 0
+        ${(A == 0) && (B == 0)} :JMP_EQ(1, _input_is_zero)
+
+_zero_check:
+
+        ; We must ensure that either A != 0 or B != 0
+        ; In fact, if B == 0 and A != 0, then we can compute the inverse over Fp
+        B => C                  :JMPNZ(_input_is_not_zero) ; chunk 0
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 1
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 2
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 3
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 4
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 5
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 6
+        ROTL_C => C             :JMPNZ(_input_is_not_zero) ; chunk 7
+
+        ; At this point B == 0, and we must be sure that A != 0
+        A => C                  :JMPNZ(_inverse_over_Fp) ; chunk 0
+        ROTL_C => C             :JMPNZ(_inverse_over_Fp) ; chunk 1
+        ROTL_C => C             :JMPNZ(_inverse_over_Fp) ; chunk 2
+        ROTL_C => C             :JMPNZ(_inverse_over_Fp) ; chunk 3
+        ROTL_C => C             :JMPNZ(_inverse_over_Fp) ; chunk 4
+        ROTL_C => C             :JMPNZ(_inverse_over_Fp) ; chunk 5
+        ROTL_C => C             :JMPNZ(_inverse_over_Fp) ; chunk 6
+        ROTL_C => C             :JMPZ(failAssert)          ; chunk 7
+
+_inverse_over_Fp:
+        ; otherwise, we can compute the inverse over Fp
+        RR => _RR               :CALL(invFpBLS12381_input_is_not_zero)
+        B => C
+        0 => D
+
+        _RR => RR               :RETURN
+
+_input_is_not_zero:
+        ; Remember that an element y ∈ Fp2 is the inverse of x ∈ Fp2 if and only if x·y = 1 in Fp2
+        ; We therefore check that (A + B·u)·(C + D·u) = 1 + 0·u
+        ; A·[C] - B·[D] = 1 + (q0·BLS12381_P)
+        ; A·[D] + B·[C] = 0 + (q1·BLS12381_P)
+        ${fp2BLS12_381_inv_x(A,B)} => C,_x
+        ${fp2BLS12_381_inv_y(A,B)} => D,_y
+        1 => E
+        0                       :ARITH_BLS12381_MULFP2
+
+        ; Check that the resulting elements are lower than BLS12381_P
+        %BLS12_381_P => D
+
+        ; 1] Check C
+        ; 0·B + C = op (mod BLS12381_P)
+        0 => A
+        ${C % D} => C           :ARITH_384_MOD
+
+        _x - C => C             :JMPNZ(failAssert) ; chunk 0
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 2
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 3
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 4
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 5
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 6
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 7
+
+        ; 2] Check D
+        ; 0·B + C = op (mod BLS12381_P)
+        _y => C
+        ${C % D} => D           :ARITH_384_MOD
+
+        _y - D => C             :JMPNZ(failAssert) ; chunk 0
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 1
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 2
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 3
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 4
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 5
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 6
+        ROTL_C => C             :JMPNZ(failAssert) ; chunk 7
+
+        _x => C                 :RETURN
+
+_input_is_zero:
+        0 => C,D                :ASSERT
+        B                       :ASSERT, RETURN

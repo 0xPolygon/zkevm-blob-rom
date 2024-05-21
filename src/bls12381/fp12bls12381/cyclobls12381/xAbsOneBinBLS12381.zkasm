@@ -1,0 +1,73 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  xAbsOneBinBLS12381:
+;;          output: A bit of the (little-endian) binary representation of |x|+1 = 0xd201000000010001:
+;;                      1000000000000000100000000000000000000000000000001000000001001011
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+xAbsOneBinBLS12381:
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	1 => B 								 :RETURN

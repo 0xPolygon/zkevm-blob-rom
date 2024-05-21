@@ -1,0 +1,72 @@
+    ; This file contains a subset of the tests found in other files
+
+    ; Proof is not correct
+    0x0000000000000000000000000000000000000000000000000000000000000000n => KZGVerify_commit_low
+    0xc0000000000000000000000000000000n => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000002n => KZGVerify_z
+    0x0000000000000000000000000000000000000000000000000000000000000000n => KZGVerify_y
+    0xc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bbn => KZGVerify_proof_low
+    0x97f1d3a73197d7942695638c4fa9ac0fn => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    0       :ASSERT
+
+    ; Commitment has invalid serialization
+    0x0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6n => KZGVerify_commit_low
+    0x97f1d3a73197d7942695638c4fa9acn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0xf7c3912a6adc7c3737ad3f8a3b750425c1531a7426f03033a3994bc82a10609fn => KZGVerify_proof_low
+    0xb0c829a8d2d3405304fecbea193e6c67n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    2       :ASSERT
+
+    ; edge case with commit - [y] = 𝒪 and proof = 𝒪
+    ; this means that 1 = e(𝒪, [1]₂) = e(𝒪, [x]₂ - [z]₂) is trivially satisfied (as long as [z]₂ is a curve element)
+    0x9721db309128012543902d0ac358a62ae28f75bb8f1c7c42c39a8c5529bf0f4en => KZGVerify_commit_low
+    0xa572cbea904d67468808c8eb50a9450cn => KZGVerify_commit_high
+    0x564c0a11a0f704f4fc3e8acfe0f8245f0ad1347b378fbf96e206da11a5d36306n => KZGVerify_z
+    0x0000000000000000000000000000000000000000000000000000000000000002n => KZGVerify_y
+    0x0000000000000000000000000000000000000000000000000000000000000000n => KZGVerify_proof_low
+    0xc0000000000000000000000000000000n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    1       :ASSERT
+    B => A
+    0       :ASSERT
+
+    ; standard tests
+    0x27d54c976157cb64d0a7087329a115f6ccf8d94a5f3a1af6b6c744ffc2b1eca9n => KZGVerify_commit_low
+    0xa1aa6c0a85beb947df00587918144c82n => KZGVerify_commit_high
+    0x4124347a6f69eed4bf5eae100bf955d5f54d1ea6a0d12c4993cdf46d71e3f6e1n => KZGVerify_z
+    0x1c6627da2f0d65e53ee1abd701ca7651be8fa5c89f6130af9bdf06fee6f0133bn => KZGVerify_y
+    0xe0905b77094efe5a5ee7bbbe6a306a0fab2796adedbeed5a80e94be7edc85391n => KZGVerify_proof_low
+    0xb07fece886f5ed974445971028e184c7n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    1       :ASSERT
+    B => A
+    0       :ASSERT
+
+    0x787bfcb37bf03d23741eaa351c8dd79d30fd2084ba5b50f31c8d9d7ea5b132cfn => KZGVerify_commit_low
+    0xa621f969ffcf63b944d27acc57aaee96n => KZGVerify_commit_high
+    0x13594569a0b1bd6467f11a346d8c7c5a175d3bc7d2bf2dc7789653f170c71f8fn => KZGVerify_z
+    0x61588b03541afc34b0eb0d370b69251dd4b92b3d46160ea7bf849f7fd76aab75n => KZGVerify_y
+    0x86b73e626eff578ee686c30d58cf5c990b014869a57053fb3cd77354b411e55n => KZGVerify_proof_low
+    0x930d5e1b4f053e7a633d8346a46d624bn => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    1       :ASSERT
+    B => A
+    0       :ASSERT
+
+    0x9681f5651de744fb1821f8549c78985dfe8e857456e8077fb212e7dbf4659919n => KZGVerify_commit_low
+    0x91929026d7362c49c0728370697906f5n => KZGVerify_commit_high
+    0x2bc11ee1fd56fb16c9613ea547eddf16c98c2ebc585d20e9c41b41a7af88cf85n => KZGVerify_z
+    0x3b54289a2f14cfca051407c6c8c665f1fabed0b60dac273230d18d73bf42aa97n => KZGVerify_y
+    0x3ec0baeb5881545920addafa02f0952eb50cdce2937658480d5c3cde0f967325n => KZGVerify_proof_low
+    0x89eed617c24d8a8006b2e58884a93debn => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    1       :ASSERT
+    B => A
+    0       :ASSERT

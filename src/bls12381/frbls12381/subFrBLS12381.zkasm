@@ -1,0 +1,27 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: A,C are assumed to be alias-free
+;; POST: The result is in the range [0,BLS12_381_R)
+;;
+;; subFrBLS12381:
+;;             in: A,C ∈ [0, 2²⁵⁶-1]
+;;             out: C = A - C (mod BLS12_381_R) ∈ Fr
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+subFrBLS12381:
+        C => B
+        $ => C                  :SUB, JMPC(_add_alias)
+                                :RETURN
+
+_add_alias:
+        ; if A < C, then we must compute BLS12_381_R + A - C
+
+        ; NOTE: 2·BLS12_381_R < 2²⁵⁶ < 3·BLS12_381_R
+
+        B => C ; save for later use
+
+        %BLS12_381_R => B
+        $ => A                  :ADD ; It cannot overflow under the PRE condition and the previous NOTE
+
+        C => B
+        $ => C                  :SUB, RETURN

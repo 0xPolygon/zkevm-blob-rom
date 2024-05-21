@@ -1,0 +1,116 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
+;;
+;; sparseMulDFp6BLS12381:
+;;             in: (a1 + a2·v + a3·v²),(b2·v + b3·v²) ∈ Fp6, where ai,bi ∈ Fp2
+;;             out: (c1 + c2·v + c3·v²) ∈ Fp6, where:
+;;                  - c1 = (a2·b3 + a3·b2)·(1+u)
+;;                  - c2 = a1·b2 + a3·b3·(1+u)
+;;                  - c3 = a1·b3 + a2·b2
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL sparseMulDFp6BLS12381_a1_x
+VAR GLOBAL sparseMulDFp6BLS12381_a1_y
+VAR GLOBAL sparseMulDFp6BLS12381_a2_x
+VAR GLOBAL sparseMulDFp6BLS12381_a2_y
+VAR GLOBAL sparseMulDFp6BLS12381_a3_x
+VAR GLOBAL sparseMulDFp6BLS12381_a3_y
+
+VAR GLOBAL sparseMulDFp6BLS12381_b2_x
+VAR GLOBAL sparseMulDFp6BLS12381_b2_y
+VAR GLOBAL sparseMulDFp6BLS12381_b3_x
+VAR GLOBAL sparseMulDFp6BLS12381_b3_y
+
+VAR GLOBAL sparseMulDFp6BLS12381_c1_x
+VAR GLOBAL sparseMulDFp6BLS12381_c1_y
+VAR GLOBAL sparseMulDFp6BLS12381_c2_x
+VAR GLOBAL sparseMulDFp6BLS12381_c2_y
+VAR GLOBAL sparseMulDFp6BLS12381_c3_x
+VAR GLOBAL sparseMulDFp6BLS12381_c3_y
+
+VAR GLOBAL _a2b3_x
+VAR GLOBAL _a2b3_y
+VAR GLOBAL _a1b2_x
+VAR GLOBAL _a1b2_y
+VAR GLOBAL _a1b3_x
+VAR GLOBAL _a1b3_y
+
+VAR GLOBAL _RR
+
+sparseMulDFp6BLS12381:
+        RR => _RR
+
+        ; 1] c1 = (a2·b3 + a3·b2)·(1+u)
+        sparseMulDFp6BLS12381_a2_x => A
+        sparseMulDFp6BLS12381_a2_y => B
+        sparseMulDFp6BLS12381_b3_x => C
+        sparseMulDFp6BLS12381_b3_y => D :CALL(mulFp2BLS12381)
+        E => _a2b3_x
+        C => _a2b3_y
+
+        sparseMulDFp6BLS12381_a3_x => A
+        sparseMulDFp6BLS12381_a3_y => B
+        sparseMulDFp6BLS12381_b2_x => C
+        sparseMulDFp6BLS12381_b2_y => D :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a2b3_x => C
+        _a2b3_y => D                    :CALL(addFp2BLS12381)
+
+        E => A
+        C => B
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D            :CALL(mulFp2BLS12381)
+        E => sparseMulDFp6BLS12381_c1_x
+        C => sparseMulDFp6BLS12381_c1_y
+
+        ; 2] c2 = a1·b2 + a3·b3·(1+u)
+        sparseMulDFp6BLS12381_a1_x => A
+        sparseMulDFp6BLS12381_a1_y => B
+        sparseMulDFp6BLS12381_b2_x => C
+        sparseMulDFp6BLS12381_b2_y => D :CALL(mulFp2BLS12381)
+        E => _a1b2_x
+        C => _a1b2_y
+
+        sparseMulDFp6BLS12381_a3_x => A
+        sparseMulDFp6BLS12381_a3_y => B
+        sparseMulDFp6BLS12381_b3_x => C
+        sparseMulDFp6BLS12381_b3_y => D :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        %BLS12_381_EXT_X => C
+        %BLS12_381_EXT_Y => D            :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a1b2_x => C
+        _a1b2_y => D                    :CALL(addFp2BLS12381)
+        E => sparseMulDFp6BLS12381_c2_x
+        C => sparseMulDFp6BLS12381_c2_y
+
+        ; 3] c3 = a1·b3 + a2·b2
+        sparseMulDFp6BLS12381_a1_x => A
+        sparseMulDFp6BLS12381_a1_y => B
+        sparseMulDFp6BLS12381_b3_x => C
+        sparseMulDFp6BLS12381_b3_y => D :CALL(mulFp2BLS12381)
+        E => _a1b3_x
+        C => _a1b3_y
+
+        sparseMulDFp6BLS12381_a2_x => A
+        sparseMulDFp6BLS12381_a2_y => B
+        sparseMulDFp6BLS12381_b2_x => C
+        sparseMulDFp6BLS12381_b2_y => D :CALL(mulFp2BLS12381)
+
+        E => A
+        C => B
+        _a1b3_x => C
+        _a1b3_y => D                    :CALL(addFp2BLS12381)
+        E => sparseMulDFp6BLS12381_c3_x
+        C => sparseMulDFp6BLS12381_c3_y
+
+        _RR => RR                       :RETURN

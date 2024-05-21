@@ -1,0 +1,72 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  xAbsThreeBinBLS12381:
+;;          output: A bit of the (little-endian) binary representation (|x|+1)/3 = 0x460055555555aaab:
+;;                      110101010101010110101010101010101010101010101010000000000110001
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+xAbsThreeBinBLS12381:
+	1 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN
+	1 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	0 => B 								 :RETURN
+	1 => B 								 :RETURN

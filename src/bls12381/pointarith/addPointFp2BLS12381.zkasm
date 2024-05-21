@@ -1,0 +1,175 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P1,P2 ∈ E'(Fp2)\{𝒪} with P1.x1,P1.x2,P1.y1,P1.y2,P2.x1,P2.x2,P2.y1,P2.y2 ∈ [0, 2³⁸⁴ - 1]
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
+;;
+;; addPointFp2BLS12381:
+;;             in: P1 = (P1.x1 + P1.x2·u, P1.y1 + P1.y2·u), P2 = (P2.x1 + P2.x2·u, P2.y1 + P2.y2·u) ∈ E'(Fp2)
+;;             out: P1 + P2 = (P3.x1 + P3.x2·u, P3.y1 + P3.y2·u) ∈ E'(Fp2)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL addPointFp2BLS12381_P1_x1
+VAR GLOBAL addPointFp2BLS12381_P1_x2
+VAR GLOBAL addPointFp2BLS12381_P1_y1
+VAR GLOBAL addPointFp2BLS12381_P1_y2
+VAR GLOBAL addPointFp2BLS12381_P2_x1
+VAR GLOBAL addPointFp2BLS12381_P2_x2
+VAR GLOBAL addPointFp2BLS12381_P2_y1
+VAR GLOBAL addPointFp2BLS12381_P2_y2
+VAR GLOBAL addPointFp2BLS12381_P3_x1
+VAR GLOBAL addPointFp2BLS12381_P3_x2
+VAR GLOBAL addPointFp2BLS12381_P3_y1
+VAR GLOBAL addPointFp2BLS12381_P3_y2
+
+VAR GLOBAL addPointFp2BLS12381_P3_infinity
+
+VAR GLOBAL _lambda_x
+VAR GLOBAL _lambda_y
+
+VAR GLOBAL _RR
+
+addPointFp2BLS12381:
+        RR => _RR
+
+        0 => addPointFp2BLS12381_P3_infinity ; initialize the flag
+
+        ; check whether P1.x == P2.x. If they are different, then P1 != P2,-P2
+        addPointFp2BLS12381_P1_x1 => A
+        A - addPointFp2BLS12381_P2_x1 => C              :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+
+        addPointFp2BLS12381_P1_x2 => A
+        A - addPointFp2BLS12381_P2_x2 => C              :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+
+        ; If P1.x == P2.x, then either P1 == P2 or P1 == -P2. Find which one is the case
+        addPointFp2BLS12381_P1_y1 => A
+        A - addPointFp2BLS12381_P2_y1 => C              :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+
+        addPointFp2BLS12381_P1_y1 => A
+        A - addPointFp2BLS12381_P2_y1 => C              :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPZ(_compute_double)
+
+_result_is_infinity:
+        1 => addPointFp2BLS12381_P3_infinity
+
+        _RR => RR                                       :RETURN
+
+_compute_double:
+        addPointFp2BLS12381_P1_x1 => A
+        addPointFp2BLS12381_P1_x2 => B
+        A => doublePointFp2BLS12381_P_x1
+        B => doublePointFp2BLS12381_P_x2
+        addPointFp2BLS12381_P1_y1 => A
+        addPointFp2BLS12381_P1_y2 => B
+        A => doublePointFp2BLS12381_P_y1
+        B => doublePointFp2BLS12381_P_y2                :CALL(doublePointFp2BLS12381)
+
+
+        doublePointFp2BLS12381_Q_x1 => A
+        doublePointFp2BLS12381_Q_x2 => B
+        A => addPointFp2BLS12381_P3_x1
+        B => addPointFp2BLS12381_P3_x2
+        doublePointFp2BLS12381_Q_y1 => A
+        doublePointFp2BLS12381_Q_y2 => B
+        A => addPointFp2BLS12381_P3_y1
+        B => addPointFp2BLS12381_P3_y2
+
+        _RR => RR                                       :RETURN
+
+_compute_sum:
+        addPointFp2BLS12381_P2_x1 => A
+        addPointFp2BLS12381_P2_x2 => B
+        addPointFp2BLS12381_P1_x1 => C
+        addPointFp2BLS12381_P1_x2 => D  :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = P2.x - P1.x
+
+        E => A
+        C => B                          :CALL(invFp2BLS12381) ; in: [A,B] out: [C,D]
+        ; C + D·u = 1 / (P2_x - P1_x)
+        C => _lambda_x
+        D => _lambda_y
+
+        addPointFp2BLS12381_P2_y1 => A
+        addPointFp2BLS12381_P2_y2 => B
+        addPointFp2BLS12381_P1_y1 => C
+        addPointFp2BLS12381_P1_y2 => D  :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = P2.y - P1.y
+
+        _lambda_x => A
+        _lambda_y => B
+        C => D
+        E => C                          :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = lambda = (P2_y - P1_y) / (P2_x - P1_x)
+        E => _lambda_x
+        C => _lambda_y
+
+        E => A
+        C => B                          :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
+        ; E + C·u = lambda²
+
+        E => A
+        C => B
+        addPointFp2BLS12381_P1_x1 => C
+        addPointFp2BLS12381_P1_x2 => D  :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = lambda² - P1.x
+
+        E => A
+        C => B
+        addPointFp2BLS12381_P2_x1 => C
+        addPointFp2BLS12381_P2_x2 => D  :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = lambda² - P1.x - P2.x
+
+        E => addPointFp2BLS12381_P3_x1
+        C => addPointFp2BLS12381_P3_x2
+        ; P3.x = lambda² - P1.x - P2.x
+
+        addPointFp2BLS12381_P1_x1 => A
+        addPointFp2BLS12381_P1_x2 => B
+        C => D
+        E => C                          :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = P1.x - P3.x
+
+        _lambda_x => A
+        _lambda_y => B
+        C => D
+        E => C                          :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = lambda·(P1.x - P3.x)
+
+        E => A
+        C => B
+        addPointFp2BLS12381_P1_y1 => C
+        addPointFp2BLS12381_P1_y2 => D  :CALL(subFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+        ; E + C·u = lambda·(P1.x - P3.x) - P1.y
+
+        E => addPointFp2BLS12381_P3_y1
+        C => addPointFp2BLS12381_P3_y2
+
+        _RR => RR                       :RETURN

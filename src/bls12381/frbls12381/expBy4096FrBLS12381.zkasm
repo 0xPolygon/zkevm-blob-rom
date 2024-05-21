@@ -1,0 +1,71 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_R) because if falls back to Fr arithmetic
+;;
+;; expBy4096FrBLS12381:
+;;             in: A ∈ [0, 2²⁵⁶-1]
+;;             out: A = A⁴⁰⁹⁶ (mod BLS12_381_R) ∈ Fr
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+expBy4096FrBLS12381:
+        ; Is A = 0?
+        0 => B
+        $                       :EQ, JMPC(_input_is_zero)
+
+        ; Is A = 1?
+        1 => B
+        $                       :EQ, JMPC(_input_is_one, _compute)
+
+; Begin of branching
+_input_is_zero:
+        ; 0⁴⁰⁹⁶ = 0
+        0 => A                  :RETURN
+
+_input_is_one:
+        ; 1⁴⁰⁹⁶ = 1
+        1 => A                  :RETURN
+; End of branching
+
+_compute:
+
+        ; Note that 4096 = 2^12, so computing A⁴⁰⁹⁶ consists of 12 squarings
+        A => B
+        0 => C
+        %BLS12_381_R => D
+
+        ; Square 1/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 2/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 3/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 4/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 5/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 6/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 7/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 8/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 9/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 10/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 11/12
+        ${(A*B) % D} => A,B     :ARITH_MOD
+
+        ; Square 12/12
+        ${(A*B) % D} => A       :ARITH_MOD, RETURN
+

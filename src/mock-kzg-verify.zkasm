@@ -1,7 +1,0 @@
-VAR GLOBAL kzgCommitment_low ; blobType = 1
-VAR GLOBAL kzgCommitment_high ; blobType = 1
-VAR GLOBAL kzgProof_low ; blobType = 1
-VAR GLOBAL kzgProof_high ; blobType = 1
-
-kzgVerify:
-    1 => A          :RETURN

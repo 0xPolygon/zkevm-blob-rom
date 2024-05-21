@@ -1,0 +1,131 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P ∈ E'(Fp2)\{𝒪} with P of order larger than x and P.x1,P.x2,P.y1,P.y2,Q.x,Q.y ∈ [0, 2³⁸⁴ - 1]
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFp2BLS12381
+;;
+;;
+;; scalarMulPointByXFp2BLS12381:
+;;             in: P = (P.x1 + P.x2·u, P.y1 + P.y2·u) ∈ E'(Fp2)
+;;             out: [|x|]·P = (Q.x1 + Q.x2·u, Q.y1 + Q.y2·u) ∈ E'(Fp2), where |x| = 0xd201000000010000n
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL scalarMulPointByXFp2BLS12381_P_x1
+VAR GLOBAL scalarMulPointByXFp2BLS12381_P_x2
+VAR GLOBAL scalarMulPointByXFp2BLS12381_P_y1
+VAR GLOBAL scalarMulPointByXFp2BLS12381_P_y2
+VAR GLOBAL scalarMulPointByXFp2BLS12381_Q_x1
+VAR GLOBAL scalarMulPointByXFp2BLS12381_Q_x2
+VAR GLOBAL scalarMulPointByXFp2BLS12381_Q_y1
+VAR GLOBAL scalarMulPointByXFp2BLS12381_Q_y2
+VAR GLOBAL scalarMulPointByXFp2BLS12381_Q_infinity
+
+VAR GLOBAL _RR
+
+scalarMulPointByXFp2BLS12381:
+        RR => _RR
+
+        64 => RCX
+
+        ; Set Q = P
+        scalarMulPointByXFp2BLS12381_P_x1 => A
+        scalarMulPointByXFp2BLS12381_P_x2 => B
+        scalarMulPointByXFp2BLS12381_P_y1 => C
+        scalarMulPointByXFp2BLS12381_P_y2 => D
+        A => scalarMulPointByXFp2BLS12381_Q_x1
+        B => scalarMulPointByXFp2BLS12381_Q_x2
+        C => scalarMulPointByXFp2BLS12381_Q_y1
+        D => scalarMulPointByXFp2BLS12381_Q_y2
+
+_loop:
+
+        RCX - 1 => RCX                                  :JMPZ(_end)
+
+        ; We always double
+        scalarMulPointByXFp2BLS12381_Q_x1 => A
+        scalarMulPointByXFp2BLS12381_Q_x2 => B
+        scalarMulPointByXFp2BLS12381_Q_y1 => C
+        scalarMulPointByXFp2BLS12381_Q_y2 => D
+        A => doublePointFp2BLS12381_P_x1
+        B => doublePointFp2BLS12381_P_x2
+        C => doublePointFp2BLS12381_P_y1
+        D => doublePointFp2BLS12381_P_y2                :CALL(doublePointFp2BLS12381)
+        ; Q = Q + Q
+
+        doublePointFp2BLS12381_Q_x1 => A
+        doublePointFp2BLS12381_Q_x2 => B
+        doublePointFp2BLS12381_Q_y1 => C
+        doublePointFp2BLS12381_Q_y2 => D
+        A => scalarMulPointByXFp2BLS12381_Q_x1
+        B => scalarMulPointByXFp2BLS12381_Q_x2
+        C => scalarMulPointByXFp2BLS12381_Q_y1
+        D => scalarMulPointByXFp2BLS12381_Q_y2
+
+        ; We check if the MSB b of x is either 1 or 0
+        RCX - 1 => RR
+                                                        :CALL(@loopLengthBLS12381 + RR)
+
+        ; if bit = 0, then repeat
+        B                                               :JMPZ(_loop)
+        ; otherwise, add
+
+_add:
+        ; We add
+        scalarMulPointByXFp2BLS12381_Q_x1 => A
+        scalarMulPointByXFp2BLS12381_Q_x2 => B
+        scalarMulPointByXFp2BLS12381_Q_y1 => C
+        scalarMulPointByXFp2BLS12381_Q_y2 => D
+        A => addPointFp2BLS12381_P1_x1
+        B => addPointFp2BLS12381_P1_x2
+        C => addPointFp2BLS12381_P1_y1
+        D => addPointFp2BLS12381_P1_y2
+        scalarMulPointByXFp2BLS12381_P_x1 => A
+        scalarMulPointByXFp2BLS12381_P_x2 => B
+        scalarMulPointByXFp2BLS12381_P_y1 => C
+        scalarMulPointByXFp2BLS12381_P_y2 => D
+        A => addPointFp2BLS12381_P2_x1
+        B => addPointFp2BLS12381_P2_x2
+        C => addPointFp2BLS12381_P2_y1
+        D => addPointFp2BLS12381_P2_y2                  :CALL(addPointFp2BLS12381)
+        ; Q = Q + P
+
+        addPointFp2BLS12381_P3_infinity                  :JMPZ(_continue_normal)
+
+_addition_infinity_loop:
+        ; if we are at the end, we return the infinity point
+        RCX - 1 => RCX                                  :JMPZ(_result_is_infinity)
+
+        ; otherwise, we continue to the next bit equal to 1 (since 2·𝒪 = 𝒪)
+        ; if it does not exist, we return the infinity point
+        RCX - 1 => RR
+                                                        :CALL(@loopLengthBLS12381 + RR)
+
+        ; if bit = 0, then repeat
+        B                                               :JMPZ(_addition_infinity_loop)
+
+        ; we directly set Q = P
+        scalarMulPointByXFp2BLS12381_P_x1 => A
+        scalarMulPointByXFp2BLS12381_P_x2 => B
+        scalarMulPointByXFp2BLS12381_P_y1 => C
+        scalarMulPointByXFp2BLS12381_P_y2 => D
+        A => scalarMulPointByXFp2BLS12381_Q_x1
+        B => scalarMulPointByXFp2BLS12381_Q_x2
+        C => scalarMulPointByXFp2BLS12381_Q_y1
+        D => scalarMulPointByXFp2BLS12381_Q_y2          :JMP(_loop)
+
+_continue_normal:
+        addPointFp2BLS12381_P3_x1 => A
+        addPointFp2BLS12381_P3_x2 => B
+        addPointFp2BLS12381_P3_y1 => C
+        addPointFp2BLS12381_P3_y2 => D
+        A => scalarMulPointByXFp2BLS12381_Q_x1
+        B => scalarMulPointByXFp2BLS12381_Q_x2
+        C => scalarMulPointByXFp2BLS12381_Q_y1
+        D => scalarMulPointByXFp2BLS12381_Q_y2          :JMP(_loop)
+
+_result_is_infinity:
+        1 => scalarMulPointByXFp2BLS12381_Q_infinity
+
+_end:
+        _RR => RR                                       :RETURN

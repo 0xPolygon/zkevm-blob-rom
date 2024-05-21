@@ -1,0 +1,220 @@
+; Test cases where taken from https://github.com/crate-crypto/go-kzg-4844/tree/master/tests/verify_kzg_proof/kzg-mainnet
+
+    ; ERROR CODES (B)
+    ; 0 - no error
+    ; 1 - Commit bigger than 2³⁸⁴ - 1
+    ; 2 - Commit serialization is invalid
+    ; 3 - LHS is invalid (either not a point or not in G1)
+    ; 4 - Proof is bigger than 2³⁸⁴ - 1
+    ; 5 - Proof serialization is invalid
+    ; 6 - RHS is invalid (either not a point or not in G1/G2)
+    ; 7 - y is bigger than r - 1
+    ; 8 - z is bigger than r - 1
+
+    ;./verify_kzg_proof_case_invalid_commitment_3e55802a5ed3c757
+    ; commit >= 2³⁸⁴
+    0x688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb00n => KZGVerify_commit_low
+    0x97f1d3a73197d7942695638c4fa9ac0fc3n => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0xf7c3912a6adc7c3737ad3f8a3b750425c1531a7426f03033a3994bc82a10609fn => KZGVerify_proof_low
+    0xb0c829a8d2d3405304fecbea193e6c67n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    1       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_commitment_1b44e341d56c757d
+    ; invalid serialization
+    0x0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6n => KZGVerify_commit_low
+    0x97f1d3a73197d7942695638c4fa9acn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0xf7c3912a6adc7c3737ad3f8a3b750425c1531a7426f03033a3994bc82a10609fn => KZGVerify_proof_low
+    0xb0c829a8d2d3405304fecbea193e6c67n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    2       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_commitment_e9d3e9ec16fbc15f
+    ; invalid serialization
+    0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde0n => KZGVerify_commit_low
+    0x8123456789abcdef0123456789abcdefn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0xf7c3912a6adc7c3737ad3f8a3b750425c1531a7426f03033a3994bc82a10609fn => KZGVerify_proof_low
+    0xb0c829a8d2d3405304fecbea193e6c67n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    2       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_commitment_32afa9561a4b3b91
+    ; commit - [y]₁ not in G1
+    0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefn => KZGVerify_commit_low
+    0x8123456789abcdef0123456789abcdefn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0xf7c3912a6adc7c3737ad3f8a3b750425c1531a7426f03033a3994bc82a10609fn => KZGVerify_proof_low
+    0xb0c829a8d2d3405304fecbea193e6c67n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    3       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_proof_3e55802a5ed3c757
+    ; proof >= 2³⁸⁴
+    0xa1d4fe57956fa50a442f92af03b1bf37adacc8ad4ed209b31287ea5bb94d9d06n => KZGVerify_commit_low
+    0xa421e229565952cfff4ef3517100a97dn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0x688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb00n => KZGVerify_proof_low
+    0x97f1d3a73197d7942695638c4fa9ac0fc3n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    4       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_proof_1b44e341d56c757d
+    ; invalid serialization
+    0xa1d4fe57956fa50a442f92af03b1bf37adacc8ad4ed209b31287ea5bb94d9d06n => KZGVerify_commit_low
+    0xa421e229565952cfff4ef3517100a97dn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0x0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6n => KZGVerify_proof_low
+    0x97f1d3a73197d7942695638c4fa9acn => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    5       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_proof_e9d3e9ec16fbc15f
+    ; invalid serialization
+    0xa1d4fe57956fa50a442f92af03b1bf37adacc8ad4ed209b31287ea5bb94d9d06n => KZGVerify_commit_low
+    0xa421e229565952cfff4ef3517100a97dn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde0n => KZGVerify_proof_low
+    0x8123456789abcdef0123456789abcdefn => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    5       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_proof_32afa9561a4b3b91
+    ; proof is not in G1
+    0xa1d4fe57956fa50a442f92af03b1bf37adacc8ad4ed209b31287ea5bb94d9d06n => KZGVerify_commit_low
+    0xa421e229565952cfff4ef3517100a97dn => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x1824b159acc5056f998c4fefecbc4ff55884b7fa0003480200000001fffffffen => KZGVerify_y
+    0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefn => KZGVerify_proof_low
+    0x8123456789abcdef0123456789abcdefn => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    6       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_y_35d08d612aad2197
+    ; y > r
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    7       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_y_4aa6def8c35c9097
+    ; y > r
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0xffffffffffffffffffffffffffffffff00000000000000000000000000000000n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    7       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_y_64b9ff2b8f7dddee
+    ; y = r + 1
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000002n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    7       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_y_eb0601fec84cc5e9
+    ; y = r
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0x0000000000000000000000000000000000000000000000000000000000000001n => KZGVerify_z
+    0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    7       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_z_35d08d612aad2197
+    ; z > r
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn => KZGVerify_z
+    0x60f840641ec0d0c0d2b77b2d5a393b329442721fad05ab78c7b98f2aa3c20ec9n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    8       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_z_4aa6def8c35c9097
+    ; z > r
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0xffffffffffffffffffffffffffffffff00000000000000000000000000000000n => KZGVerify_z
+    0x60f840641ec0d0c0d2b77b2d5a393b329442721fad05ab78c7b98f2aa3c20ec9n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    8       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_z_64b9ff2b8f7dddee
+    ; z = r + 1
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000002n => KZGVerify_z
+    0x60f840641ec0d0c0d2b77b2d5a393b329442721fad05ab78c7b98f2aa3c20ec9n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    8       :ASSERT
+
+    ;./verify_kzg_proof_case_invalid_z_eb0601fec84cc5e9
+    ; z = r
+    0x6db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7n => KZGVerify_commit_low
+    0x8f59a8d2a1a625a17f3fea0fe5eb8c89n => KZGVerify_commit_high
+    0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001n => KZGVerify_z
+    0x60f840641ec0d0c0d2b77b2d5a393b329442721fad05ab78c7b98f2aa3c20ec9n => KZGVerify_y
+    0x8fa286f5f75fea48870585393f890909cd3c53cfe4897e799fb211b4be531e43n => KZGVerify_proof_low
+    0xb30b3d1e4faccc380557792c9a0374d5n => KZGVerify_proof_high
+    :CALL(KZGVerify)
+    0       :ASSERT
+    B => A
+    8       :ASSERT

@@ -1,0 +1,144 @@
+PRAGMA MODE_384_BITS
+
+        ; 1] Compression and decompression: It must happen that D(C(a)) = a
+        0x9cfb5cdbdfb170f707acf2a119c60c7a42d9607400a07cf0a1ca6a66d678258b11fd6eef8dab538549b29fbe5e940a5n => compressFp12BLS12381_a0_x
+        0x54010ee2fce8b2ef40ad45f69f8f34e8bff542a075af25a51b5558a3e20587f26c49ecb8f9d5e4f53502eca461a0191n  => compressFp12BLS12381_a0_y
+        0x55c3a150de9f27ddd94f8a9f44dff985452d80beb58d9109bbbc9b7155768c3e2ac57399be682674f77f5a593cf5fa3n => compressFp12BLS12381_a2_x
+        0x80686fcf89ea3bea2bad2570e6882097895ea3828ad67d807349e2cf032a7c965d83e06f795f295135ab0991f958aefn => compressFp12BLS12381_a2_y
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n => compressFp12BLS12381_a4_x
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can => compressFp12BLS12381_a4_y
+        0x11f5e6bd624a29d8effc4ec21dd46d995045e66cc8657fb91a582b06bfdb925b343b9b7c279e547f8373ae7c9b601f3dn   => compressFp12BLS12381_a1_x
+        0x19aa5557f245b2ca84ed238cb32b279150dbbf88415386a23c6fb0f05f167b86bef07a74921f06bb88092a6206cc58c3n  => compressFp12BLS12381_a1_y
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n  => compressFp12BLS12381_a3_x
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn  => compressFp12BLS12381_a3_y
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n => compressFp12BLS12381_a5_x
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn => compressFp12BLS12381_a5_y
+                                                                                                :CALL(compressFp12BLS12381)
+        0x55c3a150de9f27ddd94f8a9f44dff985452d80beb58d9109bbbc9b7155768c3e2ac57399be682674f77f5a593cf5fa3n          :MLOAD(compressFp12BLS12381_Ca2_x)
+        0x80686fcf89ea3bea2bad2570e6882097895ea3828ad67d807349e2cf032a7c965d83e06f795f295135ab0991f958aefn          :MLOAD(compressFp12BLS12381_Ca2_y)
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n           :MLOAD(compressFp12BLS12381_Ca3_x)
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn           :MLOAD(compressFp12BLS12381_Ca3_y)
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n          :MLOAD(compressFp12BLS12381_Ca4_x)
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can          :MLOAD(compressFp12BLS12381_Ca4_y)
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n          :MLOAD(compressFp12BLS12381_Ca5_x)
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn          :MLOAD(compressFp12BLS12381_Ca5_y)
+
+        0x55c3a150de9f27ddd94f8a9f44dff985452d80beb58d9109bbbc9b7155768c3e2ac57399be682674f77f5a593cf5fa3n => decompressFp12BLS12381_Ca2_x
+        0x80686fcf89ea3bea2bad2570e6882097895ea3828ad67d807349e2cf032a7c965d83e06f795f295135ab0991f958aefn => decompressFp12BLS12381_Ca2_y
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n  => decompressFp12BLS12381_Ca3_x
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn  => decompressFp12BLS12381_Ca3_y
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n => decompressFp12BLS12381_Ca4_x
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can => decompressFp12BLS12381_Ca4_y
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n => decompressFp12BLS12381_Ca5_x
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn => decompressFp12BLS12381_Ca5_y
+                                                                                                                :CALL(decompressFp12BLS12381)
+        0x9cfb5cdbdfb170f707acf2a119c60c7a42d9607400a07cf0a1ca6a66d678258b11fd6eef8dab538549b29fbe5e940a5n      :MLOAD(decompressFp12BLS12381_a0_x)
+        0x54010ee2fce8b2ef40ad45f69f8f34e8bff542a075af25a51b5558a3e20587f26c49ecb8f9d5e4f53502eca461a0191n      :MLOAD(decompressFp12BLS12381_a0_y)
+        0x55c3a150de9f27ddd94f8a9f44dff985452d80beb58d9109bbbc9b7155768c3e2ac57399be682674f77f5a593cf5fa3n      :MLOAD(decompressFp12BLS12381_a2_x)
+        0x80686fcf89ea3bea2bad2570e6882097895ea3828ad67d807349e2cf032a7c965d83e06f795f295135ab0991f958aefn      :MLOAD(decompressFp12BLS12381_a2_y)
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n     :MLOAD(decompressFp12BLS12381_a4_x)
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can     :MLOAD(decompressFp12BLS12381_a4_y)
+        0x11f5e6bd624a29d8effc4ec21dd46d995045e66cc8657fb91a582b06bfdb925b343b9b7c279e547f8373ae7c9b601f3dn     :MLOAD(decompressFp12BLS12381_a1_x)
+        0x19aa5557f245b2ca84ed238cb32b279150dbbf88415386a23c6fb0f05f167b86bef07a74921f06bb88092a6206cc58c3n     :MLOAD(decompressFp12BLS12381_a1_y)
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n     :MLOAD(decompressFp12BLS12381_a3_x)
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn      :MLOAD(decompressFp12BLS12381_a3_y)
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n      :MLOAD(decompressFp12BLS12381_a5_x)
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn      :MLOAD(decompressFp12BLS12381_a5_y)
+
+        ; Decompress with a2 = 0
+        0n => decompressFp12BLS12381_Ca2_x
+        0n => decompressFp12BLS12381_Ca2_y
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n => decompressFp12BLS12381_Ca3_x
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn  => decompressFp12BLS12381_Ca3_y
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n => decompressFp12BLS12381_Ca4_x
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can => decompressFp12BLS12381_Ca4_y
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n  => decompressFp12BLS12381_Ca5_x
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn  => decompressFp12BLS12381_Ca5_y
+                                                                                                :CALL(decompressFp12BLS12381)
+        0xc37d138fa06a7775627337953686e62cbf29a1bf0f1701d6cba0a915461e80ffd3ceeb695275100e4a8a6d0157c81c7n           :MLOAD(decompressFp12BLS12381_a0_x)
+        0x15983608f5e68ca11cc5ca94c56df79a5dd7175c49e395683b1650ee53de143113a016605e7e7a0db40d54585c9f4d1fn           :MLOAD(decompressFp12BLS12381_a0_y)
+        0n                                                                                      :MLOAD(decompressFp12BLS12381_a2_x)
+        0n                                                                                      :MLOAD(decompressFp12BLS12381_a2_y)
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n          :MLOAD(decompressFp12BLS12381_a4_x)
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can          :MLOAD(decompressFp12BLS12381_a4_y)
+        0xea47483449c3b1a1fd11630f34a5859528f6e25721746d4af5408f2e990cffe7a868fbeee906eb199ac5d1072c76352n          :MLOAD(decompressFp12BLS12381_a1_x)
+        0xd680fc29ab6a2761bafad2b4f5e9295e67fbd31f8eea7a5af1f7754e323caaa9d9c8d4bc806e34db0db7e67cdde6fefn           :MLOAD(decompressFp12BLS12381_a1_y)
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n           :MLOAD(decompressFp12BLS12381_a3_x)
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn           :MLOAD(decompressFp12BLS12381_a3_y)
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n          :MLOAD(decompressFp12BLS12381_a5_x)
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn          :MLOAD(decompressFp12BLS12381_a5_y)
+
+        ; 3] Squaring in Compressed Form: It must happen that D(C(a²)) = a²
+        0x55c3a150de9f27ddd94f8a9f44dff985452d80beb58d9109bbbc9b7155768c3e2ac57399be682674f77f5a593cf5fa3n  => squareCompCycloFp12BLS12381_Ca2_x
+        0x80686fcf89ea3bea2bad2570e6882097895ea3828ad67d807349e2cf032a7c965d83e06f795f295135ab0991f958aefn  => squareCompCycloFp12BLS12381_Ca2_y
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n => squareCompCycloFp12BLS12381_Ca3_x
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn  => squareCompCycloFp12BLS12381_Ca3_y
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n => squareCompCycloFp12BLS12381_Ca4_x
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can => squareCompCycloFp12BLS12381_Ca4_y
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n  => squareCompCycloFp12BLS12381_Ca5_x
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn  => squareCompCycloFp12BLS12381_Ca5_y
+                                                                                                :CALL(squareCompCycloFp12BLS12381)
+        0x878762257448041a1523d0f6a48ddd7812b7cd2bbed8f58c8b9276006398407494a8b6209c76d0a1db079ecb01c9db4n          :MLOAD(squareCompCycloFp12BLS12381_Cb2_x)
+        0xa647585800248be2efb378dea562a0c6d410936a9199893c1288f6585ef88d93292b9d749a3f88df47d6fc2a8a9a7dbn          :MLOAD(squareCompCycloFp12BLS12381_Cb2_y)
+        0x1203249546f27e87b90383549b1341386ee783c797b85796710c74444ea5ce0682f1c7335165227d9b47ce875d98ac18n          :MLOAD(squareCompCycloFp12BLS12381_Cb3_x)
+        0x177d974af323da2c4994ba2ea6314a5c219929c6743945ccfa99f66907295970bd44ef4cb4d2e96569bf34487fe2b87n           :MLOAD(squareCompCycloFp12BLS12381_Cb3_y)
+        0x19396a9279c5cf7a8f8a6726f638448827ae0483475b8a1908b6c13fc4f580b14d5ee6daa42efc7fadde21779a6388e8n           :MLOAD(squareCompCycloFp12BLS12381_Cb4_x)
+        0xd17c50b7418d4b4cb91b8ac1d680517706f768d2cf0c3c4e92a0d50e5da9ae3563db95ef58731c0e04a751b8f6a69afn          :MLOAD(squareCompCycloFp12BLS12381_Cb4_y)
+        0x13b7bed71eb982c13b5d02f33300d813c471208d1cb01c254665bed8be9c4e51fdd0cb6ab85da8da44b2f2cd0984812fn          :MLOAD(squareCompCycloFp12BLS12381_Cb5_x)
+        0x12816f68c5e544cefa95a4b82106aac28de3f370727c27227843fed1cf92904e30a4695174c3d182a67eb9a626a62a5an              :MLOAD(squareCompCycloFp12BLS12381_Cb5_y)
+        squareCompCycloFp12BLS12381_Cb2_x => A
+        squareCompCycloFp12BLS12381_Cb2_y => B
+        squareCompCycloFp12BLS12381_Cb3_x => C
+        squareCompCycloFp12BLS12381_Cb3_y => D
+        A => decompressFp12BLS12381_Ca2_x
+        B => decompressFp12BLS12381_Ca2_y
+        C => decompressFp12BLS12381_Ca3_x
+        D => decompressFp12BLS12381_Ca3_y
+        squareCompCycloFp12BLS12381_Cb4_x => A
+        squareCompCycloFp12BLS12381_Cb4_y => B
+        squareCompCycloFp12BLS12381_Cb5_x => C
+        squareCompCycloFp12BLS12381_Cb5_y => D
+        A => decompressFp12BLS12381_Ca4_x
+        B => decompressFp12BLS12381_Ca4_y
+        C => decompressFp12BLS12381_Ca5_x
+        D => decompressFp12BLS12381_Ca5_y
+                                                                                                :CALL(decompressFp12BLS12381)
+        0x618610bfe1763f435d258bb918214ba962ff820eb5ce7f0532856d563340bd18431079a18cc72904a2a9b70011e28b1n           :MLOAD(decompressFp12BLS12381_a0_x)
+        0x28f9dfda5414542c129a0eb4785b8fcccb9ef67e28ae4cb9861b5ca29f727a1868a0cd770f2c5155e52b10e231bdb59n           :MLOAD(decompressFp12BLS12381_a0_y)
+        0x878762257448041a1523d0f6a48ddd7812b7cd2bbed8f58c8b9276006398407494a8b6209c76d0a1db079ecb01c9db4n           :MLOAD(decompressFp12BLS12381_a2_x)
+        0xa647585800248be2efb378dea562a0c6d410936a9199893c1288f6585ef88d93292b9d749a3f88df47d6fc2a8a9a7dbn           :MLOAD(decompressFp12BLS12381_a2_y)
+        0x19396a9279c5cf7a8f8a6726f638448827ae0483475b8a1908b6c13fc4f580b14d5ee6daa42efc7fadde21779a6388e8n          :MLOAD(decompressFp12BLS12381_a4_x)
+        0xd17c50b7418d4b4cb91b8ac1d680517706f768d2cf0c3c4e92a0d50e5da9ae3563db95ef58731c0e04a751b8f6a69afn          :MLOAD(decompressFp12BLS12381_a4_y)
+        0xb7db722a1b084556e6721de7089ebab910468da1835e86973ad4a33c1a9846b0c4ab3ec5bc536156283d34b098bc37dn          :MLOAD(decompressFp12BLS12381_a1_x)
+        0x49b99b99d20377c6357af539bc95266f5275f5fd048669c7fca71e5397beb2e70cf3a232c1c545f48c79a35ae64046dn          :MLOAD(decompressFp12BLS12381_a1_y)
+        0x1203249546f27e87b90383549b1341386ee783c797b85796710c74444ea5ce0682f1c7335165227d9b47ce875d98ac18n          :MLOAD(decompressFp12BLS12381_a3_x)
+        0x177d974af323da2c4994ba2ea6314a5c219929c6743945ccfa99f66907295970bd44ef4cb4d2e96569bf34487fe2b87n           :MLOAD(decompressFp12BLS12381_a3_y)
+        0x13b7bed71eb982c13b5d02f33300d813c471208d1cb01c254665bed8be9c4e51fdd0cb6ab85da8da44b2f2cd0984812fn           :MLOAD(decompressFp12BLS12381_a5_x)
+        0x12816f68c5e544cefa95a4b82106aac28de3f370727c27227843fed1cf92904e30a4695174c3d182a67eb9a626a62a5an           :MLOAD(decompressFp12BLS12381_a5_y)
+
+        ; 5] Exponentiation by (x+1)/3 using the compression/decompression technique
+        0x9cfb5cdbdfb170f707acf2a119c60c7a42d9607400a07cf0a1ca6a66d678258b11fd6eef8dab538549b29fbe5e940a5n => expByXThreeCompCycloFp12BLS12381_a0_x
+        0x54010ee2fce8b2ef40ad45f69f8f34e8bff542a075af25a51b5558a3e20587f26c49ecb8f9d5e4f53502eca461a0191n  => expByXThreeCompCycloFp12BLS12381_a0_y
+        0x55c3a150de9f27ddd94f8a9f44dff985452d80beb58d9109bbbc9b7155768c3e2ac57399be682674f77f5a593cf5fa3n => expByXThreeCompCycloFp12BLS12381_a2_x
+        0x80686fcf89ea3bea2bad2570e6882097895ea3828ad67d807349e2cf032a7c965d83e06f795f295135ab0991f958aefn => expByXThreeCompCycloFp12BLS12381_a2_y
+        0x181b92344a97b2be5183ff569d4e788a5c265eeff42b00016ccabe069eb66045bb202f93fdff68c4a69c5a2b114983a6n => expByXThreeCompCycloFp12BLS12381_a4_x
+        0x1828b41889e6745acefd33c061bac175eff11b68853690f3fd4cf86bfa7da384d65c7694187f771c1dee96dd0e3e50can => expByXThreeCompCycloFp12BLS12381_a4_y
+        0x11f5e6bd624a29d8effc4ec21dd46d995045e66cc8657fb91a582b06bfdb925b343b9b7c279e547f8373ae7c9b601f3dn   => expByXThreeCompCycloFp12BLS12381_a1_x
+        0x19aa5557f245b2ca84ed238cb32b279150dbbf88415386a23c6fb0f05f167b86bef07a74921f06bb88092a6206cc58c3n  => expByXThreeCompCycloFp12BLS12381_a1_y
+        0x152c9372d5c5379f2bc83de4767d582caad6d14a09b91556bcdb58f78cdc23e9726014205ca6e4daea514e835c30ffa6n  => expByXThreeCompCycloFp12BLS12381_a3_x
+        0xf63c4bee282d774a5f565bff148c57d6c872f426cfa0118f3326a32e339321ba7caf65c22bac0bbc12e567aafa5e20bn  => expByXThreeCompCycloFp12BLS12381_a3_y
+        0x832f3fef66f64b46560617243b5e38291a18c2e1c4e5c3383bfcf87b2f40996f5505d61197a00ac57ac462e389aeeb9n => expByXThreeCompCycloFp12BLS12381_a5_x
+        0x7e850bc5bf5dcb89dc030a689f045f36e464093aa549b95c3eace6873451db6cf6374a8a9c29bed19e0f3fa2899f03bn => expByXThreeCompCycloFp12BLS12381_a5_y
+                                                                                                                :CALL(expByXThreeCompCycloFp12BLS12381)
+        0x5053d1cf6709918b690217159c90b2f0b91dd67050efd9666372d5cf97a2f41fcbc5578e44d3a8fd3655750d13ec2c0n           :MLOAD(expByXThreeCompCycloFp12BLS12381_c0_x)
+        0x13167dd05b68b06dbd5501c6234f36202effa06171bccf595e5fb3cf19b1d6cf6f0b5fa3547f1ad3e53fdc303060c4fn           :MLOAD(expByXThreeCompCycloFp12BLS12381_c0_y)
+        0x66d7a1bb3e08833d23063d55e6ae6431c7428e3b113d05f3c579445570dabfde79afbb98a4595e223b6638a8c817ccdn          :MLOAD(expByXThreeCompCycloFp12BLS12381_c2_x)
+        0x10a17e59838a836e1e35a914ca12bf2de285398b81e54ca5e7ce79fb012ed14b92544dc19a2363bf42352ca0c209f44cn          :MLOAD(expByXThreeCompCycloFp12BLS12381_c2_y)
+        0xec14d5827698a22c2c2d16dc4bc8a7c888fb3982965b922fe0f69e23226f304adf873b8310f75ba146d34f8abebe38n          :MLOAD(expByXThreeCompCycloFp12BLS12381_c4_x)
+        0xd57924c1b8106a5bec3e9ab42e6f280a08cc98e18a027ff37aa4cf8ae50c99e3df565f007f849ade74584584d55ab98n           :MLOAD(expByXThreeCompCycloFp12BLS12381_c4_y)
+        0x1131758ab01ebb6b8cf75d5fd981a53840e0defe8540a0d6e8727574546c43831bf6157d234869210dbaf7c838f91589n          :MLOAD(expByXThreeCompCycloFp12BLS12381_c1_x)
+        0xb905160f880d62577f45248776a3c9820a9f0929c40bf62a4514ce69b4cea74e5d5717d1ccfa0770564971a57e94ebn          :MLOAD(expByXThreeCompCycloFp12BLS12381_c1_y)
+        0x1309daccf938aaf547db4a72d31c6c5083bac9908a4146eecf81db705ac86ce886d377ce6a3c3e5ba33c2b1ad9876c5cn           :MLOAD(expByXThreeCompCycloFp12BLS12381_c3_x)
+        0x15079c4dfdb087517689797a3bc9ce86f0d390ce2dfc9631208b1eab83a1b7c8e7295c4412411d555c996c10dfaf84d1n          :MLOAD(expByXThreeCompCycloFp12BLS12381_c3_y)
+        0x1829ecfcd7cdcd3ce8f5c0c6e4adcf981f9ab2963bd3a6d258579736b4e877da84e8bbdd3b7423ee546d314cc90500fbn          :MLOAD(expByXThreeCompCycloFp12BLS12381_c5_x)
+        0x54d807ab9b32f7c2261f53affa7a1b78dce47dba0513653f712e3fb20e727c2527fb5b37669a86eb16d997f78634cddn          :MLOAD(expByXThreeCompCycloFp12BLS12381_c5_y)

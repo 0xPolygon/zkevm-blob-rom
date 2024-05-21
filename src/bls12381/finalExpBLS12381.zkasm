@@ -1,0 +1,612 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  PRE: f ∈ Fp12
+;; POST: The result is in the range [0,BLS12_381_P) because if falls back to FP12 arithmetic
+;;
+;;  finalExpBLS12381:
+;;          input: f ∈ Fp12
+;;          output: f^{(p¹²-1)/r} ∈ μ_r
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL finalExpBLS12381_f11_x
+VAR GLOBAL finalExpBLS12381_f11_y
+VAR GLOBAL finalExpBLS12381_f12_x
+VAR GLOBAL finalExpBLS12381_f12_y
+VAR GLOBAL finalExpBLS12381_f13_x
+VAR GLOBAL finalExpBLS12381_f13_y
+VAR GLOBAL finalExpBLS12381_f21_x
+VAR GLOBAL finalExpBLS12381_f21_y
+VAR GLOBAL finalExpBLS12381_f22_x
+VAR GLOBAL finalExpBLS12381_f22_y
+VAR GLOBAL finalExpBLS12381_f23_x
+VAR GLOBAL finalExpBLS12381_f23_y
+
+VAR GLOBAL _m11_x
+VAR GLOBAL _m11_y
+VAR GLOBAL _m12_x
+VAR GLOBAL _m12_y
+VAR GLOBAL _m13_x
+VAR GLOBAL _m13_y
+VAR GLOBAL _m21_x
+VAR GLOBAL _m21_y
+VAR GLOBAL _m22_x
+VAR GLOBAL _m22_y
+VAR GLOBAL _m23_x
+VAR GLOBAL _m23_y
+
+VAR GLOBAL _fconjugate_11_x
+VAR GLOBAL _fconjugate_11_y
+VAR GLOBAL _fconjugate_12_x
+VAR GLOBAL _fconjugate_12_y
+VAR GLOBAL _fconjugate_13_x
+VAR GLOBAL _fconjugate_13_y
+VAR GLOBAL _fconjugate_21_x
+VAR GLOBAL _fconjugate_21_y
+VAR GLOBAL _fconjugate_22_x
+VAR GLOBAL _fconjugate_22_y
+VAR GLOBAL _fconjugate_23_x
+VAR GLOBAL _fconjugate_23_y
+
+VAR GLOBAL _RR
+
+finalExpBLS12381:
+        RR => _RR
+
+        ; The easy part:
+        ; ===========================================
+        ; 1] f = f^(p⁶-1) = f̅·f⁻¹
+        finalExpBLS12381_f11_x => A
+        finalExpBLS12381_f11_y => B
+        A => inverseFp12BLS12381_a11_x
+        B => inverseFp12BLS12381_a11_y
+        finalExpBLS12381_f12_x => A
+        finalExpBLS12381_f12_y => B
+        A => inverseFp12BLS12381_a12_x
+        B => inverseFp12BLS12381_a12_y
+        finalExpBLS12381_f13_x => A
+        finalExpBLS12381_f13_y => B
+        A => inverseFp12BLS12381_a13_x
+        B => inverseFp12BLS12381_a13_y
+        finalExpBLS12381_f21_x => A
+        finalExpBLS12381_f21_y => B
+        A => inverseFp12BLS12381_a21_x
+        B => inverseFp12BLS12381_a21_y
+        finalExpBLS12381_f22_x => A
+        finalExpBLS12381_f22_y => B
+        A => inverseFp12BLS12381_a22_x
+        B => inverseFp12BLS12381_a22_y
+        finalExpBLS12381_f23_x => A
+        finalExpBLS12381_f23_y => B
+        A => inverseFp12BLS12381_a23_x
+        B => inverseFp12BLS12381_a23_y                  :CALL(inverseFp12BLS12381)
+
+        inverseFp12BLS12381_c11_x => A
+        inverseFp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_b11_x
+        B => mulFp12BLS12381_b11_y
+        inverseFp12BLS12381_c12_x => A
+        inverseFp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_b12_x
+        B => mulFp12BLS12381_b12_y
+        inverseFp12BLS12381_c13_x => A
+        inverseFp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_b13_x
+        B => mulFp12BLS12381_b13_y
+        inverseFp12BLS12381_c21_x => A
+        inverseFp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_b21_x
+        B => mulFp12BLS12381_b21_y
+        inverseFp12BLS12381_c22_x => A
+        inverseFp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_b22_x
+        B => mulFp12BLS12381_b22_y
+        inverseFp12BLS12381_c23_x => A
+        inverseFp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_b23_x
+        B => mulFp12BLS12381_b23_y
+        finalExpBLS12381_f11_x => A
+        finalExpBLS12381_f11_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        finalExpBLS12381_f12_x => A
+        finalExpBLS12381_f12_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        finalExpBLS12381_f13_x => A
+        finalExpBLS12381_f13_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+
+        finalExpBLS12381_f21_x => C
+        finalExpBLS12381_f21_y => D                     :CALL(negFp2BLS12381)
+        E => mulFp12BLS12381_a21_x
+        C => mulFp12BLS12381_a21_y
+        finalExpBLS12381_f22_x => C
+        finalExpBLS12381_f22_y => D                     :CALL(negFp2BLS12381)
+        E => mulFp12BLS12381_a22_x
+        C => mulFp12BLS12381_a22_y
+        finalExpBLS12381_f23_x => C
+        finalExpBLS12381_f23_y => D                     :CALL(negFp2BLS12381)
+        E => mulFp12BLS12381_a23_x
+        C => mulFp12BLS12381_a23_y                      :CALL(mulFp12BLS12381)
+
+        ; 2] m = f^(p⁶-1)(p²-1) = (f^(p⁶-1))^p²·f^(p⁶-1)
+        ; The previous result goes to Frob2 and mulFp12_b
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => frob2Fp12BLS12381_a11_x
+        A => mulFp12BLS12381_b11_x
+        B => frob2Fp12BLS12381_a11_y
+        B => mulFp12BLS12381_b11_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => frob2Fp12BLS12381_a12_x
+        A => mulFp12BLS12381_b12_x
+        B => frob2Fp12BLS12381_a12_y
+        B => mulFp12BLS12381_b12_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => frob2Fp12BLS12381_a13_x
+        A => mulFp12BLS12381_b13_x
+        B => frob2Fp12BLS12381_a13_y
+        B => mulFp12BLS12381_b13_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => frob2Fp12BLS12381_a21_x
+        A => mulFp12BLS12381_b21_x
+        B => frob2Fp12BLS12381_a21_y
+        B => mulFp12BLS12381_b21_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => frob2Fp12BLS12381_a22_x
+        A => mulFp12BLS12381_b22_x
+        B => frob2Fp12BLS12381_a22_y
+        B => mulFp12BLS12381_b22_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => frob2Fp12BLS12381_a23_x
+        A => mulFp12BLS12381_b23_x
+        B => frob2Fp12BLS12381_a23_y
+        B => mulFp12BLS12381_b23_y                      :CALL(frob2Fp12BLS12381)
+
+        frob2Fp12BLS12381_c11_x => A
+        frob2Fp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        frob2Fp12BLS12381_c12_x => A
+        frob2Fp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        frob2Fp12BLS12381_c13_x => A
+        frob2Fp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+        frob2Fp12BLS12381_c21_x => A
+        frob2Fp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_a21_x
+        B => mulFp12BLS12381_a21_y
+        frob2Fp12BLS12381_c22_x => A
+        frob2Fp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_a22_x
+        B => mulFp12BLS12381_a22_y
+        frob2Fp12BLS12381_c23_x => A
+        frob2Fp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_a23_x
+        B => mulFp12BLS12381_a23_y                      :CALL(mulFp12BLS12381)
+        ; ===========================================
+
+        ; The hard part:
+        ; ===========================================
+        ; 1] m^{(x+1)/3}, where m = f^(p⁶-1)(p²-1)
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => _m11_x
+        B => _m11_y
+        A => expByXThreeCompCycloFp12BLS12381_a0_x
+        B => expByXThreeCompCycloFp12BLS12381_a0_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => _m12_x
+        B => _m12_y
+        A => expByXThreeCompCycloFp12BLS12381_a4_x
+        B => expByXThreeCompCycloFp12BLS12381_a4_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => _m13_x
+        B => _m13_y
+        A => expByXThreeCompCycloFp12BLS12381_a3_x
+        B => expByXThreeCompCycloFp12BLS12381_a3_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => _m21_x
+        B => _m21_y
+        A => expByXThreeCompCycloFp12BLS12381_a2_x
+        B => expByXThreeCompCycloFp12BLS12381_a2_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => _m22_x
+        B => _m22_y
+        A => expByXThreeCompCycloFp12BLS12381_a1_x
+        B => expByXThreeCompCycloFp12BLS12381_a1_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => _m23_x
+        B => _m23_y
+        A => expByXThreeCompCycloFp12BLS12381_a5_x
+        B => expByXThreeCompCycloFp12BLS12381_a5_y      :CALL(expByXThreeCompCycloFp12BLS12381)
+
+        ; 2] f = f^(x+1)
+        expByXThreeCompCycloFp12BLS12381_c0_x => A
+        expByXThreeCompCycloFp12BLS12381_c0_y => B
+        A => expByXOneCompCycloFp12BLS12381_a0_x
+        B => expByXOneCompCycloFp12BLS12381_a0_y
+        expByXThreeCompCycloFp12BLS12381_c2_x => A
+        expByXThreeCompCycloFp12BLS12381_c2_y => B
+        A => expByXOneCompCycloFp12BLS12381_a2_x
+        B => expByXOneCompCycloFp12BLS12381_a2_y
+        expByXThreeCompCycloFp12BLS12381_c4_x => A
+        expByXThreeCompCycloFp12BLS12381_c4_y => B
+        A => expByXOneCompCycloFp12BLS12381_a4_x
+        B => expByXOneCompCycloFp12BLS12381_a4_y
+        expByXThreeCompCycloFp12BLS12381_c1_x => A
+        expByXThreeCompCycloFp12BLS12381_c1_y => B
+        A => expByXOneCompCycloFp12BLS12381_a1_x
+        B => expByXOneCompCycloFp12BLS12381_a1_y
+        expByXThreeCompCycloFp12BLS12381_c3_x => A
+        expByXThreeCompCycloFp12BLS12381_c3_y => B
+        A => expByXOneCompCycloFp12BLS12381_a3_x
+        B => expByXOneCompCycloFp12BLS12381_a3_y
+        expByXThreeCompCycloFp12BLS12381_c5_x => A
+        expByXThreeCompCycloFp12BLS12381_c5_y => B
+        A => expByXOneCompCycloFp12BLS12381_a5_x
+        B => expByXOneCompCycloFp12BLS12381_a5_y        :CALL(expByXOneCompCycloFp12BLS12381)
+
+        ; 3] f1 = f^p, f2 = f̅^x
+        expByXOneCompCycloFp12BLS12381_c0_x => A
+        expByXOneCompCycloFp12BLS12381_c0_y => B
+        A => frobFp12BLS12381_a11_x
+        B => frobFp12BLS12381_a11_y
+        A => expByXCompCycloFp12BLS12381_a0_x
+        B => expByXCompCycloFp12BLS12381_a0_y
+        expByXOneCompCycloFp12BLS12381_c2_x => C
+        expByXOneCompCycloFp12BLS12381_c2_y => D
+        C => frobFp12BLS12381_a21_x
+        D => frobFp12BLS12381_a21_y
+                                                        :CALL(negFp2BLS12381)
+        E => expByXCompCycloFp12BLS12381_a2_x
+        C => expByXCompCycloFp12BLS12381_a2_y
+        expByXOneCompCycloFp12BLS12381_c4_x => A
+        expByXOneCompCycloFp12BLS12381_c4_y => B
+        A => frobFp12BLS12381_a12_x
+        B => frobFp12BLS12381_a12_y
+        A => expByXCompCycloFp12BLS12381_a4_x
+        B => expByXCompCycloFp12BLS12381_a4_y
+        expByXOneCompCycloFp12BLS12381_c1_x => C
+        expByXOneCompCycloFp12BLS12381_c1_y => D
+        C => frobFp12BLS12381_a22_x
+        D => frobFp12BLS12381_a22_y
+                                                        :CALL(negFp2BLS12381)
+        E => expByXCompCycloFp12BLS12381_a1_x
+        C => expByXCompCycloFp12BLS12381_a1_y
+        expByXOneCompCycloFp12BLS12381_c3_x => A
+        expByXOneCompCycloFp12BLS12381_c3_y => B
+        A => frobFp12BLS12381_a13_x
+        B => frobFp12BLS12381_a13_y
+        A => expByXCompCycloFp12BLS12381_a3_x
+        B => expByXCompCycloFp12BLS12381_a3_y
+        expByXOneCompCycloFp12BLS12381_c5_x => C
+        expByXOneCompCycloFp12BLS12381_c5_y => D
+        C => frobFp12BLS12381_a23_x
+        D => frobFp12BLS12381_a23_y
+                                                        :CALL(negFp2BLS12381)
+        E => expByXCompCycloFp12BLS12381_a5_x
+        C => expByXCompCycloFp12BLS12381_a5_y
+                                                        :CALL(frobFp12BLS12381)            ; f1 = f^p
+                                                        :CALL(expByXCompCycloFp12BLS12381) ; f2 = f̅^x
+
+        ; 4] f = f1*f2
+        expByXCompCycloFp12BLS12381_c0_x => A
+        expByXCompCycloFp12BLS12381_c0_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        expByXCompCycloFp12BLS12381_c2_x => A
+        expByXCompCycloFp12BLS12381_c2_y => B
+        A => mulFp12BLS12381_a21_x
+        B => mulFp12BLS12381_a21_y
+        expByXCompCycloFp12BLS12381_c4_x => A
+        expByXCompCycloFp12BLS12381_c4_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        expByXCompCycloFp12BLS12381_c1_x => A
+        expByXCompCycloFp12BLS12381_c1_y => B
+        A => mulFp12BLS12381_a22_x
+        B => mulFp12BLS12381_a22_y
+        expByXCompCycloFp12BLS12381_c3_x => A
+        expByXCompCycloFp12BLS12381_c3_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+        expByXCompCycloFp12BLS12381_c5_x => A
+        expByXCompCycloFp12BLS12381_c5_y => B
+        A => mulFp12BLS12381_a23_x
+        B => mulFp12BLS12381_a23_y
+        frobFp12BLS12381_c11_x => A
+        frobFp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_b11_x
+        B => mulFp12BLS12381_b11_y
+        frobFp12BLS12381_c12_x => A
+        frobFp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_b12_x
+        B => mulFp12BLS12381_b12_y
+        frobFp12BLS12381_c13_x => A
+        frobFp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_b13_x
+        B => mulFp12BLS12381_b13_y
+        frobFp12BLS12381_c21_x => A
+        frobFp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_b21_x
+        B => mulFp12BLS12381_b21_y
+        frobFp12BLS12381_c22_x => A
+        frobFp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_b22_x
+        B => mulFp12BLS12381_b22_y
+        frobFp12BLS12381_c23_x => A
+        frobFp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_b23_x
+        B => mulFp12BLS12381_b23_y                      :CALL(mulFp12BLS12381)
+
+        ; 5] f1 = (f^x)^x, f2 = f^p², f3 = f̅
+        ; f^x, f^p², f̅
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => expByXCompCycloFp12BLS12381_a0_x
+        B => expByXCompCycloFp12BLS12381_a0_y
+        A => frob2Fp12BLS12381_a11_x
+        B => frob2Fp12BLS12381_a11_y
+        A => _fconjugate_11_x
+        B => _fconjugate_11_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => expByXCompCycloFp12BLS12381_a4_x
+        B => expByXCompCycloFp12BLS12381_a4_y
+        A => frob2Fp12BLS12381_a12_x
+        B => frob2Fp12BLS12381_a12_y
+        A => _fconjugate_12_x
+        B => _fconjugate_12_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => expByXCompCycloFp12BLS12381_a3_x
+        B => expByXCompCycloFp12BLS12381_a3_y
+        A => frob2Fp12BLS12381_a13_x
+        B => frob2Fp12BLS12381_a13_y
+        A => _fconjugate_13_x
+        B => _fconjugate_13_y
+        mulFp12BLS12381_c21_x => C
+        mulFp12BLS12381_c21_y => D
+        C => expByXCompCycloFp12BLS12381_a2_x
+        D => expByXCompCycloFp12BLS12381_a2_y
+        C => frob2Fp12BLS12381_a21_x
+        D => frob2Fp12BLS12381_a21_y                    :CALL(negFp2BLS12381)
+        E => _fconjugate_21_x
+        C => _fconjugate_21_y
+        mulFp12BLS12381_c22_x => C
+        mulFp12BLS12381_c22_y => D
+        C => expByXCompCycloFp12BLS12381_a1_x
+        D => expByXCompCycloFp12BLS12381_a1_y
+        C => frob2Fp12BLS12381_a22_x
+        D => frob2Fp12BLS12381_a22_y                    :CALL(negFp2BLS12381)
+        E => _fconjugate_22_x
+        C => _fconjugate_22_y
+        mulFp12BLS12381_c23_x => C
+        mulFp12BLS12381_c23_y => D
+        C => expByXCompCycloFp12BLS12381_a5_x
+        D => expByXCompCycloFp12BLS12381_a5_y
+        C => frob2Fp12BLS12381_a23_x
+        D => frob2Fp12BLS12381_a23_y                    :CALL(negFp2BLS12381)
+        E => _fconjugate_23_x
+        C => _fconjugate_23_y
+                                                        :CALL(expByXCompCycloFp12BLS12381)
+                                                        :CALL(frob2Fp12BLS12381)
+
+        ; (f^x)^x
+        expByXCompCycloFp12BLS12381_c0_x => A
+        expByXCompCycloFp12BLS12381_c0_y => B
+        A => expByXCompCycloFp12BLS12381_a0_x
+        B => expByXCompCycloFp12BLS12381_a0_y
+        expByXCompCycloFp12BLS12381_c2_x => A
+        expByXCompCycloFp12BLS12381_c2_y => B
+        A => expByXCompCycloFp12BLS12381_a2_x
+        B => expByXCompCycloFp12BLS12381_a2_y
+        expByXCompCycloFp12BLS12381_c4_x => A
+        expByXCompCycloFp12BLS12381_c4_y => B
+        A => expByXCompCycloFp12BLS12381_a4_x
+        B => expByXCompCycloFp12BLS12381_a4_y
+        expByXCompCycloFp12BLS12381_c1_x => A
+        expByXCompCycloFp12BLS12381_c1_y => B
+        A => expByXCompCycloFp12BLS12381_a1_x
+        B => expByXCompCycloFp12BLS12381_a1_y
+        expByXCompCycloFp12BLS12381_c3_x => A
+        expByXCompCycloFp12BLS12381_c3_y => B
+        A => expByXCompCycloFp12BLS12381_a3_x
+        B => expByXCompCycloFp12BLS12381_a3_y
+        expByXCompCycloFp12BLS12381_c5_x => A
+        expByXCompCycloFp12BLS12381_c5_y => B
+        A => expByXCompCycloFp12BLS12381_a5_x
+        B => expByXCompCycloFp12BLS12381_a5_y           :CALL(expByXCompCycloFp12BLS12381)
+
+        ; 6] f = f1*f2
+        expByXCompCycloFp12BLS12381_c0_x => A
+        expByXCompCycloFp12BLS12381_c0_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        expByXCompCycloFp12BLS12381_c2_x => A
+        expByXCompCycloFp12BLS12381_c2_y => B
+        A => mulFp12BLS12381_a21_x
+        B => mulFp12BLS12381_a21_y
+        expByXCompCycloFp12BLS12381_c4_x => A
+        expByXCompCycloFp12BLS12381_c4_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        expByXCompCycloFp12BLS12381_c1_x => A
+        expByXCompCycloFp12BLS12381_c1_y => B
+        A => mulFp12BLS12381_a22_x
+        B => mulFp12BLS12381_a22_y
+        expByXCompCycloFp12BLS12381_c3_x => A
+        expByXCompCycloFp12BLS12381_c3_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+        expByXCompCycloFp12BLS12381_c5_x => A
+        expByXCompCycloFp12BLS12381_c5_y => B
+        A => mulFp12BLS12381_a23_x
+        B => mulFp12BLS12381_a23_y
+        frob2Fp12BLS12381_c11_x => A
+        frob2Fp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_b11_x
+        B => mulFp12BLS12381_b11_y
+        frob2Fp12BLS12381_c12_x => A
+        frob2Fp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_b12_x
+        B => mulFp12BLS12381_b12_y
+        frob2Fp12BLS12381_c13_x => A
+        frob2Fp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_b13_x
+        B => mulFp12BLS12381_b13_y
+        frob2Fp12BLS12381_c21_x => A
+        frob2Fp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_b21_x
+        B => mulFp12BLS12381_b21_y
+        frob2Fp12BLS12381_c22_x => A
+        frob2Fp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_b22_x
+        B => mulFp12BLS12381_b22_y
+        frob2Fp12BLS12381_c23_x => A
+        frob2Fp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_b23_x
+        B => mulFp12BLS12381_b23_y                      :CALL(mulFp12BLS12381)
+
+        ; 7] f = f*f3
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_a21_x
+        B => mulFp12BLS12381_a21_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_a22_x
+        B => mulFp12BLS12381_a22_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_a23_x
+        B => mulFp12BLS12381_a23_y
+        _fconjugate_11_x => A
+        _fconjugate_11_y => B
+        A => mulFp12BLS12381_b11_x
+        B => mulFp12BLS12381_b11_y
+        _fconjugate_12_x => A
+        _fconjugate_12_y => B
+        A => mulFp12BLS12381_b12_x
+        B => mulFp12BLS12381_b12_y
+        _fconjugate_13_x => A
+        _fconjugate_13_y => B
+        A => mulFp12BLS12381_b13_x
+        B => mulFp12BLS12381_b13_y
+        _fconjugate_21_x => A
+        _fconjugate_21_y => B
+        A => mulFp12BLS12381_b21_x
+        B => mulFp12BLS12381_b21_y
+        _fconjugate_22_x => A
+        _fconjugate_22_y => B
+        A => mulFp12BLS12381_b22_x
+        B => mulFp12BLS12381_b22_y
+        _fconjugate_23_x => A
+        _fconjugate_23_y => B
+        A => mulFp12BLS12381_b23_x
+        B => mulFp12BLS12381_b23_y                      :CALL(mulFp12BLS12381)
+
+        ; 8] f = f*m
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => mulFp12BLS12381_a11_x
+        B => mulFp12BLS12381_a11_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => mulFp12BLS12381_a12_x
+        B => mulFp12BLS12381_a12_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => mulFp12BLS12381_a13_x
+        B => mulFp12BLS12381_a13_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => mulFp12BLS12381_a21_x
+        B => mulFp12BLS12381_a21_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => mulFp12BLS12381_a22_x
+        B => mulFp12BLS12381_a22_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => mulFp12BLS12381_a23_x
+        B => mulFp12BLS12381_a23_y
+        _m11_x => A
+        _m11_y => B
+        A => mulFp12BLS12381_b11_x
+        B => mulFp12BLS12381_b11_y
+        _m12_x => A
+        _m12_y => B
+        A => mulFp12BLS12381_b12_x
+        B => mulFp12BLS12381_b12_y
+        _m13_x => A
+        _m13_y => B
+        A => mulFp12BLS12381_b13_x
+        B => mulFp12BLS12381_b13_y
+        _m21_x => A
+        _m21_y => B
+        A => mulFp12BLS12381_b21_x
+        B => mulFp12BLS12381_b21_y
+        _m22_x => A
+        _m22_y => B
+        A => mulFp12BLS12381_b22_x
+        B => mulFp12BLS12381_b22_y
+        _m23_x => A
+        _m23_y => B
+        A => mulFp12BLS12381_b23_x
+        B => mulFp12BLS12381_b23_y                      :CALL(mulFp12BLS12381)
+        mulFp12BLS12381_c11_x => A
+        mulFp12BLS12381_c11_y => B
+        A => finalExpBLS12381_f11_x
+        B => finalExpBLS12381_f11_y
+        mulFp12BLS12381_c12_x => A
+        mulFp12BLS12381_c12_y => B
+        A => finalExpBLS12381_f12_x
+        B => finalExpBLS12381_f12_y
+        mulFp12BLS12381_c13_x => A
+        mulFp12BLS12381_c13_y => B
+        A => finalExpBLS12381_f13_x
+        B => finalExpBLS12381_f13_y
+        mulFp12BLS12381_c21_x => A
+        mulFp12BLS12381_c21_y => B
+        A => finalExpBLS12381_f21_x
+        B => finalExpBLS12381_f21_y
+        mulFp12BLS12381_c22_x => A
+        mulFp12BLS12381_c22_y => B
+        A => finalExpBLS12381_f22_x
+        B => finalExpBLS12381_f22_y
+        mulFp12BLS12381_c23_x => A
+        mulFp12BLS12381_c23_y => B
+        A => finalExpBLS12381_f23_x
+        B => finalExpBLS12381_f23_y
+
+        _RR => RR     :RETURN

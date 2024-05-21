@@ -1,0 +1,99 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P ∈ E(Fp)\{𝒪} with P.x,P.y ∈ [0, 2³⁸⁴ - 1]
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to addPointFpBLS12381
+;;
+;;
+;; scalarMulPointByXThreeFpBLS12381:
+;;             in: P = (P.x, P.y) ∈ E(Fp)
+;;             out: [(x²-1)/3]·P = (Q.x, Q.y) ∈ E(Fp), where (x²-1)/3 = 0x396c8c005555e1560000000055555555
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL scalarMulPointByXThreeFpBLS12381_P_x
+VAR GLOBAL scalarMulPointByXThreeFpBLS12381_P_y
+VAR GLOBAL scalarMulPointByXThreeFpBLS12381_Q_x
+VAR GLOBAL scalarMulPointByXThreeFpBLS12381_Q_y
+VAR GLOBAL scalarMulPointByXThreeFpBLS12381_Q_infinity
+
+VAR GLOBAL _RR
+
+scalarMulPointByXThreeFpBLS12381:
+        RR => _RR
+
+        126 => RCX
+
+        ; Set Q = P
+        scalarMulPointByXThreeFpBLS12381_P_x => A
+        scalarMulPointByXThreeFpBLS12381_P_y => B
+        A => scalarMulPointByXThreeFpBLS12381_Q_x
+        B => scalarMulPointByXThreeFpBLS12381_Q_y
+
+_loop:
+
+        RCX - 1 => RCX                                  :JMPZ(_end)
+
+        ; We always double
+        scalarMulPointByXThreeFpBLS12381_Q_x => A
+        scalarMulPointByXThreeFpBLS12381_Q_y => B
+        A => doublePointFpBLS12381_P_x
+        B => doublePointFpBLS12381_P_y                  :CALL(doublePointFpBLS12381)
+        ; Q = Q + Q
+
+        doublePointFpBLS12381_Q_x => A
+        doublePointFpBLS12381_Q_y => B
+        A => scalarMulPointByXThreeFpBLS12381_Q_x
+        B => scalarMulPointByXThreeFpBLS12381_Q_y
+
+        ; We check if the MSB b of x is either 1 or 0
+        RCX - 1 => RR
+                                                        :CALL(@xSqThreeBinBLS12381 + RR)
+
+        ; if bit = 0, then repeat
+        B                                               :JMPZ(_loop)
+        ; otherwise, add
+
+_add:
+        ; We add
+        scalarMulPointByXThreeFpBLS12381_Q_x => A
+        scalarMulPointByXThreeFpBLS12381_Q_y => B
+        A => addPointFpBLS12381_P1_x
+        B => addPointFpBLS12381_P1_y
+        scalarMulPointByXThreeFpBLS12381_P_x => A
+        scalarMulPointByXThreeFpBLS12381_P_y => B
+        A => addPointFpBLS12381_P2_x
+        B => addPointFpBLS12381_P2_y                    :CALL(addPointFpBLS12381)
+        ; Q = Q + P
+
+        addPointFpBLS12381_P3_infinity                  :JMPZ(_continue_normal)
+
+_addition_infinity_loop:
+        ; if we are at the end, we return the infinity point
+        RCX - 1 => RCX                                  :JMPZ(_result_is_infinity)
+
+        ; otherwise, we continue to the next bit equal to 1 (since 2·𝒪 = 𝒪)
+        ; if it does not exist, we return the infinity point
+        RCX - 1 => RR
+                                                        :CALL(@xSqThreeBinBLS12381 + RR)
+
+        ; if bit = 0, then repeat
+        B                                               :JMPZ(_addition_infinity_loop)
+
+        ; we directly set Q = P
+        scalarMulPointByXThreeFpBLS12381_P_x => A
+        scalarMulPointByXThreeFpBLS12381_P_y => B
+        A => scalarMulPointByXThreeFpBLS12381_Q_x
+        B => scalarMulPointByXThreeFpBLS12381_Q_y       :JMP(_loop)
+
+_continue_normal:
+        addPointFpBLS12381_P3_x => A
+        addPointFpBLS12381_P3_y => B
+        A => scalarMulPointByXThreeFpBLS12381_Q_x
+        B => scalarMulPointByXThreeFpBLS12381_Q_y       :JMP(_loop)
+
+_result_is_infinity:
+        1 => scalarMulPointByXThreeFpBLS12381_Q_infinity
+
+_end:
+        _RR => RR                                       :RETURN

@@ -1,0 +1,17 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; POST: The result is in the range [0,BLS12_381_P)
+;;
+;; negFpBLS12381:
+;;             in: A ∈ [0, 2³⁸⁴ - 1]
+;;             out: B = -A (mod BLS12381_P) ∈ Fp
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+negFpBLS12381:
+        ; A·B + 0 = op (mod BLS12381_P)
+        %BLS12_381_P_MINUS_ONE => B
+        0 => C
+        %BLS12_381_P => D
+        ${(A*B) % D} => B       :ARITH_384_MOD, RETURN

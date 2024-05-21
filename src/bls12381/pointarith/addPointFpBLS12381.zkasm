@@ -1,0 +1,112 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P1,P2 ∈ E(Fp)\{𝒪} with P1.x,P1.y,P2.x,P2.y ∈ [0, 2³⁸⁴ - 1]
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to Fp arithmetic
+;;
+;; addPointFpBLS12381:
+;;             in: P1 = (P1.x, P1.y), P2 = (P2.x, P2.y) ∈ E(Fp)
+;;             out: P1 + P2 = (P3.x, P3.y) ∈ E(Fp)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+VAR GLOBAL addPointFpBLS12381_P1_x
+VAR GLOBAL addPointFpBLS12381_P1_y
+VAR GLOBAL addPointFpBLS12381_P2_x
+VAR GLOBAL addPointFpBLS12381_P2_y
+VAR GLOBAL addPointFpBLS12381_P3_x
+VAR GLOBAL addPointFpBLS12381_P3_y
+
+VAR GLOBAL addPointFpBLS12381_P3_infinity
+
+VAR GLOBAL _lambda
+
+VAR GLOBAL _RR
+
+addPointFpBLS12381:
+        RR => _RR
+
+        0 => addPointFpBLS12381_P3_infinity ; initialize the flag
+
+        ; check whether P1.x == P2.x. If they are different, then P1 != P2,-P2
+        addPointFpBLS12381_P1_x => A
+        A - addPointFpBLS12381_P2_x => C                :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+        ROTL_C => C                                     :JMPNZ(_compute_sum)
+
+        ; If P1.x == P2.x, then either P1 == P2 or P1 == -P2. Find which one is the case
+        addPointFpBLS12381_P1_y => A
+        A - addPointFpBLS12381_P2_y => C                :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPNZ(_result_is_infinity)
+        ROTL_C => C                                     :JMPZ(_compute_sum)
+
+_result_is_infinity:
+        1 => addPointFpBLS12381_P3_infinity
+
+        _RR => RR                                       :RETURN
+
+_compute_double:
+        addPointFpBLS12381_P1_x => A
+        addPointFpBLS12381_P1_y => B
+        A => doublePointFpBLS12381_P_x
+        B => doublePointFpBLS12381_P_y                  :CALL(doublePointFpBLS12381)
+        doublePointFpBLS12381_Q_x => A
+        doublePointFpBLS12381_Q_y => B
+        A => addPointFpBLS12381_P3_x
+        B => addPointFpBLS12381_P3_y
+
+        _RR => RR                                       :RETURN
+
+_compute_sum:
+
+        addPointFpBLS12381_P2_x => C
+        addPointFpBLS12381_P1_x => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = P2.x - P1.x
+
+        C => A                          :CALL(invFpBLS12381) ; in: [A] out: [B]
+        ; B = 1 / (P2.x - P1.x)
+        B => _lambda
+
+        addPointFpBLS12381_P2_y => C
+        addPointFpBLS12381_P1_y => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = P2.y - P1.y
+
+        _lambda => A
+        C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+        ; lambda = C = (P2_y - P1_y) / (P2_x - P1_x)
+        C => A,_lambda                  :CALL(squareFpBLS12381) ; in: [A] out: [B]
+        ; B = lambda²
+
+        B => C
+        addPointFpBLS12381_P1_x => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = lambda² - P1.x
+
+        addPointFpBLS12381_P2_x => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = lambda² - P1.x - P2.x
+
+        C => A,addPointFpBLS12381_P3_x
+        ; P3.x = lambda² - P1.x - P2.x
+
+        addPointFpBLS12381_P1_x => C    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = P1.x - P3.x
+
+        _lambda => A
+        C => B                          :CALL(mulFpBLS12381) ; in: [A,B] out: [C]
+        ; C = lambda·(P1.x - P3.x)
+
+        addPointFpBLS12381_P1_y => A    :CALL(subFpBLS12381) ; in: [C,A] out: [C]
+        ; C = lambda·(P1.x - P3.x) - P1.y
+
+        C => addPointFpBLS12381_P3_y
+
+        _RR => RR                       :RETURN

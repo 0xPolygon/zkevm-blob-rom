@@ -13,7 +13,7 @@ const pathInputsFT = path.join(__dirname,"../node_modules/@0xpolygonhermez/zkevm
 
 
 it("Fulltracer tests", async function () {
-    
+
     const inputsNames = fs.readdirSync(pathInputsBlob);
     for(let i = 0; i < inputsNames.length; i++) {
         const inputName = inputsNames[i];

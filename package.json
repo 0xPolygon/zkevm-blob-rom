@@ -8,7 +8,7 @@
     "build:metadata": "echo \"COMMIT=$(git rev-parse HEAD)\nSHA256SUM=$(sha256sum ./build/blob-rom.json)\" > build/metadata-blob-rom.txt",
     "eslint": "npx eslint js/**.js",
     "eslint:fix": "npx eslint js/**.js --fix",
-    "test:zkasm": "node tools/run-tests-zkasm.js ./test --helper js/helper.js",
+    "test:zkasm": "tools/run-zkasm-tests.sh",
     "test:gen": "node tools/parallel-testing/gen-parallel-tests.js",
     "test:start": "npx mocha --timeout 0 --max-old-space-size=8192 --parallel \"tools/parallel-testing/parallel-tests/*.test.js\"",
     "test:fulltracer": "npx mocha tools/run-tests-fulltracer.js"
@@ -29,13 +29,14 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#develop-feijoa",
+    "@0xpolygonhermez/zkasmcom": "https://github.com/0xPolygonHermez/zkasmcom.git#feature/arith-384",
     "crypto": "^1.0.1",
+    "ffjavascript": "^0.3.0",
     "yargs": "^17.5.1"
   },
   "devDependencies": {
     "@0xpolygonhermez/zkevm-commonjs": "github:0xPolygonHermez/zkevm-commonjs#develop-feijoa",
-    "@0xpolygonhermez/zkevm-proverjs": "github:0xPolygonHermez/zkevm-proverjs#develop-feijoa",
+    "@0xpolygonhermez/zkevm-proverjs": "github:0xPolygonHermez/zkevm-proverjs#feature/arith-384",
     "@0xpolygonhermez/zkevm-testvectors": "github:0xPolygonHermez/zkevm-testvectors#develop-feijoa",
     "chai": "^4.3.6",
     "chalk": "^3.0.0",
