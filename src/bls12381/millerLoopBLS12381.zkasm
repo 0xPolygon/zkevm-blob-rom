@@ -77,12 +77,8 @@ millerLoopBLS12381:
     0n => millerLoopBLS12381_f22_y
     0n => millerLoopBLS12381_f23_x
     0n => millerLoopBLS12381_f23_y
-    ; [steps: 22, bin: 0, arith: 0]
 
 _loop:
-    ; block costs:
-    ;       no_last: [steps: 1937, bin: 4, arith: 149]
-    ;       last:    [steps: 1]
 
     RCX - 1 => RCX                      :JMPZ(_conjugate)
 
@@ -113,7 +109,6 @@ _loop:
     millerLoopBLS12381_f23_y => B
     A => squareFp12BLS12381_a23_x
     B => squareFp12BLS12381_a23_y       :CALL(squareFp12BLS12381)
-    ; [steps: 901, bin: 0, arith: 69]
 
     squareFp12BLS12381_c11_x => A
     squareFp12BLS12381_c11_y => B
@@ -153,7 +148,6 @@ _loop:
     millerLoopBLS12381_P_y => B
     A => lineSamePointsBLS12381_Q_x
     B => lineSamePointsBLS12381_Q_y     :CALL(lineSamePointsBLS12381)
-    ; [steps: 1037, bin: 0, arith: 82]
 
     ; 1.3] f² · line_{twist(R),twist(R)}(P)
     _fsquare11_x => A
@@ -193,7 +187,6 @@ _loop:
     lineSamePointsBLS12381_l13_y => B
     A => sparseMulBFp12BLS12381_b13_x
     B => sparseMulBFp12BLS12381_b13_y   :CALL(sparseMulBFp12BLS12381)
-    ; [steps: 1786, bin: 0, arith: 138]
 
     sparseMulBFp12BLS12381_c11_x => A
     sparseMulBFp12BLS12381_c11_y => B
@@ -229,7 +222,6 @@ _loop:
     B => doublePointFp2BLS12381_P_x2
     C => doublePointFp2BLS12381_P_y1
     D => doublePointFp2BLS12381_P_y2    :CALL(doublePointFp2BLS12381)
-    ; [steps: 1924, bin: 4, arith: 149]
 
     doublePointFp2BLS12381_Q_x1 => A
     doublePointFp2BLS12381_Q_x2 => B
@@ -245,12 +237,10 @@ _loop:
 
     ; if bit = 0, then repeat
     B           :JMPZ(_loop)
-    ; [steps: 1937, bin: 4, arith: 149]
 
     ; if bit = 1, then add
 
 _add:
-    ; block costs: [steps: 930, bin: 4, arith: 68]
 
     ; 1] f = f · line_{twist(R),twist(Q)}(P)
     ; 1.1] line_{twist(R),twist(Q)}(P)
@@ -274,7 +264,6 @@ _add:
     millerLoopBLS12381_P_y => B
     A => lineDiffPointsBLS12381_Q_x
     B => lineDiffPointsBLS12381_Q_y     :CALL(lineDiffPointsBLS12381)
-    ; [steps: 80, bin: 0, arith: 7]
 
     ; 1.2] f · line_{twist(R),twist(Q)}(P)
     millerLoopBLS12381_f11_x => A
@@ -314,7 +303,7 @@ _add:
     lineDiffPointsBLS12381_l22_y => B
     A => sparseMulAFp12BLS12381_b22_x
     B => sparseMulAFp12BLS12381_b22_y   :CALL(sparseMulAFp12BLS12381)
-    ; [steps: 780, bin: 0, arith: 58]
+
     sparseMulAFp12BLS12381_c11_x => A
     sparseMulAFp12BLS12381_c11_y => B
     A => millerLoopBLS12381_f11_x
@@ -366,10 +355,8 @@ _add:
     B => _R_x2
     C => _R_y1
     D => _R_y2                          :JMP(_loop)
-    ; [steps: 930, bin: 4, arith: 68]
 
 _conjugate:
-    ; block costs till end: [steps: 1776, bin: 8, arith: 130]
 
     ; 2] f = f̅
     millerLoopBLS12381_f21_x => C

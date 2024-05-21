@@ -9,11 +9,6 @@
 
 PRAGMA MODE_384_BITS
 
-; RESOURCES:
-; -----------------------------
-; [steps: 3, bin: 0, arith: 1]
-; -----------------------------
-
 negFpBLS12381:
         ; A·B + 0 = op (mod BLS12381_P)
         %BLS12_381_P_MINUS_ONE => B

@@ -51,11 +51,6 @@ VAR GLOBAL _fconjugate_23_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 170707, bin: 486, arith: 15411]
-; -----------------------------
-
 finalExpBLS12381:
         RR => _RR
 

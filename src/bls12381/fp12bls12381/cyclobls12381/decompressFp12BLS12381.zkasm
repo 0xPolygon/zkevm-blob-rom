@@ -58,12 +58,6 @@ VAR GLOBAL _sum_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; PATH 1 a2 == 0: [steps: 132, bin: 6, arith: 12]
-; PATH 2 a2 != 0: [steps: 190, bin: 5, arith: 20] <--- w.c.
-; -----------------------------
-
 decompressFp12BLS12381:
         RR => _RR
 

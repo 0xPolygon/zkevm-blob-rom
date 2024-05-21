@@ -11,12 +11,6 @@
 
 PRAGMA MODE_384_BITS
 
-; RESOURCES:
-; -------------------------------------------
-; PATH 1 A,B == 0:       [steps: 3,  bin: 0, arith: 0]
-; PATH 2 A != 0, B == 0: [steps: 16, bin: 3, arith: 1]
-; PATH 3 A,B != 0:       [steps: 18, bin: 4, arith: 1] <-- w.c.
-; -------------------------------------------
 VAR GLOBAL _x
 VAR GLOBAL _y
 

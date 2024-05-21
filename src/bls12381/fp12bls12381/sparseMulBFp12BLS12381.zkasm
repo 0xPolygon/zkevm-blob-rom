@@ -60,11 +60,6 @@ VAR GLOBAL _a1b2mul3_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 713, bin: 0, arith: 56]
-; -----------------------------
-
 sparseMulBFp12BLS12381:
         RR => _RR
 

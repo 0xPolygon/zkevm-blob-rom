@@ -45,12 +45,6 @@ VAR GLOBAL _a1square3_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; PATH 1 (a1² - a2²·v) == 0: [steps: 1129, bin: 10, arith: 108]
-; PATH 2 (a1² - a2²·v) != 0: [steps: 1132, bin: 9,  arith: 109] <--- w.c.
-; -----------------------------
-
 inverseFp12BLS12381:
         RR => _RR
 

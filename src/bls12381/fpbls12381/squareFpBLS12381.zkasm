@@ -9,11 +9,6 @@
 
 PRAGMA MODE_384_BITS
 
-; RESOURCES:
-; -----------------------------
-; [steps: r, bin: 0, arith: 1]
-; -----------------------------
-
 squareFpBLS12381:
         ; A·A + 0 = op (mod BLS12381_P)
         A => B

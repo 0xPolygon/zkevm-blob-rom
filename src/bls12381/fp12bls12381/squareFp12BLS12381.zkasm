@@ -72,11 +72,6 @@ VAR GLOBAL _a1a2vsub3_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 876, bin: 0, arith: 69]
-; -----------------------------
-
 squareFp12BLS12381:
         RR => _RR
 

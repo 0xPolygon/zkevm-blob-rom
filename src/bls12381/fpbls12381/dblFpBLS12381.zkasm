@@ -9,11 +9,6 @@
 
 PRAGMA MODE_384_BITS
 
-; RESOURCES:
-; -----------------------------
-; [steps: 3, bin: 0, arith: 1]
-; -----------------------------
-
 dblFpBLS12381:
         ; A·1 + A = op (mod BLS12381_P)
         A => C

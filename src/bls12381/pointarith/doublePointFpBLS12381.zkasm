@@ -22,11 +22,6 @@ VAR GLOBAL _lambda
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 102, bin: 4, arith: 11]
-; -----------------------------
-
 doublePointFpBLS12381:
         RR => _RR
 

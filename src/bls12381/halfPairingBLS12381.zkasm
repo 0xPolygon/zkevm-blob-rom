@@ -43,11 +43,6 @@ VAR GLOBAL halfPairingBLS12381_out23_y
 
 VAR GLOBAL _RR
 
-; RESOURCES (not considering error paths):
-; -------------------------------------------
-; [steps: 342758, bin: 1452, arith: 28738] <--- w.c.
-; -------------------------------------------
-
 halfPairingBLS12381:
     RR => _RR
 

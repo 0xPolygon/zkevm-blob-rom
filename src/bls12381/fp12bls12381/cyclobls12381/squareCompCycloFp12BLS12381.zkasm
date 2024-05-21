@@ -58,11 +58,6 @@ VAR GLOBAL _twoCa4_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 216, bin: 0, arith: 27]
-; -----------------------------
-
 squareCompCycloFp12BLS12381:
         RR => _RR
 

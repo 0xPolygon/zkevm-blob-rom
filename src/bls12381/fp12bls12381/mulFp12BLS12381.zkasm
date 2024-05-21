@@ -82,11 +82,6 @@ VAR GLOBAL _b1b2sum3_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 1050, bin: 0, arith: 88]
-; -----------------------------
-
 mulFp12BLS12381:
         RR => _RR
 

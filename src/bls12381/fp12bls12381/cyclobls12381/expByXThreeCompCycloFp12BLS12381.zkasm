@@ -84,7 +84,6 @@ expByXThreeCompCycloFp12BLS12381:
         expByXThreeCompCycloFp12BLS12381_a5_y => B
         A => compressFp12BLS12381_a5_x
         B => compressFp12BLS12381_a5_y                  :CALL(compressFp12BLS12381)
-        ; [steps: 106, bin: 24, arith: 0]
 
         ; Store it in the output squareCompCyclo for future compressed squarings
         compressFp12BLS12381_Ca2_x => A
@@ -103,7 +102,6 @@ expByXThreeCompCycloFp12BLS12381:
         compressFp12BLS12381_Ca5_y => B
         A => squareCompCycloFp12BLS12381_Cb5_x
         B => squareCompCycloFp12BLS12381_Cb5_y
-        ; [steps: 338, bin: 24, arith: 27]
 
         ; Set the result to 1
         1 => mulFp12BLS12381_c11_x
@@ -222,8 +220,6 @@ _square:
         RCX + 1 => RCX                                  :JMP(_loop)
 
 _last:
-        ; block costs till end: [steps: 26, bin: 0, arith: 0]
-
         ; Last asignment
         mulFp12BLS12381_c11_x => A
         mulFp12BLS12381_c11_y => B

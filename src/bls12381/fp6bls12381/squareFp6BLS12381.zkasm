@@ -37,11 +37,6 @@ VAR GLOBAL _a2sq_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 140, bin: 0, arith: 17]
-; -----------------------------
-
 squareFp6BLS12381:
         RR              :MSTORE(_RR)
 

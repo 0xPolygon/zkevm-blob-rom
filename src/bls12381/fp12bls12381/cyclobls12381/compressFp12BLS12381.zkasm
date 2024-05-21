@@ -31,11 +31,6 @@ VAR GLOBAL compressFp12BLS12381_Ca4_y
 VAR GLOBAL compressFp12BLS12381_Ca5_x
 VAR GLOBAL compressFp12BLS12381_Ca5_y
 
-; RESOURCES:
-; -----------------------------
-; [steps: 16, bin: 0, arith: 0]
-; -----------------------------
-
 compressFp12BLS12381:
         compressFp12BLS12381_a2_x => A
         compressFp12BLS12381_a2_y => B

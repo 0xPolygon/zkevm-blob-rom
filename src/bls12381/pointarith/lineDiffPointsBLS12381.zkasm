@@ -34,11 +34,6 @@ VAR GLOBAL _P2x_P1y_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 60, bin: 0, arith: 7]
-; -----------------------------
-
 lineDiffPointsBLS12381:
         RR => _RR
 

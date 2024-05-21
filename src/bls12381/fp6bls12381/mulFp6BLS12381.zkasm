@@ -46,11 +46,6 @@ VAR GLOBAL _a2b2mul_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 190, bin: 0, arith: 23]
-; -----------------------------
-
 mulFp6BLS12381:
         RR => _RR
 

@@ -30,11 +30,6 @@ VAR GLOBAL subFp6BLS12381_c3_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 30, bin: 0, arith: 3]
-; -----------------------------
-
 subFp6BLS12381:
         RR => _RR
 

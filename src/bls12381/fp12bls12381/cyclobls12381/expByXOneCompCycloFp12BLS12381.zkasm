@@ -39,17 +39,6 @@ VAR GLOBAL _RR
 
 ; TODO: unroll the loop
 
-; RESOURCES:
-; -------------------------------------------
-;  [steps: 2338, bin: 29, arith: 216]                  // setup
-;   + 58 * [steps: 237, bin: 0, arith: 27]             // squarings
-;   + 26 * [steps: 1305, bin: 5, arith: 108]           // multiplications
-;   + [steps: 26]                                      // last iteration + end
-;  total (w.c.): [steps: 50040 bin: 159, arith: 4590]  // [2338 + 58*237 + 26*1305 + 26,
-;                                                          29            + 26*5,
-;                                                          216  + 58*27  + 26*108]
-; -------------------------------------------
-
 expByXOneCompCycloFp12BLS12381:
         RR => _RR
 
@@ -81,7 +70,6 @@ expByXOneCompCycloFp12BLS12381:
         expByXOneCompCycloFp12BLS12381_a5_y => B
         A => compressFp12BLS12381_a5_x
         B => compressFp12BLS12381_a5_y                  :CALL(compressFp12BLS12381)
-        ; [steps: 106, bin: 24, arith: 0]
 
         ; Store it in the output squareCompCyclo for future compressed squarings
         compressFp12BLS12381_Ca2_x => A
@@ -100,7 +88,6 @@ expByXOneCompCycloFp12BLS12381:
         compressFp12BLS12381_Ca5_y => B
         A => squareCompCycloFp12BLS12381_Cb5_x
         B => squareCompCycloFp12BLS12381_Cb5_y
-        ; [steps: 338, bin: 24, arith: 27]
 
         ; Set the result to 1
         1 => mulFp12BLS12381_c11_x
@@ -219,8 +206,6 @@ _square:
         RCX + 1 => RCX                                  :JMP(_loop)
 
 _last:
-        ; block costs till end: [steps: 26, bin: 0, arith: 0]
-
         ; Last asignment
         mulFp12BLS12381_c11_x => A
         mulFp12BLS12381_c11_y => B

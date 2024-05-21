@@ -9,11 +9,6 @@
 
 PRAGMA MODE_384_BITS
 
-; RESOURCES:
-; -----------------------------
-; [steps: 2, bin: 0, arith: 1]
-; -----------------------------
-
 addFp2BLS12381:
         ; Compute and check the mul
         ; A + C = [E] + (q0·BLS12381_P)

@@ -38,11 +38,6 @@ VAR GLOBAL frobFp12BLS12381_c23_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 63, bin: 6, arith: 5]
-; -----------------------------
-
 frobFp12BLS12381:
         RR => _RR
 

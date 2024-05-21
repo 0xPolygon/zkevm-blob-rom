@@ -30,11 +30,6 @@ VAR GLOBAL _lambda_y
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -------------------------------------------
-; [steps: 101, bin: 4, arith: 10]
-; -------------------------------------------
-
 addPointFp2BLS12381:
         RR => _RR
 

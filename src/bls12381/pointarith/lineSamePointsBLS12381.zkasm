@@ -31,11 +31,6 @@ VAR GLOBAL _P_y2_square
 
 VAR GLOBAL _RR
 
-; RESOURCES:
-; -----------------------------
-; [steps: 100, bin: 0, arith: 13]
-; -----------------------------
-
 lineSamePointsBLS12381:
         RR => _RR
 
