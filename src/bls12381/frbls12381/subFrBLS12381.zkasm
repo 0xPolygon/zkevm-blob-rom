@@ -8,12 +8,6 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; RESOURCES:
-; -----------------------------
-; PATH A >= C:  [steps: 3, bin: 1, arith: 0]
-; PATH A < C:   [steps: 7, bin: 3, arith: 0] <-- w.c.
-; -----------------------------
-
 subFrBLS12381:
         C => B
         $ => C                  :SUB, JMPC(_add_alias)

@@ -29,18 +29,6 @@ VAR GLOBAL _RR
 
 ; NOTE: If z is a 4096-th root of unity, say ωⁱ, we should return the i-th evaluation of the polynomial
 
-; RESOURCES:
-; -------------------------------------------
-; PATH 1 z_is_root:
-;               · z_is_one:     [steps: 23,  bin: 2]
-;               · z_is_not_one: [steps: 94, bin: 2, arith: 12]
-; PATH 2 z_is_not_root: inital_exp_and_first_term       + 4096*i-th_term                          + last_mul_and_end             =
-;                       [steps: 102, bin: 6, arith: 13] + 4096*[steps: 39-43, bin: 2-4, arith: 4] + [steps: 9, bin: 0, arith: 1] =
-;                                      [steps: 159.855-176.239, bin: 8.198-16.390, arith: 16.398]
-; PATH 3 z_is_not_root: PATH 2 + reduce_all = [steps: 159.855-176.239, bin: 8.198-16.390, arith: 16.398] + [steps: 20, bin: 1, arith: 2] + [steps: 53.237, bin: 4.095, arith: 4.095] =
-;                                      [steps: 213.112-229.496, bin: 12.294-20.486, arith: 20.495] <--- w.c.
-; -------------------------------------------
-
 polEvalFrBLS12381:
         RR => _RR
 
@@ -54,7 +42,6 @@ polEvalFrBLS12381:
         0 => C
         %BLS12_381_R => D
         ${A % D} => polEvalFrBLS12381_z         :ARITH_MOD
-        ; [steps: 10, bin: 1, arith: 1]
 
 _check_index:
         polEvalFrBLS12381_index => E          :JMPZ(_compute)
@@ -69,11 +56,8 @@ _check_index:
         0 => C
         %BLS12_381_R => D
         ${A % D} => polEvalFrBLS12381_pol_eval[E]      :ARITH_MOD
-        ; [steps: 20, bin: 1, arith: 2]
 
 _reduce_evals:
-        ; w.c. loop -> 4095*[steps: 13, bin: 1, arith: 1] + 2*steps = [steps: 53.237, bin: 4.095, arith: 4.095]
-
         E + 1 => E
         E                                       :JMP_EQ(4096, _compute)
         polEvalFrBLS12381_pol_eval[E] => A
@@ -88,11 +72,10 @@ _compute:
         ; Objective: f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
 
         ; 1] Compute (z⁴⁰⁹⁶-1)/4096
-        polEvalFrBLS12381_z => A                :CALL(expBy4096FrBLS12381) ; [steps: 80, bin: 2, arith: 12] <-- w.c.
+        polEvalFrBLS12381_z => A                :CALL(expBy4096FrBLS12381)
 
         ; Check whether z is a 4096-th root of unity by checking if z⁴⁰⁹⁶ = 1
         $0{A == 1}                              :JMPZ(_z_is_not_root_of_unity)
-        ; [steps: 83, bin: 2, arith: 12]
 
 _z_is_root_of_unity:
         1n                                              :ASSERT
@@ -111,11 +94,8 @@ _z_is_root_of_unity:
         ; Return the corresponding evaluation
         polEvalFrBLS12381_pol_eval[E] => A
         A => polEvalFrBLS12381_y                :JMP(_end)
-        ; till the end -> [steps: 94, bin: 2, arith: 12]
 
 _z_is_not_root_of_unity:
-        ; before -> [steps: 83, bin: 2, arith: 12]
-
         ; Objective: f(z) = (z⁴⁰⁹⁶-1)/4096·∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
 
         ; ensure z its not a 4096-th root of unity
@@ -123,7 +103,7 @@ _z_is_not_root_of_unity:
         0               :EQ
 
         ; A = z⁴⁰⁹⁶
-        1 => C         :CALL(subFrBLS12381) ; [steps: 7, bin: 3, arith: 0] <-- w.c.
+        1 => C         :CALL(subFrBLS12381)
 
         ; Compute (z⁴⁰⁹⁶-1)/4096
         C => A
@@ -135,15 +115,13 @@ _z_is_not_root_of_unity:
         ; 2] Compute ∑ᵢ fᵢ·ωⁱ/(z-ωⁱ)
         0 => _accum ; Initialize the accumulator
         4095 => E
-        ; [steps: 102, bin: 6, arith: 13]
-_loop:
-        ; block costs: [steps: 39-43, bin: 2-4, arith: 4]
 
+_loop:
         ; 2.1] Compute 1/(z-ωⁱ)
         polEvalFrBLS12381_z => A
                                         :CALL(@rootsOfUnity4096FrBLS12381 + E) ; [out: C]
-                                        :CALL(subFrBLS12381) ; [steps: 3, bin: 1]-[steps: 7, bin: 3] <-- w.c.
-        C => A                          :CALL(invFrBLS12381) ; [steps: 7, bin: 1, arith: 1]
+                                        :CALL(subFrBLS12381)
+        C => A                          :CALL(invFrBLS12381)
         A => _inv_i
 
         ; 2.2] Compute fᵢ·ωⁱ and multiply by 1/(z-ωⁱ)
@@ -168,8 +146,6 @@ _loop:
         E - 1 => E                      :JMPN(_last_mul, _loop)
 
 _last_mul:
-        ; till the end costs -> [steps: 9, bin: 0, arith: 1]
-
         ; 3] Multiply the accumulator by (z⁴⁰⁹⁶-1)/4096
         _accum => A
         polEvalFrBLS12381_y => B
