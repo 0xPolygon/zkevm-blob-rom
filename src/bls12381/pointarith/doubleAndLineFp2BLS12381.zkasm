@@ -1,0 +1,165 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRE: P is in E'(Fp2)\{𝒪} with P != -P and its coordinates are in the range [0,BLS12_381_P)
+;; POST: The resulting coordinates are in the range [0,BLS12_381_P) because if falls back to FP2 arithmetic
+;;
+;; doubleAndLineFp2BLS12381:
+;;             in: P = (P.x1 + P.x2·u, P.y1 + P.y2·u) ∈ E'(Fp2)
+;;             out: 2·P = (Q.x1 + Q.x2·u, Q.y1 + Q.y2·u) ∈ E'(Fp2)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+PRAGMA MODE_384_BITS
+
+; Precomputed values in the Miller loop
+VAR GLOBAL doubleAndLineFp2BLS12381_Px_prime
+VAR GLOBAL doubleAndLineFp2BLS12381_Py_prime
+
+VAR GLOBAL doubleAndLineFp2BLS12381_T_x1
+VAR GLOBAL doubleAndLineFp2BLS12381_T_x2
+VAR GLOBAL doubleAndLineFp2BLS12381_T_y1
+VAR GLOBAL doubleAndLineFp2BLS12381_T_y2
+VAR GLOBAL doubleAndLineFp2BLS12381_T_dbl_x1
+VAR GLOBAL doubleAndLineFp2BLS12381_T_dbl_x2
+VAR GLOBAL doubleAndLineFp2BLS12381_T_dbl_y1
+VAR GLOBAL doubleAndLineFp2BLS12381_T_dbl_y2
+VAR GLOBAL doubleAndLineFp2BLS12381_l0_x
+VAR GLOBAL doubleAndLineFp2BLS12381_l0_y
+VAR GLOBAL doubleAndLineFp2BLS12381_l2_x
+VAR GLOBAL doubleAndLineFp2BLS12381_l2_y
+VAR GLOBAL doubleAndLineFp2BLS12381_l3_x
+VAR GLOBAL doubleAndLineFp2BLS12381_l3_y
+
+VAR GLOBAL _lambda_x
+VAR GLOBAL _lambda_y
+VAR GLOBAL _mu_x
+VAR GLOBAL _mu_y
+
+VAR GLOBAL _aux_x
+VAR GLOBAL _aux_y
+
+VAR GLOBAL _RR
+
+doubleAndLineFp2BLS12381:
+    RR => _RR
+
+    ; TODO: Check they are correct (e.g., free of aliases and so on)
+    ${fp2GetSlope_x(mem.doubleAndLineFp2BLS12381_T_x1,mem.doubleAndLineFp2BLS12381_T_x2,mem.doubleAndLineFp2BLS12381_T_y1,mem.doubleAndLineFp2BLS12381_T_y2)} => _lambda_x
+    ${fp2GetSlope_y(mem.doubleAndLineFp2BLS12381_T_x1,mem.doubleAndLineFp2BLS12381_T_x2,mem.doubleAndLineFp2BLS12381_T_y1,mem.doubleAndLineFp2BLS12381_T_y2)} => _lambda_y
+    ${fp2GetVerticalIntercept_x(mem._lambda_x,mem._lambda_y,mem.doubleAndLineFp2BLS12381_T_x1,mem.doubleAndLineFp2BLS12381_T_x2,mem.doubleAndLineFp2BLS12381_T_y1,mem.doubleAndLineFp2BLS12381_T_y2)} => _mu_x
+    ${fp2GetVerticalIntercept_y(mem._lambda_x,mem._lambda_y,mem.doubleAndLineFp2BLS12381_T_x1,mem.doubleAndLineFp2BLS12381_T_x2,mem.doubleAndLineFp2BLS12381_T_y1,mem.doubleAndLineFp2BLS12381_T_y2)} => _mu_y
+
+    ; 1] Show that y = λ·x + μ: the input point passes through the line
+    _lambda_x => A
+    _lambda_y => B
+    doubleAndLineFp2BLS12381_T_x1 => C
+    doubleAndLineFp2BLS12381_T_x2 => D      :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+
+    E => A
+    C => B
+    _mu_x => C
+    _mu_y => D                              :CALL(addFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+
+    C - doubleAndLineFp2BLS12381_T_y2 => C  :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+
+    E - doubleAndLineFp2BLS12381_T_y1 => C  :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+
+    ; 2] Show that 2·λ·y = 3·x²: the line is a tangent line
+    2 => A
+    _lambda_x => C
+    _lambda_y => D                          :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+
+    E => A
+    C => B
+    doubleAndLineFp2BLS12381_T_y1 => C
+    doubleAndLineFp2BLS12381_T_y2 => D      :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => _aux_x
+    C => _aux_y
+
+    doubleAndLineFp2BLS12381_T_x1 => A
+    doubleAndLineFp2BLS12381_T_x2 => B      :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
+    3 => A
+    C => D
+    E => C                                  :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+
+    C - _aux_y => C                         :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+
+    E - _aux_x => C                         :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+    ROTL_C => C                             :JMPNZ(failAssert)
+
+    ; 3] Compute Q.x = λ² - 2·P.x, Q.y = -μ - λ·Q.x = -(λ·Q.x + μ)
+    _lambda_x => A
+    _lambda_y => B                          :CALL(squareFp2BLS12381) ; in: [A,B] out: [E,C]
+    E => _aux_x
+    C => _aux_y
+
+    %BLS12_381_P - 2n => A
+    doubleAndLineFp2BLS12381_T_x1 => C
+    doubleAndLineFp2BLS12381_T_x2 => D      :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+
+    _aux_x => A
+    _aux_y => B
+    C => D
+    E => C                                  :CALL(addFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+    E => A,doubleAndLineFp2BLS12381_T_dbl_x1
+    C => B,doubleAndLineFp2BLS12381_T_dbl_x2
+
+    _lambda_x => C
+    _lambda_y => D                          :CALL(mulFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+
+    E => A
+    C => B
+    _mu_x => C
+    _mu_y => D                              :CALL(addFp2BLS12381) ; in: [A,B,C,D] out: [E,C]
+
+    C => D
+    E => C                                  :CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
+    E => doubleAndLineFp2BLS12381_T_dbl_y1
+    C => doubleAndLineFp2BLS12381_T_dbl_y2
+
+    ; 4] Compute ℓᵩ₍ᴛ₎(P) = -μ·y' + λ·x'·w² + w³, where P = (x,y) and y' = 1/y, x' = -x/y
+    _mu_x => C
+    _mu_y => D                              :CALL(negFp2BLS12381) ; in: [C,D] out: [E,C]
+
+    doubleAndLineFp2BLS12381_Py_prime => A
+    C => D
+    E => C                                  :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+    E => doubleAndLineFp2BLS12381_l0_x
+    C => doubleAndLineFp2BLS12381_l0_y
+
+    doubleAndLineFp2BLS12381_Px_prime => A
+    _lambda_x => C
+    _lambda_y => D                          :CALL(scalarMulFp2BLS12381) ; in: [A,C,D] out: [E,C]
+    E => doubleAndLineFp2BLS12381_l2_x
+    C => doubleAndLineFp2BLS12381_l2_y
+
+    1 => doubleAndLineFp2BLS12381_l3_x
+    1 => doubleAndLineFp2BLS12381_l3_y
+
+    _RR => RR                               :RETURN

@@ -92,99 +92,99 @@ module.exports = class myHelper {
         return this.FpBLS12_381.inv(a);
     }
 
-    // fp2Add(a, b) {
-    //     return [this.FpBLS12_381.add(a[0], b[0]), this.FpBLS12_381.add(a[1], b[1])];
-    // }
+    fp2Add(a, b) {
+        return [this.FpBLS12_381.add(a[0], b[0]), this.FpBLS12_381.add(a[1], b[1])];
+    }
 
-    // fp2Sub(a, b) {
-    //     return [this.FpBLS12_381.sub(a[0], b[0]), this.FpBLS12_381.sub(a[1], b[1])];
-    // }
+    fp2Sub(a, b) {
+        return [this.FpBLS12_381.sub(a[0], b[0]), this.FpBLS12_381.sub(a[1], b[1])];
+    }
 
-    // fp2Mul(a, b) {
-    //     const F = this.FpBLS12_381;
-    //     const a0b0 = F.mul(a[0], b[0]);
-    //     const a1b1 = F.mul(a[1], b[1]);
-    //     const a0b1 = F.mul(a[0], b[1]);
-    //     const a1b0 = F.mul(a[1], b[0]);
-    //     return [F.sub(a0b0, a1b1), F.add(a0b1, a1b0)];
-    // }
+    fp2Mul(a, b) {
+        const F = this.FpBLS12_381;
+        const a0b0 = F.mul(a[0], b[0]);
+        const a1b1 = F.mul(a[1], b[1]);
+        const a0b1 = F.mul(a[0], b[1]);
+        const a1b0 = F.mul(a[1], b[0]);
+        return [F.sub(a0b0, a1b1), F.add(a0b1, a1b0)];
+    }
 
-    // fp2ScalarMul(a, b) {
-    //     return [this.FpBLS12_381.mul(a[0], b), this.FpBLS12_381.mul(a[1], b)];
-    // }
+    fp2ScalarMul(a, b) {
+        return [this.FpBLS12_381.mul(a[0], b), this.FpBLS12_381.mul(a[1], b)];
+    }
 
-    // fp2Square(a) {
-    //     const F = this.FpBLS12_381;
-    //     const a0a1 = F.mul(a[0], a[1]);
-    //     const a0a0 = F.square(a[0]);
-    //     const a1a1 = F.square(a[1]);
-    //     return [F.sub(a0a0, a1a1), F.add(a0a1, a0a1)];
-    // }
+    fp2Square(a) {
+        const F = this.FpBLS12_381;
+        const a0a1 = F.mul(a[0], a[1]);
+        const a0a0 = F.square(a[0]);
+        const a1a1 = F.square(a[1]);
+        return [F.sub(a0a0, a1a1), F.add(a0a1, a0a1)];
+    }
 
-    // fp2Inv(a) {
-    //     const F = this.FpBLS12_381;
-    //     if (F.isZero(a[0]) && F.isZero(a[1])) {
-    //         throw new Error("Inversion of zero");
-    //     }
+    fp2Inv(a) {
+        const F = this.FpBLS12_381;
+        if (F.isZero(a[0]) && F.isZero(a[1])) {
+            throw new Error("Inversion of zero");
+        }
 
-    //     const den = F.add(F.square(a[0]), F.square(a[1]));
-    //     return [F.div(a[0], den), F.neg(F.div(a[1], den))];
-    // }
+        const den = F.add(F.square(a[0]), F.square(a[1]));
+        return [F.div(a[0], den), F.neg(F.div(a[1], den))];
+    }
 
-    // fp2Div(a, b) {
-    //     return this.fp2Mul(a, this.fp2Inv(b));
-    // }
+    fp2Div(a, b) {
+        return this.fp2Mul(a, this.fp2Inv(b));
+    }
 
-    // fp2GetSlope(x1, y1, x2, y2, isDouble) {
-    //     if (isDouble) {
-    //         return this.fp2Div(
-    //             this.fp2ScalarMul(this.fp2Square(x1), 3n),
-    //             this.fp2ScalarMul(y1, 2n)
-    //         );
-    //     } else {
-    //         return this.fp2Div(this.fp2Sub(y2, y1), this.fp2Sub(x2, x1));
-    //     }
-    // }
+    fp2GetSlope(x1, y1, x2, y2, isDouble) {
+        if (isDouble) {
+            return this.fp2Div(
+                this.fp2ScalarMul(this.fp2Square(x1), 3n),
+                this.fp2ScalarMul(y1, 2n)
+            );
+        } else {
+            return this.fp2Div(this.fp2Sub(y2, y1), this.fp2Sub(x2, x1));
+        }
+    }
 
-    // eval_fp2GetSlope_x(ctx, tag) {
-    //     const ctxFullFe = { ...ctx, fullFe: true };
-    //     const isDouble = tag.params.length === 4;
-    //     const x1 = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
-    //     const y1 = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
-    //     const x2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[0] : tag.params[4]), this.evalCommand(ctxFullFe, isDouble ? tag.params[1] : tag.params[5])];
-    //     const y2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[2] : tag.params[6]), this.evalCommand(ctxFullFe, isDouble ? tag.params[3] : tag.params[7])];
+    eval_fp2GetSlope_x(ctx, tag) {
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const isDouble = tag.params.length === 4;
+        const x1 = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
+        const y1 = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
+        const x2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[0] : tag.params[4]), this.evalCommand(ctxFullFe, isDouble ? tag.params[1] : tag.params[5])];
+        const y2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[2] : tag.params[6]), this.evalCommand(ctxFullFe, isDouble ? tag.params[3] : tag.params[7])];
 
-    //     return this.fp2GetSlope(x1, y1, x2, y2, isDouble)[0];
-    // }
+        return this.fp2GetSlope(x1, y1, x2, y2, isDouble)[0];
+    }
 
-    // eval_fp2GetSlope_y(ctx, tag) {
-    //     const ctxFullFe = { ...ctx, fullFe: true };
-    //     const isDouble = tag.params.length === 4;
-    //     const x1 = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
-    //     const y1 = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
-    //     const x2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[0] : tag.params[4]), this.evalCommand(ctxFullFe, isDouble ? tag.params[1] : tag.params[5])];
-    //     const y2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[2] : tag.params[6]), this.evalCommand(ctxFullFe, isDouble ? tag.params[3] : tag.params[7])];
+    eval_fp2GetSlope_y(ctx, tag) {
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const isDouble = tag.params.length === 4;
+        const x1 = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
+        const y1 = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
+        const x2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[0] : tag.params[4]), this.evalCommand(ctxFullFe, isDouble ? tag.params[1] : tag.params[5])];
+        const y2 = [this.evalCommand(ctxFullFe, isDouble ? tag.params[2] : tag.params[6]), this.evalCommand(ctxFullFe, isDouble ? tag.params[3] : tag.params[7])];
 
-    //     return this.fp2GetSlope(x1, y1, x2, y2, isDouble)[1];
-    // }
+        return this.fp2GetSlope(x1, y1, x2, y2, isDouble)[1];
+    }
 
-    // eval_fp2GetVerticalIntercept_x(ctx, tag) {
-    //     const ctxFullFe = { ...ctx, fullFe: true };
-    //     const slope = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
-    //     const x = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
-    //     const y = [this.evalCommand(ctxFullFe, tag.params[4]), this.evalCommand(ctxFullFe, tag.params[5])];
+    eval_fp2GetVerticalIntercept_x(ctx, tag) {
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const slope = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
+        const x = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
+        const y = [this.evalCommand(ctxFullFe, tag.params[4]), this.evalCommand(ctxFullFe, tag.params[5])];
 
-    //     return this.fp2Sub(y, this.fp2Mul(slope, x))[0];
-    // }
+        return this.fp2Sub(y, this.fp2Mul(slope, x))[0];
+    }
 
-    // eval_fp2GetVerticalIntercept_y(ctx, tag) {
-    //     const ctxFullFe = { ...ctx, fullFe: true };
-    //     const slope = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
-    //     const x = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
-    //     const y = [this.evalCommand(ctxFullFe, tag.params[4]), this.evalCommand(ctxFullFe, tag.params[5])];
+    eval_fp2GetVerticalIntercept_y(ctx, tag) {
+        const ctxFullFe = { ...ctx, fullFe: true };
+        const slope = [this.evalCommand(ctxFullFe, tag.params[0]), this.evalCommand(ctxFullFe, tag.params[1])];
+        const x = [this.evalCommand(ctxFullFe, tag.params[2]), this.evalCommand(ctxFullFe, tag.params[3])];
+        const y = [this.evalCommand(ctxFullFe, tag.params[4]), this.evalCommand(ctxFullFe, tag.params[5])];
 
-    //     return this.fp2Sub(y, this.fp2Mul(slope, x))[1];
-    // }
+        return this.fp2Sub(y, this.fp2Mul(slope, x))[1];
+    }
 
 
     /**
