@@ -503,46 +503,46 @@ PRAGMA MODE_384_BITS
         ; Psi Endomorphism
         ; ====================
 
-        ; ; ====================
-        ; ; Double and Line
-        ; ; ====================
-        ; ; Necessary precomputation: Given P = (x,y) y' = 1/y, x' = -x/y
-        ; 0xfd7e7c837902063f0e8f909bcd1c17b0abdcefb8bb328a59789bd2b76cb34c77fda6e5c45367270a85b3b5ed302f385n => A
-        ; :CALL(invFpBLS12381)
-        ; B => doubleAndLineFp2BLS12381_Py_prime
-        ; B => addAndLineFp2BLS12381_Py_prime
+        ; ====================
+        ; Double and Line
+        ; ====================
+        ; Necessary precomputation: Given P = (x,y) y' = 1/y, x' = -x/y
+        0xfd7e7c837902063f0e8f909bcd1c17b0abdcefb8bb328a59789bd2b76cb34c77fda6e5c45367270a85b3b5ed302f385n => A
+        :CALL(invFpBLS12381)
+        B => doubleAndLineFp2BLS12381_Py_prime
+        B => addAndLineFp2BLS12381_Py_prime
 
-        ; 0x7e0eb25b56c13ca1135cbe99635b5e1f478dfd33ba9e5eafb7eee2cad74263ac19213e93d0504a4a24c1fbcd2ce9790n => A
-        ; :CALL(negFpBLS12381)
-        ; B => A
-        ; doubleAndLineFp2BLS12381_Py_prime => B
-        ; :CALL(mulFpBLS12381)
-        ; C => doubleAndLineFp2BLS12381_Px_prime
-        ; C => addAndLineFp2BLS12381_Px_prime
+        0x7e0eb25b56c13ca1135cbe99635b5e1f478dfd33ba9e5eafb7eee2cad74263ac19213e93d0504a4a24c1fbcd2ce9790n => A
+        :CALL(negFpBLS12381)
+        B => A
+        doubleAndLineFp2BLS12381_Py_prime => B
+        :CALL(mulFpBLS12381)
+        C => doubleAndLineFp2BLS12381_Px_prime
+        C => addAndLineFp2BLS12381_Px_prime
 
-        ; %BLS12_381_G2X1 => doubleAndLineFp2BLS12381_T_x1
-        ; %BLS12_381_G2X2 => doubleAndLineFp2BLS12381_T_x2
-        ; %BLS12_381_G2Y1 => doubleAndLineFp2BLS12381_T_y1
-        ; %BLS12_381_G2Y2 => doubleAndLineFp2BLS12381_T_y2
-        ; :CALL(doubleAndLineFp2BLS12381)
-        ; 0x1638533957d540a9d2370f17cc7ed5863bc0b995b8825e0ee1ea1e1e4d00dbae81f14b0bf3611b78c952aacab827a053n    :MLOAD(doubleAndLineFp2BLS12381_T_dbl_x1)
-        ; 0xa4edef9c1ed7f729f520e47730a124fd70662a904ba1074728114d1031e1572c6c886f6b57ec72a6178288c47c33577n     :MLOAD(doubleAndLineFp2BLS12381_T_dbl_x2)
-        ; 0x468fb440d82b0630aeb8dca2b5256789a66da69bf91009cbfe6bd221e47aa8ae88dece9764bf3bd999d95d71e4c9899n     :MLOAD(doubleAndLineFp2BLS12381_T_dbl_y1)
-        ; 0xf6d4552fa65dd2638b361543f887136a43253d9c66c411697003f7a13c308f5422e1aa0a59c8967acdefd8b6e36ccf3n     :MLOAD(doubleAndLineFp2BLS12381_T_dbl_y2)
+        %BLS12_381_G2X1 => doubleAndLineFp2BLS12381_T_x1
+        %BLS12_381_G2X2 => doubleAndLineFp2BLS12381_T_x2
+        %BLS12_381_G2Y1 => doubleAndLineFp2BLS12381_T_y1
+        %BLS12_381_G2Y2 => doubleAndLineFp2BLS12381_T_y2
+        :CALL(doubleAndLineFp2BLS12381)
+        0x1638533957d540a9d2370f17cc7ed5863bc0b995b8825e0ee1ea1e1e4d00dbae81f14b0bf3611b78c952aacab827a053n    :MLOAD(doubleAndLineFp2BLS12381_T_dbl_x1)
+        0xa4edef9c1ed7f729f520e47730a124fd70662a904ba1074728114d1031e1572c6c886f6b57ec72a6178288c47c33577n     :MLOAD(doubleAndLineFp2BLS12381_T_dbl_x2)
+        0x468fb440d82b0630aeb8dca2b5256789a66da69bf91009cbfe6bd221e47aa8ae88dece9764bf3bd999d95d71e4c9899n     :MLOAD(doubleAndLineFp2BLS12381_T_dbl_y1)
+        0xf6d4552fa65dd2638b361543f887136a43253d9c66c411697003f7a13c308f5422e1aa0a59c8967acdefd8b6e36ccf3n     :MLOAD(doubleAndLineFp2BLS12381_T_dbl_y2)
 
-        ; ; ====================
-        ; ; Add and Line
-        ; ; ====================
-        ; %BLS12_381_G2X1 => addAndLineFp2BLS12381_T_x1
-        ; %BLS12_381_G2X2 => addAndLineFp2BLS12381_T_x2
-        ; %BLS12_381_G2Y1 => addAndLineFp2BLS12381_T_y1
-        ; %BLS12_381_G2Y2 => addAndLineFp2BLS12381_T_y2
-        ; 0x553341fbcd79a88b4fad713a6e1882aa5d6bde7bc8d52212f360fe079ce162965ea79d721ee86982c0e76e8b977eb01n => addAndLineFp2BLS12381_S_x1
-        ; 0xbd60f8690f9287c283c879bdafd6058accbd23c07d33241cdd09c1e1ae5fc038fffa51e9b6fa69b4c0936a75f523938n => addAndLineFp2BLS12381_S_x2
-        ; 0x77eeba099a807772ade93de61c97d53c125744624d9b61dfb5c7879e025189dbc46e78e2d93eb74e5092828d8f6161dn => addAndLineFp2BLS12381_S_y1
-        ; 0x294c495e3d78150d4f7af21bdbca71cf1cf0eab730cdb47797700692f50f41042c7157d73e8c636f65ca07a13fc74f1n => addAndLineFp2BLS12381_S_y2
-        ; :CALL(addAndLineFp2BLS12381)
-        ; 0x3987d1ea2261bfdd189889d23afd201772cbf31aeefaa7d84cdaa734644cc63a737f655e8b473297435f335576b2b1an    :MLOAD(addAndLineFp2BLS12381_TS_x1)
-        ; 0xcadc41e9e57c5973a07ff0d8254d1fcfadbe82d48a070285c67fe1bbecad44258a133fe1c87518869e257b155726118n     :MLOAD(addAndLineFp2BLS12381_TS_x2)
-        ; 0x16c2252543f1c82e2f8809c3ffce7dbedf81505ef72739539b7ebf080fc2fd171c6b6bab55429dcbcce7237d90cbeafn     :MLOAD(addAndLineFp2BLS12381_TS_y1)
-        ; 0xdf58e141495b8b1f3bbe457e41f38da9dbeded619bee98c967131d97c77ecd875ebf7af7e750dc7981ac680958b3d8fn     :MLOAD(addAndLineFp2BLS12381_TS_y2)
+        ; ====================
+        ; Add and Line
+        ; ====================
+        %BLS12_381_G2X1 => addAndLineFp2BLS12381_T_x1
+        %BLS12_381_G2X2 => addAndLineFp2BLS12381_T_x2
+        %BLS12_381_G2Y1 => addAndLineFp2BLS12381_T_y1
+        %BLS12_381_G2Y2 => addAndLineFp2BLS12381_T_y2
+        0x553341fbcd79a88b4fad713a6e1882aa5d6bde7bc8d52212f360fe079ce162965ea79d721ee86982c0e76e8b977eb01n => addAndLineFp2BLS12381_S_x1
+        0xbd60f8690f9287c283c879bdafd6058accbd23c07d33241cdd09c1e1ae5fc038fffa51e9b6fa69b4c0936a75f523938n => addAndLineFp2BLS12381_S_x2
+        0x77eeba099a807772ade93de61c97d53c125744624d9b61dfb5c7879e025189dbc46e78e2d93eb74e5092828d8f6161dn => addAndLineFp2BLS12381_S_y1
+        0x294c495e3d78150d4f7af21bdbca71cf1cf0eab730cdb47797700692f50f41042c7157d73e8c636f65ca07a13fc74f1n => addAndLineFp2BLS12381_S_y2
+        :CALL(addAndLineFp2BLS12381)
+        0x3987d1ea2261bfdd189889d23afd201772cbf31aeefaa7d84cdaa734644cc63a737f655e8b473297435f335576b2b1an    :MLOAD(addAndLineFp2BLS12381_TS_x1)
+        0xcadc41e9e57c5973a07ff0d8254d1fcfadbe82d48a070285c67fe1bbecad44258a133fe1c87518869e257b155726118n     :MLOAD(addAndLineFp2BLS12381_TS_x2)
+        0x16c2252543f1c82e2f8809c3ffce7dbedf81505ef72739539b7ebf080fc2fd171c6b6bab55429dcbcce7237d90cbeafn     :MLOAD(addAndLineFp2BLS12381_TS_y1)
+        0xdf58e141495b8b1f3bbe457e41f38da9dbeded619bee98c967131d97c77ecd875ebf7af7e750dc7981ac680958b3d8fn     :MLOAD(addAndLineFp2BLS12381_TS_y2)
